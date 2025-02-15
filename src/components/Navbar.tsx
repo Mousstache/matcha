@@ -1,21 +1,39 @@
 import { Link } from "react-router-dom";
+import { Heart, User, LogIn } from "lucide-react";
 
 const Navbar = () => {
   return (
-    <nav className="bg-red-300 p-2 text-white">
+    <nav className="bg-pink-500 p-4 shadow-lg">
       <div className="container mx-auto flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Matcha</h1>
-        <ul className="flex space-x-4">
-          <li>
-            <Link to="/" className="hover:underline">Accueil</Link>
+        {/* Logo */}
+        <Link to="/" className="flex items-center space-x-2">
+          <img src="/logo.png" alt="Logo" className="w-10 h-10 rounded-full" />
+          <span className="text-white text-2xl font-bold">LoveConnect</span>
+        </Link>
+
+        {/* Navigation Links */}
+        <ul className="hidden md:flex space-x-6 text-white font-medium">
+          <li className="hover:underline">
+            <Link to="/explore" className="flex items-center space-x-1">
+              <Heart /> <span>Explorer</span>
+            </Link>
           </li>
-          <li>
-            <Link to="/login" className="hover:underline">Connexion</Link>
-          </li>
-          <li>
-            <Link to="/about" className="hover:underline">À propos</Link>
+          <li className="hover:underline">
+            <Link to="/profile" className="flex items-center space-x-1">
+              <User /> <span>Mon Profil</span>
+            </Link>
           </li>
         </ul>
+
+        {/* Boutons */}
+        <div className="space-x-4">
+          <Link to="/login" className="px-4 py-2 bg-white text-pink-500 rounded-lg font-bold hover:bg-gray-200 transition">
+            Connexion
+          </Link>
+          <Link to="/signup" className="px-4 py-2 bg-yellow-400 text-white rounded-lg font-bold hover:bg-yellow-500 transition">
+            Inscription
+          </Link>
+        </div>
       </div>
     </nav>
   );
