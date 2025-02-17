@@ -3,12 +3,12 @@ import { Heart, User, LogIn } from "lucide-react";
 
 const Navbar = () => {
   return (
-    <nav className="bg-pink-500 p-4 shadow-lg">
+    <nav className="bg-pink-900 p-4 shadow-lg">
       <div className="container mx-auto flex justify-between items-center">
         {/* Logo */}
         <Link to="/" className="flex items-center space-x-2">
-          <img src="/logo.png" alt="Logo" className="w-10 h-10 rounded-full" />
-          <span className="text-white text-2xl font-bold">LoveConnect</span>
+          <img src="../img/logo.webp" alt="Logo" className="w-10 h-10 rounded-full" />
+          <span className="text-white text-2xl font-serif">Matcha</span>
         </Link>
 
         {/* Navigation Links */}

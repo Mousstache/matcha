@@ -8,16 +8,19 @@ import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Home from "./pages/Home";
 import Signup from "./pages/Signup";
+import Profile from "./pages/Profile";
 
 function App() {
 
   return (
     <Router>
+      <title>Matcha</title>
       <Navbar />
       <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
+      <Route path="/profile" element={<Profile />} />
       </Routes>
       <Footer />
     </Router>
