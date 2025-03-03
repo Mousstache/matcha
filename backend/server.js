@@ -3,10 +3,10 @@ import express from 'express';
 import path from 'path';
 import cors from 'cors';
 import { fileURLToPath } from 'url';
-import db from './config/db.js';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth.js';
-import syncDatabase from './models'; 
+import { syncDatabase } from './models/index.js';
+import { connectDB } from './config/db.js';
 
 
 dotenv.config();

@@ -1,6 +1,8 @@
 import express from 'express';
-import User from '../models/user.js';
-import router from express.Router();
+// import User from '../models/User';
+import { User } from '../models/index.js';
+
+const router = express.Router();
 
 router.post('/user', async (req, res) => {
     try{
@@ -40,4 +42,4 @@ router.post('/user', async (req, res) => {
 }
 });
 
-module.exports = router;
+export default router;

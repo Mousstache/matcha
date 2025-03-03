@@ -1,3 +1,10 @@
+// const { Sequelize } = require('../config/db.js');
+// const UserModel = require('./User.js');
+
+import { sequelize } from '../config/db.js';
+import UserModel from './User.js';
+
+
 // const express = require('express');
 // const { Pool } = require('pg');
 // const cors = require('cors');
@@ -36,3 +43,16 @@
 // app.listen(port, () => {
 //   console.log(`Serveur en écoute sur le port ${port}`);
 // });
+
+const User = UserModel(sequelize);
+
+const syncDatabase = async () => {
+    try {
+        await sequelize.sync({ alter: true});
+        console.log('Database synchronized');
+    }catch (error) {    
+        console.error('Error synchronizing database:', error);
+    }
+};
+
+export { User, syncDatabase };
