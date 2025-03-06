@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useNavigate, useSearchParams } from "react-router-dom";import './App.css'
+// import { useState, useEffect } from 'react';
+// import { useNavigate, useSearchParams } from "react-router-dom";import './App.css'
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import './App.css';
 
@@ -11,12 +11,12 @@ import Signup from "./components/Signup";
 import Profil from "./components/Profil";
 import Explore from "./components/Explore";
 
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  created_at?: string;
-}
+// interface User {
+//   id: number;
+//   name: string;
+//   email: string;
+//   created_at?: string;
+// }
 
 
 function App() {

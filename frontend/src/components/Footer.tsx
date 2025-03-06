@@ -1,5 +1,5 @@
-import { Link } from "react-router-dom";
-import { Heart, Mail, Shield, Facebook, Twitter, Instagram } from 'lucide-react';
+// import { Link } from "react-router-dom";
+// import { Heart, Mail, Shield, Facebook, Twitter, Instagram } from 'lucide-react';
 
 
 

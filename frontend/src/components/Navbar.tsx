@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Heart, User, LogIn } from "lucide-react";
+import { Heart, User } from "lucide-react";
 
 const Navbar = () => {
   return (

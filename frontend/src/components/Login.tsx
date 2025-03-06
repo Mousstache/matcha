@@ -1,14 +1,17 @@
 import { useState } from "react";
 import { useAuth } from "../context/auth";
-import { button } from "./components/ui/button";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage,} from "./components/ui/form";
-import { input } from "./components/ui/input";
+// import { Link } from "react-router-dom";
+
+// import { button } from "./components/ui/button";
+// import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage,} from "./components/ui/form";
+// import { input } from "./components/ui/input";
 
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  // const [firstname, setFirstname] = useState("");
   const { firstname, setFirstname } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -16,7 +19,7 @@ const Login = () => {
     setError("");
     
     try{
-      const response = await fetch("http://localhost:5000/api/user", {
+      const response = await fetch("http://localhost:5000/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -26,15 +29,14 @@ const Login = () => {
         throw new Error(data.message);
       }
       else {
+        firstname;
         setFirstname(data.firstname);
       }
       if (!email || !password) {
         setError("Tous les champs sont requis.");
         return;
       }
-      setFirstname(email.split("@")[0]);
-  
-      // Simuler une connexion réussie
+      localStorage.setItem("token", data.token);
       console.log("Connexion réussie avec :", { email, password });
     } catch (error) {
       setError("Erreur lors de la connexion.");
@@ -70,11 +72,7 @@ const Login = () => {
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
-
-          <button
-            type="submit"
-            className="w-full px-4 py-2 mt-6 font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition duration-300"
-          >
+          <button type="submit" className="w-full px-4 py-2 mt-6 font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition duration-300">
             Se connecter
           </button>
         </form>

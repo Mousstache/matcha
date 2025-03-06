@@ -63,4 +63,69 @@ const UserModel = (sequelize) => {
     return User;
 };
 
+
+// class UserModel {
+//     // Méthode pour créer un nouvel utilisateur
+//     static async create(userData) {
+//       const { 
+//         email, 
+//         firstName, 
+//         lastName, 
+//         password, 
+//         gender, 
+//         description, 
+//         preference,
+//         age
+//       } = userData;
+
+//     try{
+//         const existingUser = await Pool.query(
+//             'SELECT * FROM users WHERE email = $1',
+//             [email]
+//         );
+//         if (existingUser.rows.lenght > 0){
+//             throw new Error('Cet email est deja utilise');
+//         }
+
+//         const salt = await bcrypt.genSalt(10);
+//         const hashedPassword = await bcrypt.hash(password , salt);
+
+//         const querry = `ISERT INTO users 
+//         (email, first_name, last_name, password, gender, description, preference, age)
+//         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+//         RETURNING id, email, firstName, lastName 
+//         `;
+//         const values = [
+//             email,
+//             firstName,
+//             lastName,
+//             hashedPassword,
+//             gender,
+//             description || '',
+//             preference,
+//             age,
+//           ];
+
+//         const result = await pool.query(query, values);
+//         // Retourner l'utilisateur sans le mot de passe
+//         return result.rows[0];
+    
+//         }catch (error){
+//             console.error('Erreur lors de la création de l\'utilisateur:', error);
+//             throw error;
+//         }
+//     }
+
+//     static async findByEmail(email) {
+//         try {
+//           const query = 'SELECT * FROM users WHERE email = $1';
+//           const result = await pool.query(query, [email]);
+//           return result.rows[0];
+//         } catch (error) {
+//           console.error('Erreur lors de la recherche de l\'utilisateur:', error);
+//           throw error;
+//         }
+//       }
+//     }
+    
 export default UserModel;

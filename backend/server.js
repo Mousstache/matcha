@@ -1,18 +1,19 @@
-// Importation des modules nécessaires
 import express from 'express';
 import path from 'path';
 import cors from 'cors';
-import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
-import authRoutes from './routes/auth.js';
+
+import { fileURLToPath } from 'url';
 import { syncDatabase } from './models/index.js';
 import { connectDB } from './config/db.js';
 
+import stuffRoutes  from './routes/stuff.js';
+import authRoutes from './routes/auth.js';
+
+
 
 dotenv.config();
-
 connectDB();
-
 syncDatabase();
 
 // Obtenir l'équivalent de __dirname pour ES Modules
@@ -26,55 +27,33 @@ const port = 5000;
 // Configuration pour servir les fichiers statiques avec le chemin correct
 app.use(express.static(path.join(__dirname, 'public')));
 
+// CONFIG CORS
+const corsOptions = {
+  origin: [
+    'http://localhost:3000',   // React
+    'http://localhost:5173',   // Vite
+    'http://localhost:5000',   // Votre serveur backend
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true
+};
+app.use(cors(corsOptions));
+
 // Middleware pour parser le JSON
 app.use(express.json());
 
-app.use('/api/auth', authRoutes);
-
-app.use(cors());
-
-// Route pour la page d'accueil
+// app.use('/api/auth', authRoutes);
+app.use('/api', stuffRoutes);
 
 app.get('/', (req, res) => {
   console.log(__dirname);
   res.send('API est en cours d\'exécution');
 });
 
-app.get('/', async (req, res) => {
-  try {
-    const result = await db.query('SELECT * FROM users');
-    res.json(result.rows);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('Internal Server Error');
-  }
-});
-
-app.get('/api/hello', (req, res) => {
-  res.json({ message: 'Hello from Express!' });
-});
-
-app.get('/api/match', (req, res, next) => {
-  res.status(200).json({
-    message: 'Match found!'
-  });
-}),
-
-app.post('/api/user', (req, res, next) => {
-  const formData = req.body;
-  console.log(formData);
-  res.status(201).json({
-    message: 'User created! loool',
-    user: formData,
-  });
-});
-
-// Autre route d'exemple
-app.get('/login', (req, res) => {
-  res.sendFile(path.join(__dirname, 'src', ''));
-});
-
 // Démarrage du serveur
 app.listen(port, () => {
   console.log(`Serveur démarré sur http://localhost:${port}`);
 });
+
+export default app;

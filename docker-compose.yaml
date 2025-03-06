@@ -8,8 +8,8 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
       POSTGRES_DB: appdb
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -29,8 +29,8 @@ services:
       - db
     environment:
       PORT: 5000
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
       POSTGRES_DB: appdb
       POSTGRES_HOST: db
     networks:
@@ -48,6 +48,16 @@ services:
       - backend
     networks:
       - app-network
+   
+  adminer:
+    image: adminer
+    container_name: adminer
+    restart: always
+    ports:
+      - "8080:8080"
+    networks:
+      - app-network
+
 
 networks:
   app-network:
