@@ -1,8 +1,24 @@
-import { Calendar } from "lucide-react";
+//import { Calendar } from "lucide-react";
 import { Card, CardContent, CardTitle } from "./ui/card"
 import { useState } from "react";
+//import { Input } from "@/components/ui/input";
+// import { Label } from "@/components/ui/label";
+// import { Button } from "@/components/ui/button";
+// import { Calendar } from "@/components/ui/calendar";
+// import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+// import { cn } from "@/lib/utils";
+// import { format } from "date-fns";
+// import { fr } from "date-fns/locale";
+// import { CalendarIcon } from "lucide-react";
+//import { Checkbox } from "@/components/ui/checkbox";
+//import { Alert, AlertDescription } from "@/components/ui/alert";
 // import { Link } from "react-router-dom";
 
+
+interface Interest {
+    id: string;
+    label: string;
+  }
 
 const Signup = () => {
     
@@ -13,7 +29,36 @@ const Signup = () => {
     const [password, setPassword] = useState('');
     const [description, setDescription] = useState('');
     const [preference, setPreference] = useState('1');
-    const [age, setAge] = useState('');
+    const [birthDate, setBirthDate] = useState('');
+    const [interests, setInterests] = useState<string[]>([]);
+    const [interestError, setInterestError] = useState('');
+
+    const interestsList: Interest[] = [
+        { id: "sports", label: "Sports" },
+        { id: "music", label: "Musique" },
+        { id: "cinema", label: "Cinéma" },
+        { id: "technology", label: "Technologie" },
+        { id: "travel", label: "Voyages" },
+        { id: "cooking", label: "Cuisine" },
+        { id: "art", label: "Art" },
+        { id: "literature", label: "Littérature" }
+    ];
+
+    const handleInterestChange = (id: string): void => {
+        setInterestError('');
+        
+        if (interests.includes(id)) {
+            // Retirer l'intérêt s'il est déjà sélectionné
+            setInterests(interests.filter(item => item !== id));
+        } else {
+            // Ajouter l'intérêt s'il n'est pas déjà sélectionné et moins de 3 intérêts
+            if (interests.length < 3) {
+                setInterests([...interests, id]);
+            } else {
+                setInterestError("Vous ne pouvez sélectionner que 3 intérêts maximum.");
+            }
+        }
+    };
     
     const sendForm = async (e:any) => {
         e.preventDefault();
@@ -24,7 +69,7 @@ const Signup = () => {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ email, firstName, lastName, gender, password, description, preference })
+                body: JSON.stringify({ email, firstName, lastName, gender, password, description, preference, birthDate, interests })
             })
             .then(response => response.json())
             .then(data => {
@@ -66,9 +111,15 @@ const Signup = () => {
                         <option value="3">Non binaire</option>
                     </select>
 
-                    <label>age :</label>
-                    <Calendar></Calendar>
-                    <input type='date' placeholder='Enter BirthDate' value={age} onChange={(e) => setAge(e.target.value)}  name='birthdate'/>
+                    <label>Birth date :</label>
+                    <input 
+                        type='date' 
+                        value={birthDate} 
+                        onChange={(e) => setBirthDate(e.target.value)}
+                        name='birthdate'
+                        className="text-black w-full px-4 py-2 border rounded-lg"
+                    />
+                    {/* <input type='date' placeholder='Enter BirthDate' value={age} onChange={(e) => setAge(e.target.value)}  name='birthdate'/> */}
                     
                     <label>Password :</label>
                     <input type="password" onChange={(e) => setPassword(e.target.value)}  className="text-black w-full px-4 py-2 border rounded-lg"></input>
@@ -82,6 +133,44 @@ const Signup = () => {
                         <option value="2">Femme</option>
                         <option value="3">Les deux</option>
                     </select>
+
+                    <label>Intérêts (maximum 3) :</label>
+                    {interestError && (
+                        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded">
+                            {interestError}
+                        </div>
+                    )}
+                    
+                    <label>Intérêts (maximum 3) :</label>
+                    {interestError && (
+                        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded">
+                            {interestError}
+                        </div>
+                    )}
+                    
+                    {/* <div className="grid grid-cols-2 gap-2">
+                        {interestsList.map((interest) => (
+                            <div key={interest.id} className="flex items-center space-x-2">
+                                <input
+                                    type="checkbox"
+                                    id={interest.id}
+                                    checked={interests.includes(interest.id)}
+                                    onChange={() => handleInterestChange(interest.id)}
+                                    className="rounded"
+                                />
+                                <label
+                                    htmlFor={interest.id}
+                                    className="text-sm cursor-pointer"
+                                >
+                                    {interest.label}
+                                </label>
+                            </div>
+                        ))}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                        {interests.length}/3 intérêts sélectionnés
+                    </div> */}
+
                     {/* <label>Intérêts :</label> */}
                     {/* <Link to="/profil"> */}
                         <button type="submit" className="text-white">S'inscrire</button>

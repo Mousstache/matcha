@@ -43,6 +43,10 @@ const UserModel = (sequelize) => {
             type: DataTypes.ENUM('1', '2', '3'),
             defaultValue: '3',
         },
+        birthdate: {
+            type: DataTypes.DATEONLY,
+            allowNull: false,
+        },
 
         // hooks: {
         //     beforeCreate: async (user) => {

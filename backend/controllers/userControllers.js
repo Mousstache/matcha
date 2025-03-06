@@ -20,7 +20,9 @@ export default {
         lastName, 
         description, 
         preference, 
-        gender 
+        gender,
+        birthDate,
+        interest
       } = req.body;
 
       const existingUser = await User.findOne({ where: { email } });
@@ -39,7 +41,9 @@ export default {
         lastName,
         description: description || '',
         preference,
-        gender
+        gender,
+        birthDate,
+        interest
       });
 
       const token = jwt.sign(
@@ -170,7 +174,9 @@ export default {
         firstName, 
         lastName, 
         description, 
-        preference
+        preference,
+        birthDate,
+        interest
       } = req.body;
 
     }catch(error){

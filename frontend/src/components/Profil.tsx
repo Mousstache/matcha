@@ -1,6 +1,6 @@
 // import { useParams } from 'react-router-dom';
 // import { useAuth } from '../context/auth';
-import { use, useState } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardTitle } from "./ui/card"
 import { useEffect } from 'react';
 
@@ -13,6 +13,7 @@ interface User{
   description: string;
   gender: number;
   preference: number;
+  birthDate: number;
 }
 
 const Profile = () => {
@@ -71,6 +72,10 @@ const Profile = () => {
       });
 
       const data = await response.json();
+
+      if (!data)
+        return ;
+
     } catch (error) {
       console.error(error);
     }
