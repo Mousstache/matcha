@@ -25,10 +25,10 @@ const Signup = () => {
     const [email, setEmail] = useState('');
     const [firstName, setFirstName] = useState('');
     const [lastName, setLastName] = useState('');
-    const [gender, setGender] = useState('1');
+    const [gender, setGender] = useState('Non binaire');
     const [password, setPassword] = useState('');
     const [description, setDescription] = useState('');
-    const [preference, setPreference] = useState('1');
+    const [preference, setPreference] = useState('Les deux');
     const [birthDate, setBirthDate] = useState('');
     const [interests, setInterests] = useState<string[]>([]);
     const [interestError, setInterestError] = useState('');
@@ -69,10 +69,11 @@ const Signup = () => {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ email, firstName, lastName, gender, password, description, preference, birthDate, interests })
+                body: JSON.stringify({ email, firstName, lastName, gender, password, description, preference, birthDate, interests }),
             })
             .then(response => response.json())
             .then(data => {
+                localStorage.setItem("token", data.token);
                 if (data.error) {
                     console.error(data.error)
                 } else {
@@ -80,6 +81,7 @@ const Signup = () => {
                 }
             })
             localStorage.setItem
+
             // .then(response => {
             //     if (response.redirected) {
             //             window.location.href = response.url;
@@ -106,9 +108,9 @@ const Signup = () => {
                     
                     <label>Gender :</label>
                     <select value={gender} onChange={(e) => setGender(e.target.value)} className="text-black w-full px-4 py-2 border rounded-lg">
-                        <option value="1">Homme</option>
-                        <option value="2">Femme</option>
-                        <option value="3">Non binaire</option>
+                        <option value="Homme">Homme</option>
+                        <option value="Femme">Femme</option>
+                        <option value="Non binaire">Non binaire</option>
                     </select>
 
                     <label>Birth date :</label>
@@ -116,7 +118,7 @@ const Signup = () => {
                         type='date' 
                         value={birthDate} 
                         onChange={(e) => setBirthDate(e.target.value)}
-                        name='birthdate'
+                        name='birthDate'
                         className="text-black w-full px-4 py-2 border rounded-lg"
                     />
                     {/* <input type='date' placeholder='Enter BirthDate' value={age} onChange={(e) => setAge(e.target.value)}  name='birthdate'/> */}
@@ -129,17 +131,10 @@ const Signup = () => {
                     
                     <label>préférence :</label>
                     <select value={preference} onChange={(e) => setPreference(e.target.value)} className="text-black w-full px-4 py-2 border rounded-lg">
-                        <option value="1">Homme</option>
-                        <option value="2">Femme</option>
-                        <option value="3">Les deux</option>
+                        <option value="Homme">Homme</option>
+                        <option value="Femme">Femme</option>
+                        <option value="Les deux">Les deux</option>
                     </select>
-
-                    <label>Intérêts (maximum 3) :</label>
-                    {interestError && (
-                        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded">
-                            {interestError}
-                        </div>
-                    )}
                     
                     <label>Intérêts (maximum 3) :</label>
                     {interestError && (
@@ -148,7 +143,7 @@ const Signup = () => {
                         </div>
                     )}
                     
-                    {/* <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-2 gap-2">
                         {interestsList.map((interest) => (
                             <div key={interest.id} className="flex items-center space-x-2">
                                 <input
@@ -169,7 +164,7 @@ const Signup = () => {
                     </div>
                     <div className="text-sm text-gray-500">
                         {interests.length}/3 intérêts sélectionnés
-                    </div> */}
+                    </div>
 
                     {/* <label>Intérêts :</label> */}
                     {/* <Link to="/profil"> */}

@@ -22,7 +22,7 @@ export default {
         preference, 
         gender,
         birthDate,
-        interest
+        interests
       } = req.body;
 
       const existingUser = await User.findOne({ where: { email } });
@@ -43,7 +43,7 @@ export default {
         preference,
         gender,
         birthDate,
-        interest
+        interests: interests || ''
       });
 
       const token = jwt.sign(
@@ -66,7 +66,6 @@ export default {
         message: 'Utilisateur créé avec succès',
         user: userResponse,
         token,
-        RedirectUrl: '/profile'
       });
 
     } catch (error) {
@@ -176,7 +175,7 @@ export default {
         description, 
         preference,
         birthDate,
-        interest
+        interests
       } = req.body;
 
     }catch(error){

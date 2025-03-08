@@ -1,10 +1,11 @@
-import jwt from jsonwebtoken;
+import jwt from 'jsonwebtoken';
 
 const authMiddleware = (req, res, next) => {
   
   const token = req.header('Authorization');
 
   if (!token) {
+    window.location.href = '/login';
     return res.status(401).json({ message: 'Accès non autorisé, token manquant' });
   }
 

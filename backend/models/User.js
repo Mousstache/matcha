@@ -32,21 +32,26 @@ const UserModel = (sequelize) => {
             },
         },
         gender: {
-            type: DataTypes.ENUM('1', '2', '3'),
-            defaultValue: '1',
+            type: DataTypes.ENUM('Homme', 'Femme', 'Non binaire'),
+            defaultValue: 'Non binaire',
         },
         description: {
             type: DataTypes.TEXT,
             allowNull: true,
         },
         preference: {
-            type: DataTypes.ENUM('1', '2', '3'),
-            defaultValue: '3',
+            type: DataTypes.ENUM('Homme', 'Femme', 'Les deux'),
+            defaultValue: 'Les deux',
         },
-        birthdate: {
+        birthDate: {
             type: DataTypes.DATEONLY,
             allowNull: false,
         },
+        interests: {
+            type: DataTypes.ARRAY(DataTypes.STRING),
+            allowNull: true,
+            defaultValue: []
+          },
 
         // hooks: {
         //     beforeCreate: async (user) => {
