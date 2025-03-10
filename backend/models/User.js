@@ -44,7 +44,15 @@ const UserModel = (sequelize) => {
             defaultValue: 'Les deux',
         },
         birthDate: {
+            type: DataTypes.INTEGER,
+            allowNull: false,
+        },
+        birthDate: {
             type: DataTypes.DATEONLY,
+            allowNull: false,
+        },
+        age: {
+            type: DataTypes.INTEGER,
             allowNull: false,
         },
         interests: {
@@ -52,6 +60,14 @@ const UserModel = (sequelize) => {
             allowNull: true,
             defaultValue: []
           },
+        isOnline: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false,
+        },
+        lastConnection: {
+            type: DataTypes.DATE,
+            allowNull: true,
+        },
 
         // hooks: {
         //     beforeCreate: async (user) => {

@@ -2,6 +2,21 @@ import { Link } from "react-router-dom";
 import { Heart, User } from "lucide-react";
 
 const Navbar = () => {
+
+  const handleLogout = async () => {
+
+    const token = localStorage.getItem("token");
+  
+    await fetch("http://localhost:5000/api/logout", {
+      method: "PUT",
+      headers: { "Authorization": `Bearer ${token}` },
+      body : JSON.stringify({ online: false })
+    });
+  
+    localStorage.removeItem("token");
+    window.location.href = "/login";
+  };
+
   return (
     <nav className="bg-pink-900 p-4 shadow-lg">
       <div className="container mx-auto flex justify-between items-center space-x-4">
@@ -27,12 +42,9 @@ const Navbar = () => {
 
         {/* Boutons */}
         <div className="space-x-4">
-          <Link to="/login" className="px-4 py-2 bg-white text-pink-500 rounded-lg font-bold hover:bg-gray-200 transition">
-            Connexion
-          </Link>
-          <Link to="/signup" className="px-4 py-2 bg-yellow-400 text-white rounded-lg font-bold hover:bg-yellow-500 transition">
-            Inscription
-          </Link>
+          <button  onClick={handleLogout} className="px-4 py-2 bg-white text-pink-500 rounded-lg font-bold hover:bg-gray-200 transition">
+            Log out
+          </button>
         </div>
       </div>
     </nav>

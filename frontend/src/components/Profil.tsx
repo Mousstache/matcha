@@ -81,20 +81,9 @@ const Profile = () => {
     }
     if (!token) {
       window.location.href = '/login';
+      return ;
     }
   }
-
-  const handleLogout = async () => {
-    const token = localStorage.getItem("token");
-  
-    await fetch("http://localhost:5000/api/auth/logout", {
-      method: "POST",
-      headers: { "Authorization": `Bearer ${token}` },
-    });
-  
-    localStorage.removeItem("token"); // Supprime le token du navigateur
-    window.location.href = "/login"; // Redirige vers la page de connexion
-  };
 
   // const { username } = useParams<SearchParams>();
   // const { username } = useParams<{ username: string }>();
@@ -108,10 +97,9 @@ const Profile = () => {
         <CardTitle><h1>Votre Profil</h1></CardTitle>
         <img></img>
 
-        <button onClick={handleLogout}>log out</button>
 
           <span className="">Profil de {user.firstName} {user.lastName}</span>
-        <CardContent>
+        <CardContent className='flex flex-col space-y-4'>
           <h2>Description de {user.firstName}: </h2>
           <label>Description :</label>
           <input value={user.description || ''} onChange={(e) => setUser({ ...user, description: e.target.value })}/>

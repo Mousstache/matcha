@@ -28,10 +28,12 @@ const Signup = () => {
     const [gender, setGender] = useState('Non binaire');
     const [password, setPassword] = useState('');
     const [description, setDescription] = useState('');
-    const [preference, setPreference] = useState('Les deux');
     const [birthDate, setBirthDate] = useState('');
+    const [preference, setPreference] = useState('Les deux');
     const [interests, setInterests] = useState<string[]>([]);
     const [interestError, setInterestError] = useState('');
+    const [online, setOnline] = useState(false);
+    const [lastConnection, setLastConnection] = useState("");
 
     const interestsList: Interest[] = [
         { id: "sports", label: "Sports" },
@@ -43,6 +45,20 @@ const Signup = () => {
         { id: "art", label: "Art" },
         { id: "literature", label: "Littérature" }
     ];
+
+    const calculateAge = (birthDate: string) => {
+        const today = new Date();
+        const birth = new Date(birthDate);
+      
+        let age = today.getFullYear() - birth.getFullYear();
+        const monthDiff = today.getMonth() - birth.getMonth();
+      
+        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+          age--;
+        }
+      console.log(age);
+        return age;
+      };
 
     const handleInterestChange = (id: string): void => {
         setInterestError('');
@@ -64,12 +80,19 @@ const Signup = () => {
         e.preventDefault();
         
         try{
+            online;
+            lastConnection;
+            setOnline(false);
+            setLastConnection(new Date().toISOString());
+            console.log(new Date().toISOString().split('T')[0]);
+            const userAge = calculateAge(birthDate);
+            console.log("Âge calculé:", userAge);
             fetch('http://localhost:5000/api/create', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ email, firstName, lastName, gender, password, description, preference, birthDate, interests }),
+                body: JSON.stringify({ email, firstName, lastName, gender, password, description, preference, birthDate, age: userAge, interests }),
             })
             .then(response => response.json())
             .then(data => {
@@ -81,7 +104,7 @@ const Signup = () => {
                 }
             })
             localStorage.setItem
-
+            // window.location.href = "/login";
             // .then(response => {
             //     if (response.redirected) {
             //             window.location.href = response.url;

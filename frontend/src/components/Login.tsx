@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "../context/auth";
+// import { set } from "date-fns";
 // import { Link } from "react-router-dom";
 
 // import { button } from "./components/ui/button";
@@ -11,6 +12,8 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [online, setOnline] = useState(false);
+  const [lastConnection, setLastConnection] = useState("");
   // const [firstname, setFirstname] = useState("");
   const { firstname, setFirstname } = useAuth();
 
@@ -19,10 +22,13 @@ const Login = () => {
     setError("");
     
     try{
+      setOnline(true);
+      lastConnection;
+      setLastConnection(new Date().toISOString());
       const response = await fetch("http://localhost:5000/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password , online, lastConnection: new Date() }),
       });
       const data = await response.json();
       if (!response.ok) {
@@ -37,6 +43,7 @@ const Login = () => {
         return;
       }
       localStorage.setItem("token", data.token);
+      window.location.href = "/profil";
       console.log("Connexion réussie avec :", { email, password });
     } catch (error) {
       setError("Erreur lors de la connexion.");

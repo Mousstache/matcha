@@ -2,6 +2,8 @@
 // import { useNavigate, useSearchParams } from "react-router-dom";import './App.css'
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import './App.css';
+import { Navigate } from 'react-router-dom';
+// import { ReactNode } from 'react';
 
 import Login from "./components/Login";
 import Navbar from "./components/Navbar";
@@ -18,20 +20,44 @@ import Explore from "./components/Explore";
 //   created_at?: string;
 // }
 
+interface ProtectedRouteProps {
+  children: React.ReactNode;
+}
+
+const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
+  const isAuthenticated = localStorage.getItem('token') !== null;
+  console.log(isAuthenticated);
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  return children;
+};
+
+const RouteNotFound = () => {
+  return (
+    <div>
+      <h1>404</h1>
+      <p>Page not found</p>
+    </div>
+  );
+}
 
 function App() {
-
+  
   return (
     <Router>
       <title>Matcha</title>
       <Navbar />
       <Routes>
-      <Route path="/" element={<Home />} />
+      <Route path="*" element={<RouteNotFound />} />
+      {/* <Route path="/404" element={<RouteNotFound />} /> */}
+      <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
       <Route path="/login" element={<Login />} />
-      <Route path="/explore" element={<Explore />} />
+      <Route path="/explore" element={<ProtectedRoute><Explore /></ProtectedRoute>} />
       <Route path="/signup" element={<Signup />} />
-      <Route path="/profil" element={<Profil />} />
-      <Route path="/profil/:username" element={<Profil />} />
+      <Route path="/profil" element={<ProtectedRoute><Profil /></ProtectedRoute>} />
+      <Route path="/profil/:username" element={<ProtectedRoute><Profil /></ProtectedRoute>} />
       </Routes>
       <Footer />
     </Router>
