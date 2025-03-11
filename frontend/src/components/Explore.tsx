@@ -10,8 +10,8 @@ import { Badge } from '@/components/ui/badge';
 
 interface Profile {
   id: string;
-  firstname: string;
-  lastname: string;
+  firstName: string;
+  lastName: string;
   age: number;
   distance: string;
   description: string;
@@ -101,12 +101,12 @@ const Explore = () => {
             <div className="relative">
               <img 
                 // src={currentProfile.image}
-                alt={currentProfile.firstname} 
+                alt={currentProfile.firstName} 
                 className="w-full h-96 object-cover rounded-t-lg"
               />
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4">
                 <h2 className="text-white text-2xl font-bold">
-                  {currentProfile.firstname}, {currentProfile.age}
+                  {currentProfile.firstName}, {currentProfile.age}
                 </h2>
                 <p className="text-white opacity-80 text-sm">
                   {currentProfile.distance}

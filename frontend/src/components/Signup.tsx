@@ -1,6 +1,7 @@
 //import { Calendar } from "lucide-react";
 import { Card, CardContent, CardTitle } from "./ui/card"
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 //import { Input } from "@/components/ui/input";
 // import { Label } from "@/components/ui/label";
 // import { Button } from "@/components/ui/button";
@@ -21,12 +22,14 @@ interface Interest {
   }
 
 const Signup = () => {
+
+    const navigate = useNavigate();
     
-    const [email, setEmail] = useState('');
-    const [firstName, setFirstName] = useState('');
-    const [lastName, setLastName] = useState('');
+    // const [email, setEmail] = useState('');
+    // const [firstName, setFirstName] = useState('');
+    // const [lastName, setLastName] = useState('');
     const [gender, setGender] = useState('Non binaire');
-    const [password, setPassword] = useState('');
+    // const [password, setPassword] = useState('');
     const [description, setDescription] = useState('');
     const [birthDate, setBirthDate] = useState('');
     const [preference, setPreference] = useState('Les deux');
@@ -64,10 +67,8 @@ const Signup = () => {
         setInterestError('');
         
         if (interests.includes(id)) {
-            // Retirer l'intérêt s'il est déjà sélectionné
             setInterests(interests.filter(item => item !== id));
         } else {
-            // Ajouter l'intérêt s'il n'est pas déjà sélectionné et moins de 3 intérêts
             if (interests.length < 3) {
                 setInterests([...interests, id]);
             } else {
@@ -84,26 +85,27 @@ const Signup = () => {
             lastConnection;
             setOnline(false);
             setLastConnection(new Date().toISOString());
-            console.log(new Date().toISOString().split('T')[0]);
             const userAge = calculateAge(birthDate);
-            console.log("Âge calculé:", userAge);
+            const token = localStorage.getItem("token");
             fetch('http://localhost:5000/api/create', {
                 method: 'POST',
                 headers: {
+                    'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ email, firstName, lastName, gender, password, description, preference, birthDate, age: userAge, interests }),
+                body: JSON.stringify({ gender, description, preference, birthDate, age: userAge, interests, lastConnection : new Date() }),
             })
             .then(response => response.json())
             .then(data => {
-                localStorage.setItem("token", data.token);
+                // localStorage.setItem("token", data.token);
                 if (data.error) {
                     console.error(data.error)
                 } else {
                     console.log(data)
                 }
             })
-            localStorage.setItem
+            navigate("/confirm-email");
+            // localStorage.setItem
             // window.location.href = "/login";
             // .then(response => {
             //     if (response.redirected) {
@@ -120,15 +122,6 @@ const Signup = () => {
             <CardTitle> <h1>Inscription</h1> </CardTitle>
             <CardContent>
                 <form onSubmit={sendForm} className="flex flex-col space-y-4">
-                    <label>email :</label>
-                    <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="text-black w-full px-4 py-2 mt-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="exemple@email.com"></input>
-                    
-                    <label className="space-between">FirstName :</label>
-                    <input type="firstname" value={firstName} onChange={(e) => setFirstName(e.target.value)} className="text-black w-full px-4 py-2 border rounded-lg "></input>
-                    
-                    <label className="space-between">LastName :</label>
-                    <input type="lastname" value={lastName} onChange={(e) => setLastName(e.target.value)} className="text-black w-full px-4 py-2 border rounded-lg "></input>
-                    
                     <label>Gender :</label>
                     <select value={gender} onChange={(e) => setGender(e.target.value)} className="text-black w-full px-4 py-2 border rounded-lg">
                         <option value="Homme">Homme</option>
@@ -144,10 +137,6 @@ const Signup = () => {
                         name='birthDate'
                         className="text-black w-full px-4 py-2 border rounded-lg"
                     />
-                    {/* <input type='date' placeholder='Enter BirthDate' value={age} onChange={(e) => setAge(e.target.value)}  name='birthdate'/> */}
-                    
-                    <label>Password :</label>
-                    <input type="password" onChange={(e) => setPassword(e.target.value)}  className="text-black w-full px-4 py-2 border rounded-lg"></input>
                     
                     <label>description :</label>
                     <input type="description" value={description} onChange={(e) => setDescription(e.target.value)} className="text-black w-full px-4 py-2 border rounded-lg"></input>
@@ -189,10 +178,7 @@ const Signup = () => {
                         {interests.length}/3 intérêts sélectionnés
                     </div>
 
-                    {/* <label>Intérêts :</label> */}
-                    {/* <Link to="/profil"> */}
-                        <button type="submit" className="text-white">S'inscrire</button>
-                    {/* </Link> */}
+                    <button type="submit" className="text-white">S'inscrire</button>
                 </form>
             </CardContent>
         </Card>

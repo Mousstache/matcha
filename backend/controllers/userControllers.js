@@ -2,9 +2,10 @@ import bcrypt from 'bcrypt';
 // import pkg from 'jsonwebtoken';
 import jwt from 'jsonwebtoken';
 import { User } from '../models/index.js';
+import crypto from 'crypto';
+import { sendConfirmationEmail } from '../utils/emailService.js';
 import { log } from 'console';
 
-// const {jwt} = pkg;
 
 export default {
   // Route de test simple
@@ -15,10 +16,6 @@ export default {
   createUser: async (req, res) => {
     try {
       const { 
-        email, 
-        password, 
-        firstName, 
-        lastName, 
         description, 
         preference, 
         gender,
@@ -29,44 +26,39 @@ export default {
         lastConnection
       } = req.body;
 
-      const existingUser = await User.findOne({ where: { email } });
-      if (existingUser) {
-        return res.status(400).json({ 
-          message: 'Un utilisateur avec cet email existe déjà' 
-        });
-      }
+      const token = req.headers.authorization?.split(' ')[1];
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const userId = decoded.id;
 
-      const hashedPassword = await bcrypt.hash(password, 10);
+      const user = await User.findByPk(userId);
 
-      const newUser = await User.create({
-        email,
-        password: hashedPassword,
-        firstName,
-        lastName,
-        description: description || '',
-        preference,
-        gender,
-        birthDate,
-        age,
-        interests: interests || '',
-        isOnline: isOnline || false,
-        lastConnection: lastConnection || ''
-      });
+      const updateData = {};
+      if (req.body.gender !== undefined) updateData.gender = req.body.gender;
+      if (req.body.isOnline !== undefined) updateData.isOnline = req.body.isOnline;
+      if (req.body.age !== undefined) updateData.age = req.body.age;
+      if (req.body.description !== undefined) updateData.description = req.body.description;
+      if (req.body.preference !== undefined) updateData.preference = req.body.preference;
+      if (req.body.birthDate !== undefined) updateData.birthDate = req.body.birthDate;
+      if (req.body.interests !== undefined) updateData.interests = req.body.interests;
 
-      const token = jwt.sign(
-        { 
-          id: newUser.id, 
-          email: newUser.email 
-        },
-        process.env.JWT_SECRET,
-        { expiresIn: '24h' }
-      );
+      await user.update(updateData);
+
+      // await User.update({
+      //   description: description || '',
+      //   preference,
+      //   gender,
+      //   birthDate,
+      //   age,
+      //   interests: interests || '',
+      //   isOnline: isOnline || false,
+      //   lastConnection: lastConnection || ''
+      // });
 
       const userResponse = {
-        id: newUser.id,
-        email: newUser.email,
-        firstName: newUser.firstName,
-        lastName: newUser.lastName
+        id: User.id,
+        email: User.email,
+        firstName: User.firstName,
+        lastName: User.lastName
       };
 
       res.status(201).json({
@@ -91,9 +83,71 @@ export default {
     }
   },
 
+  registerUser: async(req, res) => {
+    try{
+      const { email, userName, firstName, lastName, password} = req.body
+
+      const existingUser = await User.findOne({ where: { email } });
+      if (existingUser) {
+        return res.status(400).json({ 
+          message: 'Un utilisateur avec cet email existe déjà' 
+        });
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 10);
+       // Générer un token de confirmation
+      const confirmationToken = crypto.randomBytes(32).toString('hex');
+      const confirmationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+      const newUser = await User.create({
+        email,
+        password: hashedPassword,
+        userName,
+        firstName,
+        lastName,
+      });
+
+      const token = jwt.sign(
+        { 
+          id: newUser.id, 
+          email: newUser.email 
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: '24h' }
+      );
+
+      const userResponse = {
+        id: newUser.id,
+        email: newUser.email,
+        firstName: newUser.firstName,
+        lastName: newUser.lastName
+      };
+
+      res.status(201).json({
+        message: 'Utilisateur créé avec succès',
+        user: userResponse,
+        token,
+      });
+
+    }catch  (error){
+      console.error('Erreur lors de la création de l\'utilisateur:', error);
+      
+      if (error.name === 'SequelizeValidationError') {
+        return res.status(400).json({
+          message: 'Erreur de  validation register',
+          errors: error.errors.map(e => e.message)
+        });
+      }
+
+      res.status(500).json({ 
+        message: 'Erreur serveur lors de la registration de l\'utilisateur' 
+      });
+    }
+  },
+
   logUser: async (req, res) => {
     try {
-      const { email, password } = req.body;
+      const { email, password , lastConnection } = req.body;
 
       const user = await User.findOne({ where: { email } });
       if (!user) {
@@ -244,5 +298,112 @@ export default {
         message: 'Erreur serveur lors de la récupération des utilisateurs'
       });
     }
-  }
+  },
+
+  confirmEmail: async (req, res) => {
+    try {
+      const { token } = req.params;
+      
+      const user = await User.findOne({ 
+        where: { 
+          confirmationToken: token,
+          confirmationTokenExpires: { [Op.gt]: new Date() }
+        }
+      });
+      
+      if (!user) {
+        return res.status(400).json({
+          message: 'Token invalide ou expiré'
+        });
+      }
+      
+      // Confirmer l'email de l'utilisateur
+      await user.update({
+        emailConfirmed: true,
+        confirmationToken: null,
+        confirmationTokenExpires: null
+      });
+      
+      res.status(200).json({
+        message: 'Email confirmé avec succès'
+      });
+    } catch (error) {
+      console.error('Erreur lors de la confirmation de l\'email:', error);
+      res.status(500).json({
+        message: 'Erreur serveur lors de la confirmation de l\'email'
+      });
+    }
+  },
+
+  // forgotPassword: async (req, res) => {
+  //   try {
+  //     const { email } = req.body;
+      
+  //     const user = await User.findOne({ where: { email } });
+  //     if (!user) {
+  //       return res.status(404).json({
+  //         message: 'Aucun utilisateur trouvé avec cet email'
+  //       });
+  //     }
+      
+  //     // Générer un token de réinitialisation
+  //     const resetToken = crypto.randomBytes(32).toString('hex');
+  //     const resetTokenExpires = new Date(Date.now() + 1 * 60 * 60 * 1000); // 1 heure
+      
+  //     await user.update({
+  //       resetPasswordToken: resetToken,
+  //       resetPasswordExpires: resetTokenExpires
+  //     });
+      
+  //     // Envoyer l'email de réinitialisation
+  //     await sendPasswordResetEmail(email, resetToken);
+      
+  //     res.status(200).json({
+  //       message: 'Un email de réinitialisation a été envoyé'
+  //     });
+  //   } catch (error) {
+  //     console.error('Erreur lors de la demande de réinitialisation du mot de passe:', error);
+  //     res.status(500).json({
+  //       message: 'Erreur serveur lors de la demande de réinitialisation du mot de passe'
+  //     });
+  //   }
+  // },
+  
+  // resetPassword: async (req, res) => {
+  //   try {
+  //     const { token, newPassword } = req.body;
+      
+  //     const user = await User.findOne({ 
+  //       where: { 
+  //         resetPasswordToken: token,
+  //         resetPasswordExpires: { [Op.gt]: new Date() }
+  //       }
+  //     });
+      
+  //     if (!user) {
+  //       return res.status(400).json({
+  //         message: 'Token invalide ou expiré'
+  //       });
+  //     }
+      
+  //     // Hasher le nouveau mot de passe
+  //     const hashedPassword = await bcrypt.hash(newPassword, 10);
+      
+  //     // Mettre à jour le mot de passe et réinitialiser les tokens
+  //     await user.update({
+  //       password: hashedPassword,
+  //       resetPasswordToken: null,
+  //       resetPasswordExpires: null
+  //     });
+      
+  //     res.status(200).json({
+  //       message: 'Mot de passe réinitialisé avec succès'
+  //     });
+  //   } catch (error) {
+  //     console.error('Erreur lors de la réinitialisation du mot de passe:', error);
+  //     res.status(500).json({
+  //       message: 'Erreur serveur lors de la réinitialisation du mot de passe'
+  //     });
+  //   }
+  // }
 };

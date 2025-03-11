@@ -12,6 +12,8 @@ import Home from "./components/Home";
 import Signup from "./components/Signup";
 import Profil from "./components/Profil";
 import Explore from "./components/Explore";
+import Register from "./components/Register";
+import ConfirmEmail from "./components/ConfirmEmail";
 
 // interface User {
 //   id: number;
@@ -54,8 +56,10 @@ function App() {
       {/* <Route path="/404" element={<RouteNotFound />} /> */}
       <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
       <Route path="/login" element={<Login />} />
+      <Route path="/confirm-email" element={<ConfirmEmail />} />
       <Route path="/explore" element={<ProtectedRoute><Explore /></ProtectedRoute>} />
       <Route path="/signup" element={<Signup />} />
+      <Route path="/register" element={<Register />} />
       <Route path="/profil" element={<ProtectedRoute><Profil /></ProtectedRoute>} />
       <Route path="/profil/:username" element={<ProtectedRoute><Profil /></ProtectedRoute>} />
       </Routes>

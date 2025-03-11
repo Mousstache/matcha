@@ -44,16 +44,12 @@ const UserModel = (sequelize) => {
             defaultValue: 'Les deux',
         },
         birthDate: {
-            type: DataTypes.INTEGER,
-            allowNull: false,
-        },
-        birthDate: {
             type: DataTypes.DATEONLY,
-            allowNull: false,
+            allowNull: true,
         },
         age: {
             type: DataTypes.INTEGER,
-            allowNull: false,
+            allowNull: true,
         },
         interests: {
             type: DataTypes.ARRAY(DataTypes.STRING),
@@ -68,6 +64,26 @@ const UserModel = (sequelize) => {
             type: DataTypes.DATE,
             allowNull: true,
         },
+        emailConfirmed: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: false
+          },
+          confirmationToken: {
+            type: DataTypes.STRING,
+            allowNull: true
+          },
+          confirmationTokenExpires: {
+            type: DataTypes.DATE,
+            allowNull: true
+          },
+        //   resetPasswordToken: {
+        //     type: DataTypes.STRING,
+        //     allowNull: true
+        //   },
+        //   resetPasswordExpires: {
+        //     type: DataTypes.DATE,
+        //     allowNull: true
+        //   }
 
         // hooks: {
         //     beforeCreate: async (user) => {
