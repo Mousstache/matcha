@@ -1,7 +1,7 @@
 //import { Calendar } from "lucide-react";
 import { Card, CardContent, CardTitle } from "./ui/card"
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+// import { useNavigate } from "react-router-dom";
 //import { Input } from "@/components/ui/input";
 // import { Label } from "@/components/ui/label";
 // import { Button } from "@/components/ui/button";
@@ -23,7 +23,7 @@ interface Interest {
 
 const Signup = () => {
 
-    const navigate = useNavigate();
+    // const navigate = useNavigate();
     
     // const [email, setEmail] = useState('');
     // const [firstName, setFirstName] = useState('');
@@ -103,8 +103,9 @@ const Signup = () => {
                 } else {
                     console.log(data)
                 }
+                // navigate(`/confirm-email?token=${data.confirmationToken}`);
             })
-            navigate("/confirm-email");
+            // navigate("/confirm-email");
             // localStorage.setItem
             // window.location.href = "/login";
             // .then(response => {

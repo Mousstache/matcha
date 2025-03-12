@@ -106,7 +106,7 @@ const Explore = () => {
               />
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4">
                 <h2 className="text-white text-2xl font-bold">
-                  {currentProfile.firstName}, {currentProfile.age}
+                  {currentProfile.firstName}, {currentProfile.lastName}
                 </h2>
                 <p className="text-white opacity-80 text-sm">
                   {currentProfile.distance}
@@ -115,6 +115,7 @@ const Explore = () => {
             </div>
             
             <CardContent className="p-4">
+              <p>age : {currentProfile.age } ans</p>
               {/* <p className="text-gray-700 mb-4">{currentProfile.bio}</p> */}
               <div className="flex flex-wrap gap-2">
                 {currentProfile.interests.map((interest, i) => (
@@ -122,6 +123,8 @@ const Explore = () => {
                     {interest}
                   </Badge>
                 ))}
+                <p>description :</p>
+                <p>{currentProfile.description}</p>
               </div>
             </CardContent>
             

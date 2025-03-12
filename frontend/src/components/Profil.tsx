@@ -20,6 +20,9 @@ const Profile = () => {
   const [user, setUser] = useState<User | null>(null);
   // const [error, setError] = useState<string | null>(null);
   
+  const [images, setImages] = useState<File[]>([]);
+  const [preview, setPreview] = useState<string[]>([]);
+  const [uploadStatus, setUploadStatus] = useState<string | null>(null);
   
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -85,6 +88,53 @@ const Profile = () => {
     }
   }
 
+
+
+  // const UploadProfilePictures: React.FC = () => {
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const files = e.target.files;
+      if (!files) return;
+
+      const fileList = Array.from(files);
+
+      if (fileList.length > 5) {
+        alert("Vous pouvez télécharger au maximum 5 images.");
+        return;
+      }
+  
+      setImages(fileList);
+      setPreview(fileList.map((file) => URL.createObjectURL(file)));
+    };
+  
+    const handleUpload = async () => {
+      const formData = new FormData();
+      images.forEach((image) => formData.append("images", image));
+  
+      try {
+        const response = await fetch("http://localhost:5000/api/upload", {
+          method: "POST",
+          body: formData,
+        });
+  
+
+        console.log("Réponse brute:", response);
+        const data = await response.json();
+        console.log("Données reçues:", data);
+
+        if (data.images) {
+          setUploadStatus("Images uploadées avec succès !");
+          console.log("Images Cloudinary:", data.images);
+        } else {
+          setUploadStatus("Erreur lors de l'upload.");
+        }
+      } catch (error) {
+        console.error("Erreur lors de l'upload:", error);
+        setUploadStatus("Erreur lors de l'upload.");
+      }
+    };
+  
+
+
   // const { username } = useParams<SearchParams>();
   // const { username } = useParams<{ username: string }>();
 
@@ -99,7 +149,7 @@ const Profile = () => {
 
 
           <span className="">Profil de {user.firstName} {user.lastName}</span>
-        <CardContent className='flex flex-col space-y-4'>
+         <CardContent className='flex flex-col space-y-4'>
           <h2>Description de {user.firstName}: </h2>
           <label>Description :</label>
           <input value={user.description || ''} onChange={(e) => setUser({ ...user, description: e.target.value })}/>
@@ -108,6 +158,26 @@ const Profile = () => {
           <label>LastName :</label>
           <input value={user.lastName || ''}  onChange={(e) => setUser({ ...user, lastName: e.target.value })} />
           {/* <p className='value'>{user.description}</p> */}
+          
+
+          <div className="p-4">
+            <input type="file" multiple accept="image/*" onChange={handleFileChange} />
+            <div className="flex space-x-2 mt-2">
+              {preview.map((src, index) => (
+                <img key={index} src={src} alt="preview" className="w-20 h-20 rounded-lg" />
+              ))}
+            </div>
+            <button 
+              onClick={handleUpload} 
+              className="mt-2 bg-blue-500 text-white px-4 py-2 rounded"
+            >
+              Uploader
+            </button>
+            {uploadStatus && <p className="mt-2 text-green-600">{uploadStatus}</p>}
+          </div>
+
+
+
           <button className='text-white' onClick={handleUpdate}>Mettre à jour</button>
         </CardContent>
       </Card>

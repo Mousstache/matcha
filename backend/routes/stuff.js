@@ -13,6 +13,8 @@ router.post('/login', userCtrl.logUser);
 router.put('/updateUser', authMiddleware, userCtrl.updateUser);
 router.put('/logout', authMiddleware, userCtrl.logoutUser);
 
+router.post('/upload', userCtrl.imagePost);
+
 
 router.get('/confirm-email/:token', userCtrl.confirmEmail);
 // router.post('/forgot-password', userController.forgotPassword);

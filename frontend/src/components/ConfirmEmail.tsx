@@ -6,19 +6,35 @@ const ConfirmEmail = () => {
   const location = useLocation();
   const token = new URLSearchParams(location.search).get('token');
 
+  console.log("ici");
+
+  console.log('Tentative de confirmation avec token:', token);
   useEffect(() => {
     const confirmEmail = async () => {
       try {
 
-        const token_id = localStorage.getItem('token');
+        // const token_id = localStorage.getItem('token');
+        console.log('here');
 
-        await fetch('http://localhost:5000/api/confirm-email', {
+
+        const response = await fetch(`http://localhost:5000/api/confirm-email/${token}`, {
             method: 'GET',
             headers: {
-              'Authorization': `Bearer ${token_id}`,
+              // 'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
             }
         })
+
+        const data = await response.json();
+        
+        if (response.ok) {
+          console.log('Confirmation réussie:', data);
+          setStatus('success');
+        } else {
+          console.error('Erreur de confirmation:', data);
+          setStatus('error');
+        }
+        
       } catch (error) {
         console.error('Erreur lors de la confirmation:', error);
         setStatus('error');
@@ -29,6 +45,7 @@ const ConfirmEmail = () => {
       confirmEmail();
     } else {
       setStatus('error');
+      console.log('puree');
     }
   }, [token]);
 

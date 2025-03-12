@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import { User } from '../models/index.js';
 import crypto from 'crypto';
 import { sendConfirmationEmail } from '../utils/emailService.js';
+import { Op } from 'sequelize';
 import { log } from 'console';
 
 
@@ -43,84 +44,80 @@ export default {
 
       await user.update(updateData);
 
-      // await User.update({
-      //   description: description || '',
-      //   preference,
-      //   gender,
-      //   birthDate,
-      //   age,
-      //   interests: interests || '',
-      //   isOnline: isOnline || false,
-      //   lastConnection: lastConnection || ''
-      // });
-
-      const userResponse = {
-        id: User.id,
-        email: User.email,
-        firstName: User.firstName,
-        lastName: User.lastName
-      };
-
-      res.status(201).json({
-        message: 'Utilisateur créé avec succès',
-        user: userResponse,
-        token,
-      });
-
-    } catch (error) {
-      console.error('Erreur lors de la création de l\'utilisateur:', error);
-      
-      if (error.name === 'SequelizeValidationError') {
-        return res.status(400).json({
-          message: 'Erreur de validation',
-          errors: error.errors.map(e => e.message)
+        const userResponse = {
+          id: User.id,
+          email: User.email,
+          firstName: User.firstName,
+          lastName: User.lastName
+        };
+        
+        res.status(201).json({
+          message: 'Utilisateur créé avec succès',
+          user: userResponse,
+          token,
+        });
+        
+      } catch (error) {
+        console.error('Erreur lors de la création de l\'utilisateur:', error);
+        
+        if (error.name === 'SequelizeValidationError') {
+          return res.status(400).json({
+            message: 'Erreur de validation',
+            errors: error.errors.map(e => e.message)
+          });
+        }
+        
+        res.status(500).json({ 
+          message: 'Erreur serveur lors de la création de l\'utilisateur' 
         });
       }
+    },
+    
+    registerUser: async(req, res) => {
+      try{
+        const { email, userName, firstName, lastName, password} = req.body
+        
+        const existingUser = await User.findOne({ where: { email } });
+        if (existingUser) {
+          return res.status(400).json({ 
+            message: 'Un utilisateur avec cet email existe déjà' 
+          });
+        }
+        
+        const hashedPassword = await bcrypt.hash(password, 10);
 
-      res.status(500).json({ 
-        message: 'Erreur serveur lors de la création de l\'utilisateur' 
-      });
-    }
-  },
-
-  registerUser: async(req, res) => {
-    try{
-      const { email, userName, firstName, lastName, password} = req.body
-
-      const existingUser = await User.findOne({ where: { email } });
-      if (existingUser) {
-        return res.status(400).json({ 
-          message: 'Un utilisateur avec cet email existe déjà' 
+        // Générer un token de confirmation
+        const confirmationToken = crypto.randomBytes(32).toString('hex');
+        const confirmationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+        
+        const newUser = await User.create({
+          email,
+          password: hashedPassword,
+          userName,
+          firstName,
+          lastName,
+          confirmationToken,
+          confirmationTokenExpires,
+          emailConfirmed: false
         });
-      }
+        
+        await sendConfirmationEmail(email, confirmationToken);
 
-      const hashedPassword = await bcrypt.hash(password, 10);
-       // Générer un token de confirmation
-      const confirmationToken = crypto.randomBytes(32).toString('hex');
-      const confirmationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
-
-      const newUser = await User.create({
-        email,
-        password: hashedPassword,
-        userName,
-        firstName,
-        lastName,
-      });
-
-      const token = jwt.sign(
-        { 
-          id: newUser.id, 
-          email: newUser.email 
-        },
-        process.env.JWT_SECRET,
-        { expiresIn: '24h' }
-      );
+        const token = jwt.sign(
+          { 
+            id: newUser.id, 
+            email: newUser.email 
+          },
+          process.env.JWT_SECRET,
+          { expiresIn: '24h' }
+        );
 
       const userResponse = {
         id: newUser.id,
         email: newUser.email,
         firstName: newUser.firstName,
-        lastName: newUser.lastName
+        lastName: newUser.lastName,
+        confirmationToken: newUser.confirmationToken
       };
 
       res.status(201).json({
@@ -303,6 +300,8 @@ export default {
   confirmEmail: async (req, res) => {
     try {
       const { token } = req.params;
+
+      console.log('Token reçu:', token);
       
       const user = await User.findOne({ 
         where: { 
@@ -335,6 +334,22 @@ export default {
     }
   },
 
+  imagePost: async (req, res) => {
+    try {
+      const images = req.files.map((file) => file.path);
+
+      console.log("images recues:", images);
+
+      if (!req.files || req.files.length === 0)
+          return res.status(400).json({error: "aucun fichier recu"});
+
+
+      res.status(200).json({ message: "Images uploadées avec succès", images });
+
+    } catch (error) {
+      res.status(500).json({ error: "Erreur lors de l'upload des images" });
+    }
+  },
   // forgotPassword: async (req, res) => {
   //   try {
   //     const { email } = req.body;
