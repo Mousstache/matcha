@@ -111,7 +111,12 @@ const Profile = () => {
       images.forEach((image) => formData.append("images", image));
   
       try {
+        const token = localStorage.getItem("token");
         const response = await fetch("http://localhost:5000/api/upload", {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        },
           method: "POST",
           body: formData,
         });
