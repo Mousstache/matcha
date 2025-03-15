@@ -2,7 +2,8 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card"
 import { Heart, X, UserCheck } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+// import { stringify } from "querystring";
+// import { Badge } from '@/components/ui/badge';
 // import { set } from "date-fns";
 // import { set } from "date-fns";
 // import { set } from "date-fns";
@@ -10,12 +11,12 @@ import { Badge } from '@/components/ui/badge';
 
 interface Profile {
   id: string;
-  firstName: string;
-  lastName: string;
+  firstname: string;
+  lastname: string;
   age: number;
   distance: string;
   description: string;
-  interests: string[];
+  // interests: string[];
 }
 
 const Explore = () => {
@@ -50,7 +51,23 @@ const Explore = () => {
     const [direction, setDirection] = useState('');
     const [isAnimating, setIsAnimating] = useState(false);
     
-    const handleLike = () => {
+    const handleLike = async (id:string) => {
+      try{
+        const likedId = id;
+        const res = await fetch('http://localhost:5000/api/likeUser',{
+          method: "POST",
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({likedId}),
+        });
+        if (!res)
+          return ;
+      }catch (error){
+        console.error(error);
+      }
+
       if (isAnimating) return;
       setDirection('right');
       setIsAnimating(true);
@@ -101,12 +118,12 @@ const Explore = () => {
             <div className="relative">
               <img 
                 // src={currentProfile.image}
-                alt={currentProfile.firstName} 
+                alt={currentProfile.firstname} 
                 className="w-full h-96 object-cover rounded-t-lg"
               />
               <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black to-transparent p-4">
                 <h2 className="text-white text-2xl font-bold">
-                  {currentProfile.firstName}, {currentProfile.lastName}
+                  {currentProfile.firstname}, {currentProfile.lastname}
                 </h2>
                 <p className="text-white opacity-80 text-sm">
                   {currentProfile.distance}
@@ -114,15 +131,15 @@ const Explore = () => {
               </div>
             </div>
             
-            <CardContent className="p-4">
+            <CardContent className="p-4 flex ">
               <p>age : {currentProfile.age } ans</p>
               {/* <p className="text-gray-700 mb-4">{currentProfile.bio}</p> */}
               <div className="flex flex-wrap gap-2">
-                {currentProfile.interests.map((interest, i) => (
+                {/* {currentProfile.interests.map((interest, i) => (
                   <Badge key={i} variant="secondary" className="bg-gray-100">
                     {interest}
                   </Badge>
-                ))}
+                ))} */}
                 <p>description :</p>
                 <p>{currentProfile.description}</p>
               </div>
@@ -142,7 +159,7 @@ const Explore = () => {
                 variant="outline" 
                 size="icon" 
                 className="rounded-full h-12 w-12 bg-white border-2 border-green-500 hover:bg-green-50"
-                onClick={handleLike}
+                onClick={() => handleLike(currentProfile.id)}
               >
                 <Heart className="h-6 w-6 text-green-500" />
               </Button>

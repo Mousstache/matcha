@@ -18,6 +18,13 @@ const Home = () => {
 
         <CardContent>
         </CardContent>
+
+        <CardTitle>
+          <h2>Listes des gens qui likent :</h2>
+        </CardTitle>
+
+        <CardContent>
+        </CardContent>
       </Card>
     </div>
   );

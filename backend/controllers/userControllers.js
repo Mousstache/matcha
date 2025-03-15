@@ -12,7 +12,7 @@ const userController = {
     try {
       const { email, userName, firstName, lastName, password } = req.body;
       
-      // Vérifier si l'utilisateur existe déjà
+
       const existingUser = await db.findOne('users', { email });
       if (existingUser) {
         return res.status(400).json({ 
@@ -43,17 +43,15 @@ const userController = {
 
       await sendConfirmationEmail(email, confirmationToken);
       
-      // Générer un JWT pour l'authentification
       const token = jwt.sign(
         { 
           id: result.id, 
           email: email 
         },
-        config.JWT_SECRET,
+        process.env.JWT_SECRET,
         { expiresIn: '24h' }
       );
       
-      // Préparer la réponse
       const userResponse = {
         id: result.id,
         email,
@@ -87,6 +85,81 @@ const userController = {
       res.status(500).json({
         message: 'Erreur serveur lors de la création de l\'utilisateur'
       });
+    }
+  },
+
+  fillInfo: async (req, res) => {
+    try{
+
+      const token = req.headers.authorization?.split(' ')[1];
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+      const user = await db.findOne('users',  { email: decoded.email });
+      if (!user) {
+        return res.status(400).json({ message: "ID utilisateur requis" });
+      }
+
+
+      const {description, gender, birthDate, preference, interests} = req.body;
+
+      const conditions = { id: user.id};
+
+      const updateData = {};
+      if (description !== undefined) updateData.description = description;
+      if (gender !== undefined) updateData.gender = gender;
+      if (birthDate !== undefined) updateData.birthDate = birthDate;
+      if (preference !== undefined) updateData.preference = preference;
+      if (interests !== undefined) updateData.interests = interests;
+
+
+      await db.update('users', updateData , conditions);
+
+      res.status(200).json({ message: "Informations mises à jour avec succès" });
+
+    }catch (error){
+      console.error("Erreur lors de l'update des infos", error);
+      res.status(500).json({ message: "Erreur lors de la mise à jour des informations" });
+    }
+  },
+
+  updateUser: async (req, res) => {
+    try{
+
+      const token = req.headers.authorization?.split(' ')[1];
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+      const user = await db.findOne('users',  { email: decoded.email });
+
+
+      console.log("dans le back", user.id, ">>>>>>>", user.email);
+
+      if (!user) {
+        return res.status(400).json({ message: "ID utilisateur requis" });
+      }
+
+      console.log("user id = ", user.id);
+
+      const {lastName, firstName, description, gender, birthDate, preference, interests} = req.body;
+
+      const conditions = { id: user.id};
+
+      const updateData = {};
+      if (firstName !== undefined) updateData.firstName = firstName;
+      if (lastName !== undefined) updateData.lastName = lastName;
+      if (description !== undefined) updateData.description = description;
+      if (gender !== undefined) updateData.gender = gender;
+      if (birthDate !== undefined) updateData.birthDate = birthDate;
+      if (preference !== undefined) updateData.preference = preference;
+      if (interests !== undefined) updateData.interests = interests;
+
+
+      await db.update('users', updateData , conditions);
+
+      res.status(200).json({ message: "Informations mises à jour avec succès" });
+
+    }catch (error){
+      console.error("Erreur lors de l'update des infos", error);
+      res.status(500).json({ message: "Erreur lors de la mise à jour des informations" });
     }
   },
   
@@ -139,7 +212,6 @@ const userController = {
     try {
       const { email, password } = req.body;
       
-      // Rechercher l'utilisateur par email
       const user = await db.findOne('users', { email });
       if (!user) {
         return res.status(401).json({ 
@@ -147,7 +219,6 @@ const userController = {
         });
       }
       
-      // Vérifier le mot de passe
       const isPasswordValid = await bcrypt.compare(password, user.password);
       if (!isPasswordValid) {
         return res.status(401).json({ 
@@ -155,7 +226,6 @@ const userController = {
         });
       }
       
-      // Mettre à jour le statut en ligne et la dernière connexion
       await db.update(
         'users',
         {
@@ -172,7 +242,7 @@ const userController = {
           id: user.id, 
           email: user.email 
         },
-        config.JWT_SECRET,
+        process.env.JWT_SECRET,
         { expiresIn: '24h' }
       );
       
@@ -199,7 +269,71 @@ const userController = {
         message: 'Erreur serveur lors de la connexion' 
       });
     }
-  }
+  },
+
+  getUser: async (req, res) => {
+    try{
+        const token = req.headers.authorization?.split(' ')[1];
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        const user = await db.findOne('users', {email: decoded.email}, {
+          attributes: { exclude: ['password'] }
+        });
+
+        res.status(200).json({
+          user: user
+        });
+        
+
+    }catch(error){
+      console.error('Erreur lors de la récupération de l\'utilisateur:', error);
+      res.status(500).json({ 
+        message: 'Erreur serveur lors de la récupération de l\'utilisateur'
+      });
+    } 
+  },
+
+  getAllUsers: async (req, res) => {
+    try{
+      const users = await db.query(`SELECT id, email, firstname, lastname, description, interests, age FROM users`);
+
+      res.status(200).json({
+        message: 'Liste des utilisateurs récupérée avec succès',
+        users: users
+      });
+
+    }catch(error){
+      console.error('Erreur lors de la récupération des utilisateurs:', error);
+      res.status(500).json({ 
+        message: 'Erreur serveur lors de la récupération des utilisateurs'
+      });
+    }
+  },
+
+
+  likeUser: async(req, res) => {
+    try{
+
+      const token = req.headers.authorization?.split(' ')[1];
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const user = await db.findOne('users',  { email: decoded.email });
+
+      const {likedId} = req.body;
+
+      const likerId = user.id;
+
+      await db.insert('likes', {likerId, likedId});
+
+      return res.status(201).json({
+        message: "like ajouter",
+
+      })
+    }catch (error){
+      console.error('Error lors de la recup des Users', error);
+    }
+  },
+
+
 };
 
 export default userController;

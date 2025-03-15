@@ -87,8 +87,9 @@ const Signup = () => {
             setLastConnection(new Date().toISOString());
             const userAge = calculateAge(birthDate);
             const token = localStorage.getItem("token");
-            fetch('http://localhost:5000/api/create', {
-                method: 'POST',
+            console.log("dans le front", token);
+            fetch('http://localhost:5000/api/fillInfo', {
+                method: 'PUT',
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'

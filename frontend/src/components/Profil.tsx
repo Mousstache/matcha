@@ -8,8 +8,8 @@ import { useEffect } from 'react';
 interface User{
   id: number;
   email: string;
-  firstName: string;
-  lastName: string;
+  firstname: string;
+  lastname: string;
   description: string;
   gender: number;
   preference: number;
@@ -137,15 +137,6 @@ const Profile = () => {
         setUploadStatus("Erreur lors de l'upload.");
       }
     };
-  
-
-
-  // const { username } = useParams<SearchParams>();
-  // const { username } = useParams<{ username: string }>();
-
-  // const { firstname } = useAuth();
-
-  // const { ProfilData } = getProfile(username);
 
     return (
       <Card>
@@ -153,15 +144,15 @@ const Profile = () => {
         <img></img>
 
 
-          <span className="">Profil de {user.firstName} {user.lastName}</span>
+          <span className="">Profil de {user.firstname} {user.lastname}</span>
          <CardContent className='flex flex-col space-y-4'>
-          <h2>Description de {user.firstName}: </h2>
+          <h2>Description de {user.firstname}: </h2>
           <label>Description :</label>
           <input value={user.description || ''} onChange={(e) => setUser({ ...user, description: e.target.value })}/>
           <label>FirstName :</label>
-          <input value={user.firstName || ''} onChange={(e) => setUser({ ...user, firstName: e.target.value })}/>
+          <input value={user.firstname || ''} onChange={(e) => setUser({ ...user, firstname: e.target.value })}/>
           <label>LastName :</label>
-          <input value={user.lastName || ''}  onChange={(e) => setUser({ ...user, lastName: e.target.value })} />
+          <input value={user.lastname || ''}  onChange={(e) => setUser({ ...user, lastname: e.target.value })} />
           {/* <p className='value'>{user.description}</p> */}
           
 
