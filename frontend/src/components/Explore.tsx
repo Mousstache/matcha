@@ -53,14 +53,14 @@ const Explore = () => {
     
     const handleLike = async (id:string) => {
       try{
-        const likedId = id;
+        const liked_id = id;
         const res = await fetch('http://localhost:5000/api/likeUser',{
           method: "POST",
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({likedId}),
+          body: JSON.stringify({liked_id}),
         });
         if (!res)
           return ;
@@ -78,7 +78,23 @@ const Explore = () => {
       }, 300);
     };
     
-    const handleDislike = () => {
+    const handleDislike = async(id:string) => {
+      try{
+        const liked_id = id;
+        const res = await fetch('http://localhost:5000/api/dislikeUser',{
+          method: "POST",
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({liked_id}),
+        });
+        if (!res)
+          return ;
+      }catch (error){
+        console.error(error);
+      }
+
       if (isAnimating) return;
       setDirection('left');
       setIsAnimating(true);
@@ -150,7 +166,7 @@ const Explore = () => {
                 variant="outline" 
                 size="icon" 
                 className="rounded-full h-12 w-12 bg-white border-2 border-red-500 hover:bg-red-50"
-                onClick={handleDislike}
+                onClick={() => handleDislike(currentProfile.id)}
               >
                 <X className="h-6 w-6 text-red-500" />
               </Button>

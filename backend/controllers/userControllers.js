@@ -310,6 +310,23 @@ const userController = {
     }
   },
 
+  dislikeUser: async(req, res) => {
+    try{
+
+      const {liked_id} = req.body;
+
+      const is_active = false;
+
+      await db.update('likes', {liked_id , is_active});
+
+      return res.status(201).json({
+        message: "like enlever",
+      })
+    }catch (error){
+      console.error('Error lors du dislike', error);
+    }
+  },
+
 
   likeUser: async(req, res) => {
     try{
@@ -318,22 +335,81 @@ const userController = {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       const user = await db.findOne('users',  { email: decoded.email });
 
-      const {likedId} = req.body;
+      const {liked_id} = req.body;
+      const liker_id = user.id;
 
-      const likerId = user.id;
+      console.log("les zozo: ",liker_id, liked_id);
 
-      await db.insert('likes', {likerId, likedId});
+      if (!liker_id || !liked_id)
+        return res.status(400).json({
+          message: "ya pas de like",
+        })
+
+      if (liker_id === liked_id)
+        return res.status(400).json({
+          message : "pas de like sois meme",
+      })
+
+      await db.insert('likes', {liker_id, liked_id});
 
       return res.status(201).json({
         message: "like ajouter",
-
       })
     }catch (error){
-      console.error('Error lors de la recup des Users', error);
+      console.error('Error lors du like', error);
     }
   },
 
+  getLikes: async (req, res) => {
+    try{
 
+      const token = req.headers.authorization?.split(' ')[1];
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const user = await db.findOne('users',  { email: decoded.email });
+
+      const sql = `
+      SELECT u.id, u.email, u.userName, u.firstName, u.lastName 
+      FROM likes l
+      JOIN users u ON l.liked_id = u.id
+      WHERE l.liker_id = $1;
+    `;
+
+      const likes = await db.query(sql, [user.id]);
+
+      return res.status(200).json({
+        message: "liste des likes",
+        likes: likes,
+      })
+    }catch(error){
+      console.error('Error lors de la recup des likes');
+    }
+  },
+
+  getOtherLikes: async (req, res) => {
+    try{
+
+      const token = req.headers.authorization?.split(' ')[1];
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const user = await db.findOne('users',  { email: decoded.email });
+
+      const sql = `
+      SELECT u.id, u.email, u.userName, u.firstName, u.lastName 
+      FROM likes l
+      JOIN users u ON l.liker_id = u.id
+      WHERE l.liked_id = $1;
+    `;
+
+      const Otherlikes = await db.query(sql, [user.id]);
+
+      return res.status(200).json({
+        message: "liste des other likes",
+        Otherlikes: Otherlikes,
+      })
+
+    }catch (error){
+      console.log('Error lors de la recup other likes', error);
+    }
+  }
 };
 
 export default userController;

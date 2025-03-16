@@ -20,6 +20,9 @@ router.get('/allUsers', authMiddleware, userCtrl.getAllUsers);
 // router.get('user/:id', authMiddleware, userCtrl.getUser);
 
 router.post('/likeUser', userCtrl.likeUser);
+router.post('/dislikeUser', userCtrl.dislikeUser);
+router.get('/getLikes', userCtrl.getLikes);
+router.get('/getOtherLikes', userCtrl.getOtherLikes);
 
 router.put('/updateUser', authMiddleware, userCtrl.updateUser);
 // router.put('/logout', authMiddleware, userCtrl.logoutUser);
