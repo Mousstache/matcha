@@ -14,7 +14,7 @@ import Profil from "./components/Profil";
 import Explore from "./components/Explore";
 import Register from "./components/Register";
 import ConfirmEmail from "./components/ConfirmEmail";
-// import Chat from "./components/Chat";
+import Chat from "./components/Chat";
 
 // interface User {
 //   id: number;
@@ -63,6 +63,7 @@ function App() {
       <Route path="/register" element={<Register />} />
       <Route path="/profil" element={<ProtectedRoute><Profil /></ProtectedRoute>} />
       <Route path="/profil/:username" element={<ProtectedRoute><Profil /></ProtectedRoute>} />
+      <Route path="/chat" element={<ProtectedRoute ><Chat></Chat></ProtectedRoute>} />
       </Routes>
       <Footer />
     </Router>

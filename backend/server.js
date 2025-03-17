@@ -7,7 +7,7 @@ import { CloudinaryStorage } from "multer-storage-cloudinary";
 import multer from "multer";
 import { fileURLToPath } from 'url';
 import stuffRoutes  from './routes/stuff.js';
-import socket from 'socket.io';
+// import socket from 'socket.io';
 
 dotenv.config();
 
@@ -88,19 +88,19 @@ app.use(express.json({ limit: "10mb" }));
 
 app.use('/api', stuffRoutes);
 
-const io = socket(server);
+// const io = socket(server);
 
-io.on('connection', (socket) => {
-  console.log("Un client s'est connecté", socket.id);
-});
+// io.on('connection', (socket) => {
+//   console.log("Un client s'est connecté", socket.id);
+// });
 
-io.on('connection', socket => {
-  console.log("socket=",socket.id);
-  socket.on('CLIENT_MSG', data => {
-      console.log("msg=",data);
-      io.emit('SERVER_MSG', data);
-  })
-});
+// io.on('connection', socket => {
+//   console.log("socket=",socket.id);
+//   socket.on('CLIENT_MSG', data => {
+//       console.log("msg=",data);
+//       io.emit('SERVER_MSG', data);
+//   })
+// });
 
 // Démarrage du serveur
 app.listen(port, () => {

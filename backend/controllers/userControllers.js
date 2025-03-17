@@ -338,7 +338,6 @@ const userController = {
       const {liked_id} = req.body;
       const liker_id = user.id;
 
-      console.log("les zozo: ",liker_id, liked_id);
 
       if (!liker_id || !liked_id)
         return res.status(400).json({
@@ -350,6 +349,17 @@ const userController = {
           message : "pas de like sois meme",
       })
 
+      const Otherlikes = await db.findOne('likes', {liker_id: liked_id, liked_id: liker_id});
+
+      console.log(Otherlikes);
+
+      if (Otherlikes){
+        await db.insert('matches', {user1_id: liker_id, user2_id: liked_id, created_at: new Date()});
+        return res.status(201).json({
+          message: "c'est un match",
+        })
+      }
+
       await db.insert('likes', {liker_id, liked_id});
 
       return res.status(201).json({
@@ -357,6 +367,10 @@ const userController = {
       })
     }catch (error){
       console.error('Error lors du like', error);
+      return res.status(500).json({
+        message: "Une erreur est survenue",
+        error: error.message
+      });
     }
   },
 
@@ -409,8 +423,42 @@ const userController = {
     }catch (error){
       console.log('Error lors de la recup other likes', error);
     }
-  }
+  },
+
+  getMatches: async (req, res) => {
+    try {
+      const token = req.headers.authorization?.split(' ')[1];
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const user = await db.findOne('users',  { email: decoded.email });
+
+      const sql = `
+      SELECT u.id, u.email, u.userName, u.firstName, u.lastName
+      FROM matches m
+      JOIN users u ON m.user2_id = u.id
+      WHERE m.user1_id = $1
+      UNION
+      SELECT u.id, u.email, u.userName, u.firstName, u.lastName
+      FROM matches m
+      JOIN users u ON m.user1_id = u.id
+      WHERE m.user2_id = $1;
+    `;
+
+    const matches = await db.query(sql, [user.id]);
+
+    return res.status(200).json({
+      message: "liste des matches",
+      matches: matches,
+    });
+
+
+    }catch (error){
+      console.log('Error lors de la recup des matches', error);
+    }
+  },
 };
+
+
+
 
 export default userController;
 

@@ -1,6 +1,9 @@
 import { Card, CardContent, CardTitle, } from "@/components/ui/card";
+// import { match } from "assert";
 import { useEffect } from "react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom"; 
+
 
 interface User{
   id: number;
@@ -16,6 +19,10 @@ interface User{
 const Home = () => {
   const [likes, setLikes] = useState<User[]>([]);
   const [otherLikes, setOtherLikes] = useState<User[]>([]);
+  const [matches, setMatches] = useState<User[]>([]);
+
+  const navigate = useNavigate();
+
 
   useEffect(() => {
     const likelist = async () => {
@@ -62,18 +69,56 @@ const Home = () => {
           return ;
     };
 
+    const matchList = async () => {
+        const token = localStorage.getItem("token");
+          const res = await fetch('http://localhost:5000/api/getMatches', {
+            method: "GET",
+            headers:{
+              'Authorization': `bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          })
+          
+          const data = await res.json();
+          setMatches(data.matches);
+          if (!otherLikes)
+            console.log("ya r");
+
+          if (!res)
+            return ;
+            
+          if (!data)
+            return ;
+      };
+
     likelist();
     likeOtherList();
+    matchList();
   }, []);
 
   return (
     <div className="flex items-center justify-center min-h-screen text-3xl font-bold">
       <Card>
         <CardTitle>
-          <h1>Listes des matchs :</h1>
+          <h2>Listes des matchs :</h2>
         </CardTitle>
 
         <CardContent>
+        <p>
+            {matches && matches.length > 0 ? (
+              <ul className="space-y-2">
+                {matches.map((user) => (
+                  <li key={user.id} className="p-2 border border-gray-300 rounded-lg shadow-sm">
+                    <p className="font-semibold">{user.firstname}</p>
+                    <p className="text-gray-500">{user.email}</p>
+                    <button className="text-white" onClick={ () => navigate("/chat")}>commencer le chat </button>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p>Aucun like pour l'instant</p>
+            )}
+          </p>
         </CardContent>
 
         <CardTitle>
@@ -98,7 +143,7 @@ const Home = () => {
         </CardContent>
 
         <CardTitle>
-          <h1>Listes des gens qui likent :</h1>
+          <h2>Listes des gens qui likent :</h2>
         </CardTitle>
 
         <CardContent>
