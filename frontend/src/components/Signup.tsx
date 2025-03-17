@@ -28,8 +28,8 @@ const Signup = () => {
     // const [email, setEmail] = useState('');
     // const [firstName, setFirstName] = useState('');
     // const [lastName, setLastName] = useState('');
-    const [gender, setGender] = useState('Non binaire');
     // const [password, setPassword] = useState('');
+    const [gender, setGender] = useState('Non binaire');
     const [description, setDescription] = useState('');
     const [birthDate, setBirthDate] = useState('');
     const [preference, setPreference] = useState('Les deux');
@@ -179,6 +179,70 @@ const Signup = () => {
                     <div className="text-sm text-gray-500">
                         {interests.length}/3 intérêts sélectionnés
                     </div>
+
+                                {/* <div className="location-section">
+                    <h3>Localisation</h3>
+                    
+                    <div className="form-group">
+                        <label>
+                        <input
+                            type="checkbox"
+                            name="useAutomaticLocation"
+                            checked={formData.useAutomaticLocation}
+                            onChange={handleChange}
+                        />
+                        Utiliser ma position actuelle
+                        </label>
+                        
+                        {formData.useAutomaticLocation && locationLoading && (
+                        <p>Détection de votre position en cours...</p>
+                        )}
+                        
+                        {formData.useAutomaticLocation && locationError && (
+                        <p className="error">Erreur: {locationError}</p>
+                        )}
+                        
+                        {formData.useAutomaticLocation && formData.latitude && (
+                        <div className="detected-location">
+                            <p>Position détectée:</p>
+                            {formData.city && formData.country ? (
+                            <p>{formData.city}, {formData.country}</p>
+                            ) : (
+                            <p>Lat: {formData.latitude.toFixed(6)}, Long: {formData.longitude.toFixed(6)}</p>
+                            )}
+                            <button type="button" className="button-secondary" onClick={getGeolocation}>
+                            Actualiser ma position
+                            </button>
+                        </div>
+                        )}
+                    </div>
+                    
+                    {!formData.useAutomaticLocation && (
+                        <>
+                        <div className="form-group">
+                            <label htmlFor="city">Ville</label>
+                            <input
+                            type="text"
+                            id="city"
+                            name="city"
+                            value={formData.city}
+                            onChange={handleChange}
+                            />
+                        </div>
+                        
+                        <div className="form-group">
+                            <label htmlFor="country">Pays</label>
+                            <input
+                            type="text"
+                            id="country"
+                            name="country"
+                            value={formData.country}
+                            onChange={handleChange}
+                            />
+                        </div>
+                        </>
+                    )}
+                    </div> */}
 
                     <button type="submit" className="text-white">S'inscrire</button>
                 </form>

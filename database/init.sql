@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS users (
   birthDate DATE,
   age INT,
   interests TEXT,
+  profile_picture VARCHAR(255),
   isOnline BOOLEAN DEFAULT false,
   lastConnection TIMESTAMP,
   confirmationToken VARCHAR(255),

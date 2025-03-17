@@ -2,9 +2,7 @@ import express from 'express';
 import path from 'path';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { v2 as cloudinary } from "cloudinary";
-import { CloudinaryStorage } from "multer-storage-cloudinary";
-import multer from "multer";
+
 import { fileURLToPath } from 'url';
 import stuffRoutes  from './routes/stuff.js';
 // import socket from 'socket.io';
@@ -38,53 +36,10 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-app.use(express.json());
+// app.use(express.json());
 
-
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
-
-
-const storage = new CloudinaryStorage({
-  cloudinary,
-  params: {
-    folder: "user_pictures",
-    allowed_formats: ["jpg", "jpeg", "png"],
-    transformation: [{ width: 500, height: 500, crop: "limit" }],
-  },
-});
-
-const upload = multer({ storage });
-
-
-app.post("/api/upload", upload.array("images", 5), async (req, res) => {
-  try {
-    if (!req.files) {
-      return res.status(400).json({ error: "Aucune image reçue" });
-    }
-    
-    // Récupérer les URLs des images uploadées
-    const images = req.files.map((file) => file.path);
-    const profilePicture = images[0];
-    
-    // const token = req.headers.authorization?.split(' ')[1];
-    // const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    // const userId = decoded.id;
-    
-    // const user = await User.findByPk(userId);
-    
-    await user.update(req.body.images);
-    
-    res.status(200).json({ message: "Images uploadées avec succès", images });
-  } catch (error) {
-    res.status(500).json({ error: "Erreur lors de l'upload des images" });
-  }
-});
-
-app.use(express.json({ limit: "10mb" }));
+app.use(express.json({ limit: "50mb" }));
+// app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
 app.use('/api', stuffRoutes);
 

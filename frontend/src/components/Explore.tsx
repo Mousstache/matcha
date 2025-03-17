@@ -82,7 +82,7 @@ const Explore = () => {
       try{
         const liked_id = id;
         const res = await fetch('http://localhost:5000/api/dislikeUser',{
-          method: "POST",
+          method: "DELETE",
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
             'Content-Type': 'application/json'

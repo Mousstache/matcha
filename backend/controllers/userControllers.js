@@ -3,8 +3,32 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { sendConfirmationEmail } from '../utils/emailService.js';
 import db from '../config/db.js';
+import { v2 as cloudinary } from "cloudinary";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
+import multer from "multer";
 // import { log } from 'console';
 
+
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: {
+    folder: "user_pictures",
+    allowed_formats: ["jpg", "jpeg", "png"],
+    transformation: [{ width: 500, height: 500, crop: "limit" }],
+  },
+});
+
+const upload = multer({ 
+  storage,
+  limits: { fileSize: 50 * 1024 * 1024 }, 
+});
 
 
 const userController = {
@@ -169,7 +193,6 @@ const userController = {
       
       console.log('Token reçu:', token);
       
-      // Chercher l'utilisateur avec ce token qui n'a pas expiré
       const sql = `
         SELECT * FROM users 
         WHERE confirmationToken = ? 
@@ -185,7 +208,6 @@ const userController = {
         });
       }
       
-      // Mettre à jour l'utilisateur pour confirmer son email
       await db.update(
         'users',
         {
@@ -269,6 +291,50 @@ const userController = {
         message: 'Erreur serveur lors de la connexion' 
       });
     }
+  },
+
+    imageUpload: async (req, res) => {
+      try {
+        upload(req, res, async function (err) {
+          if (err) {
+            return res.status(500).json({ error: "Erreur lors de l'upload des images" });
+          }
+          
+          if (!req.files || req.files.length === 0) {
+            return res.status(400).json({ error: "Aucune image reçue" });
+          }
+          
+          const token = req.headers.authorization?.split(" ")[1];    
+          const decoded = jwt.verify(token, process.env.JWT_SECRET);
+          const userId = decoded.id;
+
+          const images = req.files.map((file) => file.path);
+    
+          const profilePicture = images[0];
+          console.log("profilePicture", profilePicture);
+    
+          const otherPictures = images.slice(1);
+    
+          await db.update(
+            'users',
+            {
+              profile_picture: profilePicture,
+              // other_pictures: JSON.stringify(otherPictures),
+            },
+            { id: userId }
+          );
+    
+          res.status(200).json({
+            message: "Images uploadées avec succès",
+            profilePicture,
+            // otherPictures,
+          });
+
+        });
+      } catch (error) {
+        console.error("Erreur d'upload :", error);
+        res.status(500).json({ error: "Erreur lors de l'upload des images" });
+      }
   },
 
   getUser: async (req, res) => {

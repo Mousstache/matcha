@@ -16,9 +16,21 @@ interface User{
   birthDate: number;
 }
 
+
+interface Geolocation {
+  latitude: number | null;
+  longitude: number | null;
+  error: string | null;
+}
+
 const Profile = () => {
   const [user, setUser] = useState<User | null>(null);
   // const [error, setError] = useState<string | null>(null);
+  const [location, setLocation] = useState<Geolocation>({
+    latitude: null,
+    longitude: null,
+    error: null,
+  });
   
   const [images, setImages] = useState<File[]>([]);
   const [preview, setPreview] = useState<string[]>([]);
@@ -49,7 +61,27 @@ const Profile = () => {
       console.error('Erreur:', err);
 
     }
-  }
+  };
+  const fetchLocation = async () => {
+    if (!navigator.geolocation) {
+      setLocation((prev) => ({ ...prev, error: "La géolocalisation n'est pas supportée" }));
+      return;
+    }
+    
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLocation({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          error: null,
+        });
+      },
+      (error) => {
+        setLocation((prev) => ({ ...prev, error: error.message }));
+      }
+    );
+  };
+  fetchLocation();
   fetchUserProfile();
   }, []);
 
@@ -89,8 +121,6 @@ const Profile = () => {
   }
 
 
-
-  // const UploadProfilePictures: React.FC = () => {
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       const files = e.target.files;
       if (!files) return;
@@ -115,7 +145,7 @@ const Profile = () => {
         const response = await fetch("http://localhost:5000/api/upload", {
           headers: {
             'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
+            // 'Content-Type': 'application/json'
         },
           method: "POST",
           body: formData,
@@ -181,6 +211,55 @@ const Profile = () => {
   };
   
 export default Profile;
+
+
+
+
+
+
+// interface LocationInfo {
+//   city: string | null;
+//   country: string | null;
+//   error: string | null;
+// }
+
+// const useReverseGeolocation = (latitude: number | null, longitude: number | null): LocationInfo => {
+//   const [locationInfo, setLocationInfo] = useState<LocationInfo>({
+//     city: null,
+//     country: null,
+//     error: null,
+//   });
+
+//   useEffect(() => {
+//     if (!latitude || !longitude) return;
+
+//     const fetchLocation = async () => {
+//       try {
+//         const res = await fetch(
+//           `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
+//         );
+//         const data = await res.json();
+
+//         if (data.address) {
+//           setLocationInfo({
+//             city: data.address.city || data.address.town || data.address.village || "Inconnu",
+//             country: data.address.country || "Inconnu",
+//             error: null,
+//           });
+//         } else {
+//           setLocationInfo((prev) => ({ ...prev, error: "Impossible de récupérer l'emplacement" }));
+//         }
+//       } catch (error) {
+//         setLocationInfo((prev) => ({ ...prev, error: "Erreur lors de la récupération des données" }));
+//       }
+//     };
+
+//     fetchLocation();
+//   }, [latitude, longitude]);
+
+//   return locationInfo;
+// };
+
 
 
 // import { useState, useEffect } from 'react';
