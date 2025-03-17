@@ -14,6 +14,7 @@ import Profil from "./components/Profil";
 import Explore from "./components/Explore";
 import Register from "./components/Register";
 import ConfirmEmail from "./components/ConfirmEmail";
+// import Chat from "./components/Chat";
 
 // interface User {
 //   id: number;

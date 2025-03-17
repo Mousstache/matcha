@@ -5,19 +5,11 @@ import dotenv from 'dotenv';
 import { v2 as cloudinary } from "cloudinary";
 import { CloudinaryStorage } from "multer-storage-cloudinary";
 import multer from "multer";
-
 import { fileURLToPath } from 'url';
-// import { connectDB } from './config/db.js';
-
 import stuffRoutes  from './routes/stuff.js';
-
-
-
+import socket from 'socket.io';
 
 dotenv.config();
-// connectDB();
-// syncDatabase();
-
 
 
 // Obtenir l'équivalent de __dirname pour ES Modules
@@ -96,9 +88,18 @@ app.use(express.json({ limit: "10mb" }));
 
 app.use('/api', stuffRoutes);
 
-app.get('/', (req, res) => {
-  console.log(__dirname);
-  res.send('API est en cours d\'exécution');
+const io = socket(server);
+
+io.on('connection', (socket) => {
+  console.log("Un client s'est connecté", socket.id);
+});
+
+io.on('connection', socket => {
+  console.log("socket=",socket.id);
+  socket.on('CLIENT_MSG', data => {
+      console.log("msg=",data);
+      io.emit('SERVER_MSG', data);
+  })
 });
 
 // Démarrage du serveur
