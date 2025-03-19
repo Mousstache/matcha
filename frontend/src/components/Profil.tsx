@@ -80,6 +80,7 @@ const Profile = () => {
         setLocation((prev) => ({ ...prev, error: error.message }));
       }
     );
+    console.log("locacation = ", location);
   };
   fetchLocation();
   fetchUserProfile();
@@ -156,9 +157,9 @@ const Profile = () => {
         const data = await response.json();
         console.log("Données reçues:", data);
 
-        if (data.images) {
+        if (data.profil_pictures) {
           setUploadStatus("Images uploadées avec succès !");
-          console.log("Images Cloudinary:", data.images);
+          console.log("Images Cloudinary:", data.profile_pictures);
         } else {
           setUploadStatus("Erreur lors de l'upload.");
         }

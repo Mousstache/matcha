@@ -1,6 +1,9 @@
 //import { Calendar } from "lucide-react";
 import { Card, CardContent, CardTitle } from "./ui/card"
 import { useState } from "react";
+import useGeolocation from "../components/useGeolocation";
+import useReverseGeolocation from "../components/useReverseGeolocation";
+
 // import { useNavigate } from "react-router-dom";
 //import { Input } from "@/components/ui/input";
 // import { Label } from "@/components/ui/label";
@@ -16,12 +19,16 @@ import { useState } from "react";
 // import { Link } from "react-router-dom";
 
 
+
 interface Interest {
     id: string;
     label: string;
   }
 
 const Signup = () => {
+
+    const { latitude, longitude, error } = useGeolocation();
+    const { city, country, error: locationError } = useReverseGeolocation(latitude, longitude);
 
     // const navigate = useNavigate();
     
@@ -94,7 +101,7 @@ const Signup = () => {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ gender, description, preference, birthDate, age: userAge, interests, lastConnection : new Date() }),
+                body: JSON.stringify({ gender, description, preference, birthDate, age: userAge, interests, lastConnection : new Date(), city, country, latitude, longitude, online }),
             })
             .then(response => response.json())
             .then(data => {
@@ -117,6 +124,8 @@ const Signup = () => {
         } catch (error) {
             console.error(error)
         }
+
+
     }
     
     return(
@@ -178,6 +187,29 @@ const Signup = () => {
                     </div>
                     <div className="text-sm text-gray-500">
                         {interests.length}/3 intérêts sélectionnés
+                    </div>
+
+                    <div className="p-4 text-center">
+                    <h1 className="text-2xl font-bold">🌍 Ma Localisation</h1>
+
+                    {error ? (
+                        <p className="text-red-500">❌ {error}</p>
+                    ) : (
+                        <>
+                        <p>📍 Latitude: {latitude}</p>
+                        <p>📍 Longitude: {longitude}</p>
+                        </>
+                    )}
+
+                    {locationError ? (
+                        <p className="text-red-500">❌ {locationError}</p>
+                    ) : (
+                        city && country && (
+                        <p className="mt-2 text-lg font-semibold">
+                            🏙️ {city}, {country}
+                        </p>
+                        )
+                    )}
                     </div>
 
                                 {/* <div className="location-section">

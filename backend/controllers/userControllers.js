@@ -3,32 +3,12 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { sendConfirmationEmail } from '../utils/emailService.js';
 import db from '../config/db.js';
-import { v2 as cloudinary } from "cloudinary";
-import { CloudinaryStorage } from "multer-storage-cloudinary";
-import multer from "multer";
+import cloudinary from "../routes/cloudinaryConfig.js";
+// import { v2 as cloudinary } from "cloudinary";
+// import { CloudinaryStorage } from "multer-storage-cloudinary";
+// import multer from "multer";
 // import { log } from 'console';
 
-
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
-
-
-const storage = new CloudinaryStorage({
-  cloudinary,
-  params: {
-    folder: "user_pictures",
-    allowed_formats: ["jpg", "jpeg", "png"],
-    transformation: [{ width: 500, height: 500, crop: "limit" }],
-  },
-});
-
-const upload = multer({ 
-  storage,
-  limits: { fileSize: 50 * 1024 * 1024 }, 
-});
 
 
 const userController = {
@@ -124,7 +104,7 @@ const userController = {
       }
 
 
-      const {description, gender, birthDate, preference, interests} = req.body;
+      const {description, gender, birthDate, preference, interests, city, country, latitude, longitude } = req.body;
 
       const conditions = { id: user.id};
 
@@ -134,6 +114,11 @@ const userController = {
       if (birthDate !== undefined) updateData.birthDate = birthDate;
       if (preference !== undefined) updateData.preference = preference;
       if (interests !== undefined) updateData.interests = interests;
+      if (city !== undefined) updateData.city = city;
+      if (country !== undefined) updateData.country = country;
+      if (latitude !== undefined) updateData.latitude = latitude;
+      if (longitude !== undefined) updateData.longitude = longitude;
+      
 
 
       await db.update('users', updateData , conditions);
@@ -293,49 +278,100 @@ const userController = {
     }
   },
 
-    imageUpload: async (req, res) => {
-      try {
-        upload(req, res, async function (err) {
-          if (err) {
-            return res.status(500).json({ error: "Erreur lors de l'upload des images" });
-          }
-          
-          if (!req.files || req.files.length === 0) {
-            return res.status(400).json({ error: "Aucune image reçue" });
-          }
-          
-          const token = req.headers.authorization?.split(" ")[1];    
-          const decoded = jwt.verify(token, process.env.JWT_SECRET);
-          const userId = decoded.id;
-
-          const images = req.files.map((file) => file.path);
-    
-          const profilePicture = images[0];
-          console.log("profilePicture", profilePicture);
-    
-          const otherPictures = images.slice(1);
-    
-          await db.update(
-            'users',
-            {
-              profile_picture: profilePicture,
-              // other_pictures: JSON.stringify(otherPictures),
-            },
-            { id: userId }
-          );
-    
-          res.status(200).json({
-            message: "Images uploadées avec succès",
-            profilePicture,
-            // otherPictures,
-          });
-
-        });
-      } catch (error) {
-        console.error("Erreur d'upload :", error);
-        res.status(500).json({ error: "Erreur lors de l'upload des images" });
+  imageUpload: async (req, res) => {
+    try {
+      if (!req.files || req.files.length === 0) {
+        return res.status(400).json({ error: "Aucune image reçue" });
       }
+  
+      const token = req.headers.authorization?.split(" ")[1];
+      if (!token) return res.status(401).json({ error: "Token manquant" });
+  
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const userId = decoded.id;
+  
+      const images = req.files.map((file) => file.path);
+      const profilePicture = images[0];
+      const otherPictures = images.slice(1);
+
+      console.log("profilePicture:", profilePicture);
+  
+      await db.update(
+        'users',
+        { profile_picture: profilePicture },
+        { id: userId }
+      );
+  
+      res.status(200).json({
+        message: "Images uploadées avec succès",
+        profilePicture,
+        otherPictures,
+      });
+    } catch (error) {
+      console.error("Erreur d'upload :", error);
+      res.status(500).json({ error: "Erreur lors de l'upload des images" });
+    }
   },
+
+  recordProfileView: async (req, res) => {
+    try {
+      const token = req.headers.authorization?.split(' ')[1];
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+      const user = await db.findOne('users',  { email: decoded.email });
+      const viewerId = user.id;
+      const { viewedId } = req.body;
+
+      console.log('viewerId:', viewerId);
+      console.log('viewedId:', viewedId);
+      
+      if (!viewedId) {
+        return res.status(400).json({
+          success: false,
+          message: "ID du profil consulté manquant"
+        });
+      }
+      
+      // if (viewerId === parseInt(viewedId)) {
+      //   return res.status(400).json({
+      //     success: false,
+      //     message: "Impossible d'enregistrer une vue sur son propre profil"
+      //   });
+      // }
+      
+      const existingView = await db.findOne('profile_views', {
+        viewer_id: viewerId,
+        viewed_id: viewedId
+      });
+      
+      if (!existingView) {
+        await db.insert('profile_views', {
+          viewer_id: viewerId,
+          viewed_id: viewedId,
+          viewed_at: new Date()
+        });
+      } else {
+        await db.update('profile_views', 
+          { id: existingView.id },
+          { viewed_at: new Date() }
+        );
+      }
+      
+      return res.status(200).json({
+        success: true,
+        message: "Vue de profil enregistrée"
+      });
+    } catch (error) {
+      console.error('Erreur lors de l\'enregistrement de la vue de profil:', error);
+      return res.status(500).json({
+        success: false,
+        message: "Une erreur est survenue",
+        error: error.message
+      });
+    }
+  },
+  
+  
 
   getUser: async (req, res) => {
     try{
@@ -360,17 +396,83 @@ const userController = {
   },
 
   getAllUsers: async (req, res) => {
-    try{
-      const users = await db.query(`SELECT id, email, firstname, lastname, description, interests, age FROM users`);
+    try {
+      const {
+        minAge,
+        maxAge,
+        sexualPreference,
+        gender,
+        latitude,
+        longitude,
+        maxDistance
+      } = req.body;
+      console.log('minAge:', minAge);
+      console.log('maxAge:', maxAge);
+      console.log('sexualPreference:', sexualPreference);
+      console.log('gender:', gender);
+      console.log('latitude:', latitude);
+      console.log('longitude:', longitude);
+      console.log('maxDistance:', maxDistance);
+      
+      let query = `SELECT id, email, firstname, lastname, description, interests, age, city`;
 
+      if (latitude && longitude) {
+        query += `,
+          ( 6371 * acos( cos( radians($1) ) * 
+            cos( radians( latitude ) ) * 
+            cos( radians( longitude ) - radians($2) ) + 
+            sin( radians($1) ) * 
+            sin( radians( latitude ) ) 
+          ) ) AS distance`;
+      }
+      
+      query += ` FROM users WHERE 1=1`;
+
+      const params = [];
+
+      if (latitude && longitude) {
+        params.push(parseFloat(latitude), parseFloat(longitude));
+      }
+      
+      if (minAge) {
+        query += ` AND age >= $${params.length + 1}`;
+        params.push(parseInt(minAge));
+      }
+      
+      if (maxAge) {
+        query += ` AND age <= $${params.length + 1}`;
+        params.push(parseInt(maxAge));
+      }
+      
+      if (sexualPreference) {
+        query += ` AND preference = $${params.length + 1}`;
+        params.push(sexualPreference);
+      }
+
+      if (gender){
+        query += ` AND gender = $${params.length + 1}`;
+        params.push(gender);
+      }
+
+      if (latitude && longitude && maxDistance) {
+        query += ` HAVING distance <= $${paramIndex}`;
+        params.push(parseFloat(maxDistance));
+        paramIndex++;
+      }
+
+      if (latitude && longitude) {
+        query += ` ORDER BY distance`;
+      }
+      
+      const users = await db.query(query, params);
+      
       res.status(200).json({
         message: 'Liste des utilisateurs récupérée avec succès',
         users: users
       });
-
-    }catch(error){
+    } catch (error) {
       console.error('Erreur lors de la récupération des utilisateurs:', error);
-      res.status(500).json({ 
+      res.status(500).json({
         message: 'Erreur serveur lors de la récupération des utilisateurs'
       });
     }
@@ -378,12 +480,16 @@ const userController = {
 
   dislikeUser: async(req, res) => {
     try{
+      const token = req.headers.authorization?.split(' ')[1];
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const user = await db.findOne('users',  { email: decoded.email });
+
 
       const {liked_id} = req.body;
 
-      const is_active = false;
+      const liker_id = user.id;
 
-      await db.update('likes', {liked_id , is_active});
+      await db.update();
 
       return res.status(201).json({
         message: "like enlever",

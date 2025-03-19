@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "../context/auth";
 // import { set } from "date-fns";
+// import { set } from "date-fns";
 // import { Link } from "react-router-dom";
 
 // import { button } from "./components/ui/button";
@@ -16,6 +17,13 @@ const Login = () => {
   const [lastConnection, setLastConnection] = useState("");
   // const [firstname, setFirstname] = useState("");
   const { firstname, setFirstname } = useAuth();
+  const { lastname, setLastname } = useAuth();
+  const { age, setAge } = useAuth();
+  const { gender, setGender } = useAuth();
+  const { latitude, setLatitude } = useAuth();
+  const { longitude, setLongitude } = useAuth();
+  const { sexualPreference, setSexualPreference } = useAuth();
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,11 +40,21 @@ const Login = () => {
       });
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.message);
-      }
-      else {
+        const data = await response.json();
         firstname;
+        lastname;
+        age;
+        gender;
+        latitude;
+        longitude;
+        sexualPreference;
         setFirstname(data.firstname);
+        setLastname(data.lastname);
+        setAge(data.age);
+        setGender(data.gender);
+        setLatitude(data.latitude);
+        setLongitude(data.longitude);
+        setSexualPreference(data.sexualPreference);
       }
       if (!email || !password) {
         setError("Tous les champs sont requis.");

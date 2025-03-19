@@ -2,15 +2,14 @@ import express from 'express';
 import path from 'path';
 import cors from 'cors';
 import dotenv from 'dotenv';
-
 import { fileURLToPath } from 'url';
-import stuffRoutes  from './routes/stuff.js';
-// import socket from 'socket.io';
+import { createServer } from 'http'; // Créer un serveur HTTP
+import { Server } from 'socket.io';  // Import correct de socket.io
+import stuffRoutes from './routes/stuff.js';
 
 dotenv.config();
 
-
-// Obtenir l'équivalent de __dirname pour ES Modules
+// Obtenir __dirname pour ES Modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -18,48 +17,51 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const port = 5000;
 
-// Configuration pour servir les fichiers statiques avec le chemin correct
-app.use(express.static(path.join(__dirname, 'public')));
+// Création du serveur HTTP
+const server = createServer(app);
 
-
-// CONFIG CORS
-const corsOptions = {
+// Configuration CORS
+app.use(cors({
   origin: [
-    'http://localhost:3000',   
+    'http://localhost:3000',
     'http://localhost:5173',
     'http://localhost:5000',
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
-};
+}));
 
-app.use(cors(corsOptions));
-
-// app.use(express.json());
-
+// Middleware JSON
 app.use(express.json({ limit: "50mb" }));
-// app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
+// Routes API
 app.use('/api', stuffRoutes);
 
-// const io = socket(server);
+// Initialisation de Socket.io
+const io = new Server(server, {
+  cors: {
+    origin: "*",
+    methods: ["GET", "POST"]
+  }
+});
 
-// io.on('connection', (socket) => {
-//   console.log("Un client s'est connecté", socket.id);
-// });
+io.on('connection', (socket) => {
+  console.log("Un client s'est connecté", socket.id);
 
-// io.on('connection', socket => {
-//   console.log("socket=",socket.id);
-//   socket.on('CLIENT_MSG', data => {
-//       console.log("msg=",data);
-//       io.emit('SERVER_MSG', data);
-//   })
-// });
+  socket.on('CLIENT_MSG', (data) => {
+    console.log("Message reçu :", data);
+    io.emit('SERVER_MSG', data);
+  });
 
-// Démarrage du serveur
-app.listen(port, () => {
-  console.log(`Serveur démarré sur http://localhost:${port}`);
+  socket.on('disconnect', () => {
+    console.log(`Le client ${socket.id} s'est déconnecté`);
+  });
+});
+
+// Démarrage du serveur HTTP
+server.listen(port, () => {
+  console.log(`Serveur WebSocket et API démarré sur http://localhost:${port}`);
 });
 
 export default app;
