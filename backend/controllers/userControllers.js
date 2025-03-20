@@ -315,12 +315,13 @@ const userController = {
 
   recordProfileView: async (req, res) => {
     try {
-      const token = req.headers.authorization?.split(' ')[1];
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const { viewedId , viewerId } = req.body;
+      
+      const user = await db.findOne('users',  { id: viewedId });
 
-      const user = await db.findOne('users',  { email: decoded.email });
-      const viewerId = user.id;
-      const { viewedId } = req.body;
+      await db.update('users', { fame_rate: user.fame_rate + 1 }, { id: viewedId });
+      
+      
 
       console.log('viewerId:', viewerId);
       console.log('viewedId:', viewedId);
@@ -404,7 +405,9 @@ const userController = {
         gender,
         latitude,
         longitude,
-        maxDistance
+        maxDistance,
+        ordered,
+        interests
       } = req.body;
       console.log('minAge:', minAge);
       console.log('maxAge:', maxAge);
@@ -460,10 +463,24 @@ const userController = {
         paramIndex++;
       }
 
-      if (latitude && longitude) {
-        query += ` ORDER BY distance`;
+      if (ordered){
+        if (odrdered === "age"){
+          if (age){
+            query += ` ORDER BY age`;
+          }
+        }
+        if (ordered === "distance"){
+          if (latitude && longitude) {
+            query += ` ORDER BY distance`;
+          }
+        }
+        if (ordered === "interests"){
+          if (interests){
+            query += ` ORDER BY interests`;
+          }
+        }
       }
-      
+
       const users = await db.query(query, params);
       
       res.status(200).json({
@@ -478,16 +495,15 @@ const userController = {
     }
   },
 
-  dislikeUser: async(req, res) => {
+  unlikeUser: async(req, res) => {
     try{
-      const token = req.headers.authorization?.split(' ')[1];
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const user = await db.findOne('users',  { email: decoded.email });
+      const {liked_id, liker_id} = req.body;
 
+      const user = db.findOne('users', { id: liked_id });
 
-      const {liked_id} = req.body;
-
-      const liker_id = user.id;
+      fameRate = user.fame_rate - 1;
+      
+      const like = await db.findOne('likes', {liker_id, liked_id});
 
       await db.update();
 
@@ -499,16 +515,37 @@ const userController = {
     }
   },
 
+  dislikeUser: async(req, res) => {
+    try{
+      const { unlike_id } = req.body;
+
+      const user = db.findOne('users', { id: unlike_id });
+
+      fameRate = user.fame_rate - 1;
+
+      db.update('users', { fame_rate: fameRate });
+      
+      return res.status(201).json({
+        message: "unlike pour la fame rate",
+      })
+
+    }catch (error){
+      console.error('Error lors du unlike', error);
+    }
+  },
+
 
   likeUser: async(req, res) => {
     try{
 
-      const token = req.headers.authorization?.split(' ')[1];
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const user = await db.findOne('users',  { email: decoded.email });
+      const {liked_id , liker_id} = req.body;
 
-      const {liked_id} = req.body;
-      const liker_id = user.id;
+      console.log("liker_id", liker_id);
+      console.log("liked_id", liked_id);
+
+      const user = await db.findOne('users', { id: liked_id });
+
+      const fameRate = user.fame_rate + 5;
 
 
       if (!liker_id || !liked_id)
@@ -521,11 +558,20 @@ const userController = {
           message : "pas de like sois meme",
       })
 
+      await db.update('users', { fame_rate: fameRate }, { id: liked_id });
+
       const Otherlikes = await db.findOne('likes', {liker_id: liked_id, liked_id: liker_id});
 
       console.log(Otherlikes);
 
       if (Otherlikes){
+        const user2 = await db.findOne('users', { id: liker_id });
+
+        fameRate = user.fame_rate + 10;
+        const fameRate2 = user2.fame_rate + 10;
+
+        await db.update('users', { fame_rate: fameRate }, { id: liked_id });
+        await db.update('users', { fame_rate: fameRate2 }, { id: liker_id });
         await db.insert('matches', {user1_id: liker_id, user2_id: liked_id, created_at: new Date()});
         return res.status(201).json({
           message: "c'est un match",

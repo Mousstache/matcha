@@ -20,11 +20,11 @@ interface Profile {
 }
 
 const Explore = () => {
-
+  
   const authContext = useAuth();
   console.log("AuthContext dans Explore:", authContext);
   
-  const { id, firstname, lastname, sexualPreference, gender, loading } = useAuth();
+  const { id, firstname, lastname, sexualPreference, gender, loading, longitude, latitude} = useAuth();
   // const [minage, setMinage] = useState<number>(0);
   // const [maxage, setMaxage] = useState<number>(0);
   // // const [distance, setDistance] = useState<number>(0);
@@ -35,25 +35,69 @@ const Explore = () => {
   // setMaxage(99);
   // // setDistance(100);
   // setPreferences(Profile.preference);
+  longitude;
+  latitude;
+  const [minAge, setMinAge] = useState<number>(0);
+  const [maxAge, setMaxAge] = useState<number>(40);
+  const [distance, setDistance] = useState<number>(25);
+  
+  // États pour les sliders
+  const [ageRange, setAgeRange] = useState<number[]>([0, 40]);
+  const [distanceValue, setDistanceValue] = useState<number[]>([25]);
+  
+  // Synchroniser les états initiaux
+  useEffect(() => {
+    setAgeRange([minAge, maxAge]);
+    setDistanceValue([distance]);
+  }, []);
+  
+  // Gestionnaires d'événements
+  const handleAgeChange = (values: number[]) => {
+    setAgeRange(values);
+    setMinAge(values[0]);
+    setMaxAge(values[1]);
+  };
+  
+  const handleDistanceChange = (values: number[]) => {
+    setDistanceValue(values);
+    setDistance(values[0]);
+  };
   
   const getUsers = async () => {
     try {
-      
-      console.log("mes donees de l'auth :", id,  firstname , lastname, sexualPreference, gender);
-      const response = await fetch('http://localhost:5000/api/allUsers', {
+
+      if (sexualPreference === "Les deux"){
+        const res = await fetch('http://localhost:5000/api/allUsers', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({minAge:30, maxAge:50, sexualPreference, gender}),
+        // body: JSON.stringify({minAge, maxAge, sexualPreference:gender, gender:sexualPreference, longitude, latitude, distance}),
       });
-      
-      const data = await response.json();
-      if (!response.ok) {
-        throw new Error(data.message);
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.message);
+        }
+        setProfiles(data.users);
       }
-      setProfiles(data.users);
+      else {
+        console.log("mes donees de l'auth :", id,  firstname , lastname, sexualPreference, gender);
+        const response = await fetch('http://localhost:5000/api/allUsers', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Content-Type': 'application/json'
+          },
+          // body: JSON.stringify({minAge, maxAge, sexualPreference:gender, gender:sexualPreference, longitude, latitude, distance}),
+        });
+          const data = await response.json();
+          if (!response.ok) {
+            throw new Error(data.message);
+          }
+          setProfiles(data.users);
+      }
+    
     } catch (error) {
       console.error(error);
     }
@@ -82,9 +126,10 @@ const Explore = () => {
   const [direction, setDirection] = useState('');
   const [isAnimating, setIsAnimating] = useState(false);
   
-  const markViewed = async (id:string) => {
+  const markViewed = async (viewed_id:string) => {
     try{
-      const viewedId = id;
+      const viewedId = viewed_id;
+      const viewerId = id;
       console.log("l'id du mec que je regarde", viewedId);
       const res = await fetch('http://localhost:5000/api/record-profile-view',{
         method: "POST",
@@ -92,7 +137,7 @@ const Explore = () => {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({viewedId}),
+        body: JSON.stringify({viewedId, viewerId}),
       });
       if (!res)
         return ;
@@ -101,20 +146,21 @@ const Explore = () => {
     }
   };
 
-    const handleLike = async (id:string) => {
+    const handleLike = async (likedId:string) => {
       try{
-        const liked_id = id;
+        const liked_id = likedId;
+        const liker_id = id;
         const res = await fetch('http://localhost:5000/api/likeUser',{
           method: "POST",
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({liked_id}),
+          body: JSON.stringify({liked_id, liker_id}),
         });
         if (!res)
           return ;
-        markViewed(id);
+        markViewed(likedId);
       }catch (error){
         console.error(error);
       }
@@ -130,20 +176,21 @@ const Explore = () => {
     };
 
     
-    const handleDislike = async(id:string) => {
+    const handleDislike = async(likedId:string) => {
       try{
-        const liked_id = id;
+        const liked_id = likedId;
+        const liker_id = id;
         const res = await fetch('http://localhost:5000/api/dislikeUser',{
-          method: "DELETE",
+          method: "POST",
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({liked_id}),
+          body: JSON.stringify({liked_id, liker_id}),
         });
         if (!res)
           return ;
-        markViewed(id);
+        markViewed(likedId);
       }catch (error){
         console.error(error);
       }
@@ -174,15 +221,14 @@ const Explore = () => {
     console.log(currentProfile);
     if (setProfiles.length > 0) {
     }
+
+        
     
     return (
       <div>
-        <Slider defaultValue={[33]} max={100} step={1} />
+        <Slider onValueChange={handleAgeChange} value={ageRange} max={100} min={18} step={5} />
 
-        <label>min age</label>
-        <input></input>
-        <label>max age</label>
-        <input></input>
+        <Slider onValueChange={handleDistanceChange} value={distanceValue} max={100} min={1} step={10} />
 
 
       <div className="w-full max-w-md mx-auto py-8">
