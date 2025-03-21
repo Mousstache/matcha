@@ -66,6 +66,7 @@ function App() {
         <Route path="/profil" element={<ProtectedRoute><Profil /></ProtectedRoute>} />
         <Route path="/profil/:username" element={<ProtectedRoute><Profil /></ProtectedRoute>} />
         <Route path="/chat" element={<ProtectedRoute ><Chat></Chat></ProtectedRoute>} />
+        <Route path="/chat/:match_id" element={<ProtectedRoute ><Chat></Chat></ProtectedRoute>} />
         </Routes>
         <Footer />
       </Router>

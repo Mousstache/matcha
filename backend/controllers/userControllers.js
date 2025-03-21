@@ -558,7 +558,7 @@ const userController = {
           message : "pas de like sois meme",
       })
 
-      await db.update('users', { fame_rate: fameRate }, { id: liked_id });
+      await db.update('users', { fame_rate: fameRate}, { id: liked_id });
 
       const Otherlikes = await db.findOne('likes', {liker_id: liked_id, liked_id: liker_id});
 
@@ -567,10 +567,10 @@ const userController = {
       if (Otherlikes){
         const user2 = await db.findOne('users', { id: liker_id });
 
-        fameRate = user.fame_rate + 10;
+        const fameRate3 = user.fame_rate + 10;
         const fameRate2 = user2.fame_rate + 10;
 
-        await db.update('users', { fame_rate: fameRate }, { id: liked_id });
+        await db.update('users', { fame_rate: fameRate3 }, { id: liked_id });
         await db.update('users', { fame_rate: fameRate2 }, { id: liker_id });
         await db.insert('matches', {user1_id: liker_id, user2_id: liked_id, created_at: new Date()});
         return res.status(201).json({
@@ -650,16 +650,16 @@ const userController = {
       const user = await db.findOne('users',  { email: decoded.email });
 
       const sql = `
-      SELECT u.id, u.email, u.userName, u.firstName, u.lastName
+      SELECT m.match_id, u.id AS user_id, u.email, u.userName, u.firstName, u.lastName
       FROM matches m
       JOIN users u ON m.user2_id = u.id
       WHERE m.user1_id = $1
       UNION
-      SELECT u.id, u.email, u.userName, u.firstName, u.lastName
+      SELECT m.match_id, u.id AS user_id, u.email, u.userName, u.firstName, u.lastName
       FROM matches m
       JOIN users u ON m.user1_id = u.id
       WHERE m.user2_id = $1;
-    `;
+      `;
 
     const matches = await db.query(sql, [user.id]);
 

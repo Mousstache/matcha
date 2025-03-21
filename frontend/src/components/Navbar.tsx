@@ -7,7 +7,7 @@ const Navbar = () => {
 
     const token = localStorage.getItem("token");
   
-    await fetch("http://localhost:5000/api/logout", {
+    await fetch("http://localhost:5001/api/logout", {
       method: "PUT",
       headers: { "Authorization": `Bearer ${token}` },
       body : JSON.stringify({ online: false })
@@ -22,7 +22,7 @@ const Navbar = () => {
       <div className="container mx-auto flex justify-between items-center space-x-4">
         {/* Logo */}
         <Link to="/" className="flex items-center space-x-2">
-          <img src="../img/logo.webp" alt="Logo" className="w-10 h-10 rounded-full" />
+          <img src="../assets/logo.webp" alt="Logo" className="w-10 h-10 rounded-full" />
           <span className="text-white text-2xl font-serif">Matcha</span>
         </Link>
 

@@ -58,7 +58,7 @@ export const AuthContextProvider = ({ children }: { children: React.ReactNode })
         return;
       }
       
-      const response = await fetch("http://localhost:5000/api/user", {
+      const response = await fetch("http://localhost:5001/api/user", {
         method: "GET",
         headers: { "Authorization": `Bearer ${token}` },
       });
