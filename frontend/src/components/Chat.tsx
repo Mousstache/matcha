@@ -1,90 +1,171 @@
-import { useState, useEffect } from 'react';
-import io from 'socket.io-client';
-// import { json } from 'stream/consumers';
-import { useParams } from 'react-router-dom';
-import { useAuth } from '@/context/auth';
+import { useState, useEffect } from "react";
+import io from "socket.io-client";
+import { useParams } from "react-router-dom";
+import { useAuth } from "@/context/auth";
 
-
-const socket = io('http://localhost:5001'); // Déplacer ici pour éviter les re-créations
+const socket = io("http://localhost:5001");
 
 const Message = () => {
-    const [messages, setMessages] = useState<{ text: string }[]>([]);
+    const [messages, setMessages] = useState<{ sender_id: number; message_text: string }[]>([]);
+    const [messageText, setMessageText] = useState("");
     const { match_id } = useParams<{ match_id: string }>();
-    const { id } = useAuth();
+    const { id } = useAuth(); // ID de l'utilisateur connecté
+
+    const cleanMatchId = match_id ? match_id.replace(":", "") : null;
+
+    console.log("match_id", cleanMatchId);
+
 
     useEffect(() => {
-        socket.on('SERVER_MSG', (msg) => {
-            setMessages(prevMessages => [...prevMessages, msg]);
+        // Récupérer les messages existants
+
+        console.log("HHOPOOOOOOHHOOOOOO");
+        const fetchMessages = async () => {
+            try {
+                const response = await fetch(`http://localhost:5001/api/getMessages/${cleanMatchId}`, {
+                    method: "GET",
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                        "Content-Type": "application/json",
+                    },
+                });
+
+                const data = await response.json();
+                // if (response.ok) {
+                //     setMessages(data.messages);
+                //     console.log("los messares", data);
+                // }
+                if (response.ok && Array.isArray(data.messages)) {
+                    setMessages(data.messages);
+                } else {
+                    setMessages([]); // Évite d'avoir `undefined`
+                }
+            } catch (error) {
+                console.error("Erreur lors de la récupération des messages :", error);
+            }
+        };
+
+        fetchMessages();
+
+        // Écouter les messages en temps réel
+        socket.on("SERVER_MSG", (messages) => {
+            setMessages((prevMessages) => [...prevMessages, messages]);
         });
 
         return () => {
-            socket.off('SERVER_MSG'); // Nettoie l'événement
+            socket.off("SERVER_MSG");
         };
-    }, []);
+    }, [cleanMatchId]);
 
     const sendMessage = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-
-        try{
-            const form = e.currentTarget;
     
-            const msg = {
-                // username: (form.elements.namedItem('username') as HTMLInputElement).value,
-                text: (form.elements.namedItem('text') as HTMLInputElement).value,
-            };
+        if (!messageText.trim()) return;
+        if (!cleanMatchId) {
+            console.error("Erreur: cleanMatchId est undefined !");
+            return;
+        }
     
-            socket.emit('CLIENT_MSG', msg);
-            // setMessages(prevMessages => [...prevMessages, msg]); // Ajoute le message localement
-
-            console.log("message_text", msg);
-            console.log("sender_id", id);
-            console.log("match_id", match_id);
+        const message = {
+            sender_id: Number(id),  // ✅ Conversion en nombre
+            message_text: messageText,
+            match_id: Number(cleanMatchId),
+        };
     
-            const response = await fetch('http://localhost:5001/getMessage', {
-                method: 'POST',
+        // Envoyer via WebSocket
+        socket.emit("CLIENT_MesSaGes", message);
+    
+        // Sauvegarde dans la base de données
+        try {
+            const response = await fetch("http://localhost:5001/api/sendMessage", {
+                method: "POST",
                 headers: {
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
-                    'Content-Type': 'application/json'
-                  },
-                body: JSON.stringify({sender_id: id, message_text: msg, match_id}),
+                    Authorization: `Bearer ${localStorage.getItem("token")}`,
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(message),
             });
     
-            const data = await response.json();
-            if (!data)
-                return ;
-            form.reset(); // Nettoie les inputs
-
-        }catch (error){
-            console.log(error);
+            if (response.ok) {
+                setMessages((prevMessages) => [
+                    ...prevMessages,
+                    { sender_id: Number(id), message_text: messageText }  // ✅ Format correct
+                ]);
+                setMessageText("");
+            }
+        } catch (error) {
+            console.error("Erreur lors de l'envoi du message :", error);
         }
-    }
+    };
+
+    // const sendMessage = async (e: React.FormEvent<HTMLFormElement>) => {
+    //     e.preventDefault();
+
+    //     if (!messageText.trim()) return;
+
+    //     const message = {
+    //         sender_id: id,
+    //         message_text: messageText,
+    //         match_id,
+    //     };
+
+    //     // Envoyer via WebSocket
+    //     socket.emit("CLIENT_MesSaGes", message);
+
+    //     // Sauvegarder dans la BDD
+    //     try {
+    //         const response = await fetch("http://localhost:5001/api/sendMessage", {
+    //             method: "POST",
+    //             headers: {
+    //                 Authorization: `Bearer ${localStorage.getItem("token")}`,
+    //                 "Content-Type": "application/json",
+    //             },
+    //             body: JSON.stringify(message),
+    //         });
+
+    //         if (response.ok) {
+    //             setMessages((prevMessages) => [...prevMessages, message]);
+    //             setMessageText(""); // Reset input
+    //         }
+    //     } catch (error) {
+    //         console.error("Erreur lors de l'envoi du message :", error);
+    //     }
+    // };
 
     return (
-        <div className="container">
-            <div className="row">
-                <div className="col-4">
-                    <div className="card">
-                        <div className="card-body">
-                            <div className="card-title">My first chat</div>
-                            <hr />
-                            <div className="messages">
-                                {messages.map((msg, index) => (
-                                    <div key={index}> {msg.text}</div>
-                                ))}
-                            </div>
-                        </div>
-                        <form onSubmit={sendMessage}>
-                            <div className="card-footer">
-                                <input id="text" type="text" placeholder="Your message" className="form-control" required />
-                                <br />
-                                <button type="submit" className="btn btn-primary form-control">
-                                    Send
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
+        <div className="flex flex-col h-screen max-w-lg mx-auto bg-gray-100 border rounded-lg shadow-lg">
+            {/* Titre */}
+            <div className="bg-blue-600 text-white text-xl font-bold p-4 rounded-t-lg">
+                Chat Room
             </div>
+
+            {/* Liste des messages */}
+            <div className="flex-1 p-4 overflow-y-auto space-y-2">
+                {messages?.map((messages, index) => (
+                    <div
+                        key={index}
+                        className={`p-2 max-w-xs rounded-lg ${
+                            Number(messages.sender_id) === Number(id) ? "bg-blue-500 text-white ml-auto" : "bg-gray-200 text-black mr-auto"
+                        }`}
+                    >
+                        {messages.message_text}
+                    </div>
+                ))}
+            </div>
+
+            {/* Formulaire d'envoi */}
+            <form onSubmit={sendMessage} className="flex p-2 bg-white border-t rounded-b-lg">
+                <input
+                    type="text"
+                    value={messageText}
+                    onChange={(e) => setMessageText(e.target.value)}
+                    placeholder="Votre message..."
+                    className="flex-1 p-2 border rounded-lg focus:outline-none"
+                />
+                <button type="submit" className="ml-2 bg-blue-600 text-white px-4 py-2 rounded-lg">
+                    Envoyer
+                </button>
+            </form>
         </div>
     );
 };

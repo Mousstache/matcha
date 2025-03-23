@@ -17,6 +17,7 @@ import Explore from "./components/Explore";
 import Register from "./components/Register";
 import ConfirmEmail from "./components/ConfirmEmail";
 import Chat from "./components/Chat";
+import Notification from "./components/Notification"; 
 
 // interface User {
 //   id: number;
@@ -67,6 +68,7 @@ function App() {
         <Route path="/profil/:username" element={<ProtectedRoute><Profil /></ProtectedRoute>} />
         <Route path="/chat" element={<ProtectedRoute ><Chat></Chat></ProtectedRoute>} />
         <Route path="/chat/:match_id" element={<ProtectedRoute ><Chat></Chat></ProtectedRoute>} />
+        <Route path="/notification" element={<ProtectedRoute><Notification /></ProtectedRoute>} />
         </Routes>
         <Footer />
       </Router>

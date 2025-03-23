@@ -25,13 +25,17 @@ router.post('/allUsers', authMiddleware, userCtrl.getAllUsers);
 
 router.post('/record-profile-view', authMiddleware, userCtrl.recordProfileView);
 router.post('/likeUser', userCtrl.likeUser);
-router.delete('/dislikeUser', userCtrl.dislikeUser);
-router.post('/unlikeUser', userCtrl.unlikeUser);
+router.post('/dislikeUser', userCtrl.dislikeUser);
+router.delete('/unlikeUser', userCtrl.unlikeUser);
 // router.post('/blockUser', userCtrl.blockUser);
 // router.delete('/unblockUser', userCtrl.unblockUser);
 router.get('/getLikes', userCtrl.getLikes);
 router.get('/getOtherLikes', userCtrl.getOtherLikes);
 router.get('/getMatches', userCtrl.getMatches);
+
+router.get('/getMessages/:match_id', authMiddleware, userCtrl.getMessages);
+router.post('/sendMessage', authMiddleware, userCtrl.sendMessage);
+router.get('/getNotifications', authMiddleware, userCtrl.getNotifications);
 
 router.put('/updateUser', authMiddleware, userCtrl.updateUser);
 // router.put('/logout', authMiddleware, userCtrl.logoutUser);

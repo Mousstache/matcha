@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import { sendConfirmationEmail } from '../utils/emailService.js';
 import db from '../config/db.js';
 import cloudinary from "../routes/cloudinaryConfig.js";
+import { match } from 'assert';
 // import { v2 as cloudinary } from "cloudinary";
 // import { CloudinaryStorage } from "multer-storage-cloudinary";
 // import multer from "multer";
@@ -521,9 +522,10 @@ const userController = {
 
       const user = db.findOne('users', { id: unlike_id });
 
-      fameRate = user.fame_rate - 1;
+      const fameRate = user.fame_rate - 1;
 
-      db.update('users', { fame_rate: fameRate });
+        
+        db.update('users', { fame_rate: fameRate }, { id: unlike_id } );
       
       return res.status(201).json({
         message: "unlike pour la fame rate",
@@ -668,6 +670,63 @@ const userController = {
       matches: matches,
     });
 
+
+    }catch (error){
+      console.log('Error lors de la recup des matches', error);
+    }
+  },
+
+  sendMessage: async (req, res) => {
+    try {
+
+      const { sender_id, match_id, message_text } = req.body;
+
+      const messages = await db.insert('messages', {sender_id, match_id, message_text, created_at: new Date()});
+
+      return res.status(200).json({
+        message: "listes des messages",
+        messages: messages,
+      })
+
+    }catch (error){
+      console.log('Error lors de la recup des matches', error);
+    }
+  },
+
+  getMessages: async (req, res) => {
+    try {
+      const { match_id } = req.params;
+
+      console.log("le matchid == ", match_id);
+
+      const messages = await db.query(
+        "SELECT * FROM messages WHERE match_id = $1 ORDER BY current_timestamp ASC",
+        [match_id]
+    );
+
+      return res.status(200).json({
+        message: "listes des messages",
+        messages: messages.rows ,
+      })
+
+    }catch (error){
+      console.log('Error lors de la recup des matches', error);
+    }
+  },
+
+  getNotifications: async (req, res) => {
+    try {
+      const { user_id } = req.params;
+
+      const notifications = await db.query(
+        "SELECT * FROM notification WHERE user_id = $1",
+        [user_id]
+    );
+
+      return res.status(200).json({
+        message: "listes des notifications",
+        notifications: notifications.rows ,
+      })
 
     }catch (error){
       console.log('Error lors de la recup des matches', error);
