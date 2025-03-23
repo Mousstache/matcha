@@ -1,10 +1,11 @@
 //import { Calendar } from "lucide-react";
-import { Card, CardContent, CardTitle } from "./ui/card"
+import { Card, CardContent, CardTitle } from "../components/ui/card"
 import { useState } from "react";
-import useGeolocation from "../components/useGeolocation";
-import useReverseGeolocation from "../components/useReverseGeolocation";
+import useGeolocation from "./useGeolocation";
+import useReverseGeolocation from "../hooks/useReverseGeolocation";
+import { useNavigate } from "react-router-dom";
 
-// import { useNavigate } from "react-router-dom";
+
 //import { Input } from "@/components/ui/input";
 // import { Label } from "@/components/ui/label";
 // import { Button } from "@/components/ui/button";
@@ -30,7 +31,7 @@ const Signup = () => {
     const { latitude, longitude, error } = useGeolocation();
     const { city, country, error: locationError } = useReverseGeolocation(latitude, longitude);
 
-    // const navigate = useNavigate();
+    const navigate = useNavigate();
     
     // const [email, setEmail] = useState('');
     // const [firstName, setFirstName] = useState('');
@@ -44,6 +45,8 @@ const Signup = () => {
     const [interestError, setInterestError] = useState('');
     const [online, setOnline] = useState(false);
     const [lastConnection, setLastConnection] = useState("");
+    // const [email, setEmail] = useState("");
+    // const [password, setPassword] = useState("");
 
     const interestsList: Interest[] = [
         { id: "sports", label: "Sports" },
@@ -109,6 +112,7 @@ const Signup = () => {
                 if (data.error) {
                     console.error(data.error)
                 } else {
+                    navigate("/login", { state: { email: data.email, password: data.password || "" } });
                     console.log(data)
                 }
                 // navigate(`/confirm-email?token=${data.confirmationToken}`);

@@ -1,7 +1,7 @@
 // import { useParams } from 'react-router-dom';
 // import { useAuth } from '../context/auth';
 import { useState } from 'react';
-import { Card, CardContent, CardTitle } from "./ui/card"
+import { Card, CardContent, CardTitle } from "../components/ui/card"
 import { useEffect } from 'react';
 
 
@@ -146,7 +146,7 @@ const Profile = () => {
         const response = await fetch("http://localhost:5001/api/upload", {
           headers: {
             'Authorization': `Bearer ${token}`,
-            // 'Content-Type': 'application/json'
+            'Content-Type': 'application/json'
         },
           method: "POST",
           body: formData,

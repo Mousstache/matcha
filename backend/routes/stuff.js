@@ -4,10 +4,6 @@ import authMiddleware from './authMiddleware.js';
 import cloudinary from "../routes/cloudinaryConfig.js";
 import upload from "../routes/uploadMiddleware.js";
 
-//   const upload = multer({ 
-//     storage,
-//     limits: { fileSize: 50 * 1024 * 1024 }, 
-//   });
 
 const router = express.Router();
 
@@ -25,8 +21,13 @@ router.post('/allUsers', authMiddleware, userCtrl.getAllUsers);
 
 router.post('/record-profile-view', authMiddleware, userCtrl.recordProfileView);
 router.post('/likeUser', userCtrl.likeUser);
+<<<<<<< HEAD
 router.post('/dislikeUser', userCtrl.dislikeUser);
 router.delete('/unlikeUser', userCtrl.unlikeUser);
+=======
+// router.delete('/dislikeUser', userCtrl.dislikeUser);
+router.post('/unlikeUser', userCtrl.unlikeUser);
+>>>>>>> 0620a995d4c26aa45a89c6c862217bee1c2614f2
 // router.post('/blockUser', userCtrl.blockUser);
 // router.delete('/unblockUser', userCtrl.unblockUser);
 router.get('/getLikes', userCtrl.getLikes);

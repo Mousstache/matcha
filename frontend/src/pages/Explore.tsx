@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Slider } from "@/components/ui/slider"
 import { useAuth } from "../context/auth";
+import { socket } from  "../context/NotificationContext";
 // import { stringify } from "querystring";
 // import { Badge } from '@/components/ui/badge';
 
@@ -160,6 +161,7 @@ const Explore = () => {
         });
         if (!res)
           return ;
+        socket.emit("send_like", { liker_id: id, liked_id: likedId });
         markViewed(likedId);
       }catch (error){
         console.error(error);
