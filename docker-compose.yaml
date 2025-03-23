@@ -24,11 +24,11 @@ services:
     container_name: express-backend
     restart: always
     ports:
-      - "5000:5000"
+      - "5001:5001"
     depends_on:
       - db
     environment:
-      PORT: 5000
+      PORT: 5001
       POSTGRES_USER: myuser
       POSTGRES_PASSWORD: mypassword
       POSTGRES_DB: appdb

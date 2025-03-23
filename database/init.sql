@@ -66,18 +66,43 @@ CREATE INDEX idx_user1 ON matches (user1_id);
 CREATE INDEX idx_user2 ON matches (user2_id);
 CREATE INDEX idx_last_message ON matches (last_message_at);
 
+
+
 CREATE TABLE messages (
-    message_id INT AUTO_INCREMENT PRIMARY KEY,
+    message_id SERIAL PRIMARY KEY,
     match_id INT NOT NULL,
     sender_id INT NOT NULL,
     message_text TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     is_read BOOLEAN DEFAULT FALSE,
     FOREIGN KEY (match_id) REFERENCES matches(match_id) ON DELETE CASCADE,
-    FOREIGN KEY (sender_id) REFERENCES users(user_id) ON DELETE CASCADE,
-    INDEX idx_match (match_id),
-    INDEX idx_sender (sender_id),
-    INDEX idx_created (created_at)
+    FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE INDEX idx_match ON messages(match_id);
+CREATE INDEX idx_sender ON messages(sender_id);
+CREATE INDEX idx_created ON messages(created_at);
+
+
+
+
+CREATE TABLE blocks (
+  block_id SERIAL PRIMARY KEY,
+  blocker_id INT NOT NULL,
+  blocked_id INT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(blocker_id, blocked_id),
+  FOREIGN KEY (blocker_id) REFERENCES users(id) ON DELETE CASCADE,
+  FOREIGN KEY (blocked_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE notifications (
+  id SERIAL PRIMARY KEY,
+  user_id INT REFERENCES users(id) ON DELETE CASCADE,
+  message TEXT NOT NULL,
+  type VARCHAR(50) NOT NULL,
+  is_read BOOLEAN DEFAULT false,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE blocks (

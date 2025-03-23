@@ -16,10 +16,18 @@ interface User{
   birthDate: number;
 }
 
+interface Match {
+  match_id: number;
+  id: number;
+  email: string;
+  firstname: string;
+  lastname: string;
+}
+
 const Home = () => {
   const [likes, setLikes] = useState<User[]>([]);
   const [otherLikes, setOtherLikes] = useState<User[]>([]);
-  const [matches, setMatches] = useState<User[]>([]);
+  const [matches, setMatches] = useState<Match[]>([]);
 
   const navigate = useNavigate();
 
@@ -28,7 +36,7 @@ const Home = () => {
     const likelist = async () => {
 
         const token = localStorage.getItem("token");
-        const res = await fetch('http://localhost:5000/api/getLikes', {
+        const res = await fetch('http://localhost:5001/api/getLikes', {
           method: "GET",
           headers:{
             'Authorization': `bearer ${token}`,
@@ -49,7 +57,7 @@ const Home = () => {
     const likeOtherList = async () => {
 
       const token = localStorage.getItem("token");
-        const res = await fetch('http://localhost:5000/api/getOtherLikes', {
+        const res = await fetch('http://localhost:5001/api/getOtherLikes', {
           method: "GET",
           headers:{
             'Authorization': `bearer ${token}`,
@@ -71,7 +79,7 @@ const Home = () => {
 
     const matchList = async () => {
         const token = localStorage.getItem("token");
-          const res = await fetch('http://localhost:5000/api/getMatches', {
+          const res = await fetch('http://localhost:5001/api/getMatches', {
             method: "GET",
             headers:{
               'Authorization': `bearer ${token}`,
@@ -107,11 +115,11 @@ const Home = () => {
         <p>
             {matches && matches.length > 0 ? (
               <ul className="space-y-2">
-                {matches.map((user) => (
-                  <li key={user.id} className="p-2 border border-gray-300 rounded-lg shadow-sm">
-                    <p className="font-semibold">{user.firstname}</p>
-                    <p className="text-gray-500">{user.email}</p>
-                    <button className="text-white" onClick={ () => navigate("/chat")}>commencer le chat </button>
+                {matches.map((match) => (
+                  <li key={match.id} className="p-2 border border-gray-300 rounded-lg shadow-sm">
+                    <p className="font-semibold">{match.firstname}</p>
+                    <p className="text-gray-500">{match.email}</p>
+                    <button className="text-white" onClick={ () => navigate(`/chat/:${match.match_id}`)}>commencer le chat </button>
                   </li>
                 ))}
               </ul>

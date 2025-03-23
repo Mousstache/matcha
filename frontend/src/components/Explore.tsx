@@ -67,7 +67,7 @@ const Explore = () => {
     try {
 
       if (sexualPreference === "Les deux"){
-        const res = await fetch('http://localhost:5000/api/allUsers', {
+        const res = await fetch('http://localhost:5001/api/allUsers', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -83,7 +83,7 @@ const Explore = () => {
       }
       else {
         console.log("mes donees de l'auth :", id,  firstname , lastname, sexualPreference, gender);
-        const response = await fetch('http://localhost:5000/api/allUsers', {
+        const response = await fetch('http://localhost:5001/api/allUsers', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -131,7 +131,7 @@ const Explore = () => {
       const viewedId = viewed_id;
       const viewerId = id;
       console.log("l'id du mec que je regarde", viewedId);
-      const res = await fetch('http://localhost:5000/api/record-profile-view',{
+      const res = await fetch('http://localhost:5001/api/record-profile-view',{
         method: "POST",
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -150,7 +150,7 @@ const Explore = () => {
       try{
         const liked_id = likedId;
         const liker_id = id;
-        const res = await fetch('http://localhost:5000/api/likeUser',{
+        const res = await fetch('http://localhost:5001/api/likeUser',{
           method: "POST",
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,
@@ -180,7 +180,7 @@ const Explore = () => {
       try{
         const liked_id = likedId;
         const liker_id = id;
-        const res = await fetch('http://localhost:5000/api/dislikeUser',{
+        const res = await fetch('http://localhost:5001/api/dislikeUser',{
           method: "POST",
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('token')}`,

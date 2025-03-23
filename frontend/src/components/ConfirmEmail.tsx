@@ -17,7 +17,7 @@ const ConfirmEmail = () => {
         console.log('here');
 
 
-        const response = await fetch(`http://localhost:5000/api/confirm-email/${token}`, {
+        const response = await fetch(`http://localhost:5001/api/confirm-email/${token}`, {
             method: 'GET',
             headers: {
               // 'Authorization': `Bearer ${token}`,

@@ -1,10 +1,16 @@
 import { useState, useEffect } from 'react';
 import io from 'socket.io-client';
+// import { json } from 'stream/consumers';
+import { useParams } from 'react-router-dom';
+import { useAuth } from '@/context/auth';
 
-const socket = io('http://localhost:5000'); // Déplacer ici pour éviter les re-créations
+
+const socket = io('http://localhost:5001'); // Déplacer ici pour éviter les re-créations
 
 const Message = () => {
-    const [messages, setMessages] = useState<{ username: string; text: string }[]>([]);
+    const [messages, setMessages] = useState<{ text: string }[]>([]);
+    const { match_id } = useParams<{ match_id: string }>();
+    const { id } = useAuth();
 
     useEffect(() => {
         socket.on('SERVER_MSG', (msg) => {
@@ -16,18 +22,41 @@ const Message = () => {
         };
     }, []);
 
-    function sendMessage(e: React.FormEvent<HTMLFormElement>) {
+    const sendMessage = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        const form = e.currentTarget;
 
-        const msg = {
-            username: (form.elements.namedItem('username') as HTMLInputElement).value,
-            text: (form.elements.namedItem('text') as HTMLInputElement).value,
-        };
+        try{
+            const form = e.currentTarget;
+    
+            const msg = {
+                // username: (form.elements.namedItem('username') as HTMLInputElement).value,
+                text: (form.elements.namedItem('text') as HTMLInputElement).value,
+            };
+    
+            socket.emit('CLIENT_MSG', msg);
+            // setMessages(prevMessages => [...prevMessages, msg]); // Ajoute le message localement
 
-        socket.emit('CLIENT_MSG', msg);
-        setMessages(prevMessages => [...prevMessages, msg]); // Ajoute le message localement
-        form.reset(); // Nettoie les inputs
+            console.log("message_text", msg);
+            console.log("sender_id", id);
+            console.log("match_id", match_id);
+    
+            const response = await fetch('http://localhost:5001/getMessage', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`,
+                    'Content-Type': 'application/json'
+                  },
+                body: JSON.stringify({sender_id: id, message_text: msg, match_id}),
+            });
+    
+            const data = await response.json();
+            if (!data)
+                return ;
+            form.reset(); // Nettoie les inputs
+
+        }catch (error){
+            console.log(error);
+        }
     }
 
     return (
@@ -40,14 +69,12 @@ const Message = () => {
                             <hr />
                             <div className="messages">
                                 {messages.map((msg, index) => (
-                                    <div key={index}>{msg.username}: {msg.text}</div>
+                                    <div key={index}> {msg.text}</div>
                                 ))}
                             </div>
                         </div>
                         <form onSubmit={sendMessage}>
                             <div className="card-footer">
-                                <input id="username" type="text" placeholder="Username" className="form-control" required />
-                                <br />
                                 <input id="text" type="text" placeholder="Your message" className="form-control" required />
                                 <br />
                                 <button type="submit" className="btn btn-primary form-control">

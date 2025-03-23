@@ -42,7 +42,7 @@ const Profile = () => {
     const token = localStorage.getItem('token');
 
     try {
-      const response = await fetch('http://localhost:5000/api/user', {
+      const response = await fetch('http://localhost:5001/api/user', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -98,7 +98,7 @@ const Profile = () => {
 
       const token = localStorage.getItem('token');
       try{
-        const response = await fetch('http://localhost:5000/api/updateUser', {
+        const response = await fetch('http://localhost:5001/api/updateUser', {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -143,7 +143,7 @@ const Profile = () => {
   
       try {
         const token = localStorage.getItem("token");
-        const response = await fetch("http://localhost:5000/api/upload", {
+        const response = await fetch("http://localhost:5001/api/upload", {
           headers: {
             'Authorization': `Bearer ${token}`,
             // 'Content-Type': 'application/json'
@@ -289,7 +289,7 @@ export default Profile;
 //       }
 
 //       try {
-//         const response = await fetch('http://localhost:5000/api/user', {
+//         const response = await fetch('http://localhost:5001/api/user', {
 //           method: 'GET',
 //           headers: {
 //             'Authorization': `Bearer ${token}`,
@@ -319,7 +319,7 @@ export default Profile;
 
 //     const token = localStorage.getItem('token');
 //     try {
-//       const response = await fetch('http://localhost:5000/api/updateUser', {
+//       const response = await fetch('http://localhost:5001/api/updateUser', {
 //         method: 'PUT',
 //         headers: {
 //           'Authorization': `Bearer ${token}`,

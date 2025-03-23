@@ -15,7 +15,7 @@ const __dirname = path.dirname(__filename);
 
 // Création de l'application Express
 const app = express();
-const port = 5000;
+const port = 5001;
 
 // Création du serveur HTTP
 const server = createServer(app);
@@ -25,7 +25,7 @@ app.use(cors({
   origin: [
     'http://localhost:3000',
     'http://localhost:5173',
-    'http://localhost:5000',
+    'http://localhost:5001',
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
