@@ -6,6 +6,8 @@ import { fileURLToPath } from 'url';
 import { createServer } from 'http'; // Créer un serveur HTTP
 import { Server } from 'socket.io';  // Import correct de socket.io
 import stuffRoutes from './routes/stuff.js';
+import userCtrl from "./controllers/userControllers.js";
+// import { setSocket } from './controllers/userControllers.js';
 
 dotenv.config();
 
@@ -28,7 +30,7 @@ app.use(cors({
     'http://localhost:5001',
   ],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Cache-control'],
   credentials: true
 }));
 
@@ -46,18 +48,46 @@ const io = new Server(server, {
   }
 });
 
-io.on('connection', (socket) => {
-  console.log("Un client s'est connecté", socket.id);
 
-  socket.on('CLIENT_MSG', (data) => {
-    console.log("Message reçu :", data);
-    io.emit('SERVER_MSG', data);
+const connectedUsers = {}; // Stocke les utilisateurs connectés
+
+io.on("connection", (socket) => {
+  console.log(`Utilisateur connecté : ${socket.id}`);
+
+  // Associe un utilisateur à son socket lorsqu'il s'authentifie
+  socket.on("userConnected", (userId) => {
+    connectedUsers[userId] = socket.id;
+    console.log("Utilisateurs connectés:", connectedUsers);
   });
 
-  socket.on('disconnect', () => {
-    console.log(`Le client ${socket.id} s'est déconnecté`);
+  // Supprime l'utilisateur quand il se déconnecte
+  socket.on("disconnect", () => {
+    for (const userId in connectedUsers) {
+      if (connectedUsers[userId] === socket.id) {
+        console.log(`Utilisateur déconnecté : ${socket.id}`);
+        delete connectedUsers[userId];
+        break;
+      }
+    }
   });
 });
+
+// userCtrl.setSocket(io);
+
+export { io, connectedUsers };
+
+// io.on('connection', (socket) => {
+//   console.log("Un client s'est connecté", socket.id);
+
+//   socket.on('CLIENT_MSG', (data) => {
+//     console.log("Message reçu :", data);
+//     io.emit('SERVER_MSG', data);
+//   });
+
+//   socket.on('disconnect', () => {
+//     console.log(`Le client ${socket.id} s'est déconnecté`);
+//   });
+// });
 
 // Démarrage du serveur HTTP
 server.listen(port, () => {

@@ -7,16 +7,17 @@ import { Navigate } from 'react-router-dom';
 
 // import { ReactNode } from 'react';
 
-import Login from "./components/Login";
+import Login from "./pages/Login";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
-import Home from "./components/Home";
-import Signup from "./components/Signup";
-import Profil from "./components/Profil";
-import Explore from "./components/Explore";
-import Register from "./components/Register";
-import ConfirmEmail from "./components/ConfirmEmail";
-import Chat from "./components/Chat";
+import Home from "./pages/Home";
+import Signup from "./pages/Signup";
+import Profil from "./pages/Profil";
+import Explore from "./pages/Explore";
+import Register from "./pages/Register";
+import ConfirmEmail from "./pages/ConfirmEmail";
+import Chat from "./pages/Chat";
+import Notification from "./pages/Notification";
 
 // interface User {
 //   id: number;
@@ -67,6 +68,7 @@ function App() {
         <Route path="/profil/:username" element={<ProtectedRoute><Profil /></ProtectedRoute>} />
         <Route path="/chat" element={<ProtectedRoute ><Chat></Chat></ProtectedRoute>} />
         <Route path="/chat/:match_id" element={<ProtectedRoute ><Chat></Chat></ProtectedRoute>} />
+        <Route path="/notification" element={<ProtectedRoute ><Notification></Notification></ProtectedRoute>} />
         </Routes>
         <Footer />
       </Router>

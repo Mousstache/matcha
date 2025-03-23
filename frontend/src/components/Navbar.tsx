@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Heart, User } from "lucide-react";
+import { Heart, User, Mail } from "lucide-react";
 
 const Navbar = () => {
 
@@ -36,6 +36,11 @@ const Navbar = () => {
           <li className="hover">
             <Link to="/profil" className="flex items-center space-x-1">
               <User /> <span>Mon Profil</span>
+            </Link>
+          </li>
+          <li className="hover">
+            <Link to="/notification" className="flex items-center space-x-1">
+              <Mail /> <span>Mes notif</span>
             </Link>
           </li>
         </ul>

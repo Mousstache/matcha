@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useAuth } from "../context/auth";
+import { useLocation } from "react-router-dom";
+
 // import { set } from "date-fns";
 // import { set } from "date-fns";
 // import { Link } from "react-router-dom";
@@ -10,8 +12,11 @@ import { useAuth } from "../context/auth";
 
 
 const Login = () => {
-  const [email, setEmail] = useState("");
+  const location = useLocation();
+  const [email, setEmail] = useState(location.state?.email || "");
   const [password, setPassword] = useState("");
+
+
   const [error, setError] = useState("");
   const [online, setOnline] = useState(false);
   const [lastConnection, setLastConnection] = useState("");
@@ -23,6 +28,7 @@ const Login = () => {
   const { latitude, setLatitude } = useAuth();
   const { longitude, setLongitude } = useAuth();
   const { sexualPreference, setSexualPreference } = useAuth();
+
 
 
   const handleSubmit = async (e: React.FormEvent) => {
