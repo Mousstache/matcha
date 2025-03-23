@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Card, CardContent, CardTitle } from "./ui/card"
+import { Card, CardContent, CardTitle } from "../../src/components/ui/card"
 import { useNavigate } from "react-router-dom"; 
 
 

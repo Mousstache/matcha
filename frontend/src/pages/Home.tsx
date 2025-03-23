@@ -3,7 +3,8 @@ import { Card, CardContent, CardTitle, } from "@/components/ui/card";
 import { useEffect } from "react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom"; 
-import { Send, Ban} from 'lucide-react'
+import { Send, Ban} from 'lucide-react';
+// import { Link } from "react-router-dom";
 
 
 interface User{
@@ -105,6 +106,7 @@ const Home = () => {
     matchList();
   }, []);
 
+  
   return (
     <div className="flex items-center justify-center min-h-screen text-3xl font-bold">
       <Card>
@@ -121,7 +123,11 @@ const Home = () => {
                     <p className="font-semibold">{match.firstname}</p>
                     <p className="text-gray-500">{match.email}</p>
                     <Ban></Ban>
-                    <Send><button className="text-white" onClick={ () => navigate(`/chat/:${match.match_id}`)}>commencer le chat </button></Send>
+                    {/* <Link to="/chat/:${match.match_id}" className="flex items-center space-x-1">
+                      <Send/> <span>chatter</span>
+                    </Link> */}
+                    
+                    <button className="text-white" onClick={ () => navigate(`/chat/:${match.match_id}`)}>commencer le chat <Send></Send> </button>
                   </li>
                 ))}
               </ul>

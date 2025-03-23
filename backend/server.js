@@ -3,11 +3,10 @@ import path from 'path';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
-import { createServer } from 'http'; // Créer un serveur HTTP
-import { Server } from 'socket.io';  // Import correct de socket.io
+import { createServer } from 'http';
+import { Server } from 'socket.io';
 import stuffRoutes from './routes/stuff.js';
 import userCtrl from "./controllers/userControllers.js";
-// import { setSocket } from './controllers/userControllers.js';
 
 dotenv.config();
 
@@ -48,19 +47,24 @@ const io = new Server(server, {
   }
 });
 
-
 const connectedUsers = {}; // Stocke les utilisateurs connectés
 
 io.on("connection", (socket) => {
   console.log(`Utilisateur connecté : ${socket.id}`);
 
-  // Associe un utilisateur à son socket lorsqu'il s'authentifie
+  // Écoute des messages envoyés par un client
+  socket.on("CLIENT_MesSaGes", async (message) => {
+    console.log("Message reçu :", message);
+    io.emit("SERVER_MSG", message); // Diffuser à tous les clients connectés
+  });
+
+  // Associer un utilisateur à son socket lorsqu'il s'authentifie
   socket.on("userConnected", (userId) => {
     connectedUsers[userId] = socket.id;
     console.log("Utilisateurs connectés:", connectedUsers);
   });
 
-  // Supprime l'utilisateur quand il se déconnecte
+  // Supprimer l'utilisateur quand il se déconnecte
   socket.on("disconnect", () => {
     for (const userId in connectedUsers) {
       if (connectedUsers[userId] === socket.id) {
@@ -72,26 +76,11 @@ io.on("connection", (socket) => {
   });
 });
 
-// userCtrl.setSocket(io);
-
-export { io, connectedUsers };
-
-// io.on('connection', (socket) => {
-//   console.log("Un client s'est connecté", socket.id);
-
-//   socket.on('CLIENT_MSG', (data) => {
-//     console.log("Message reçu :", data);
-//     io.emit('SERVER_MSG', data);
-//   });
-
-//   socket.on('disconnect', () => {
-//     console.log(`Le client ${socket.id} s'est déconnecté`);
-//   });
-// });
-
 // Démarrage du serveur HTTP
 server.listen(port, () => {
   console.log(`Serveur WebSocket et API démarré sur http://localhost:${port}`);
 });
 
+// Exportation compatible ES Modules
+export { io, connectedUsers };
 export default app;

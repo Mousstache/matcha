@@ -10,16 +10,6 @@ import { Navigate } from 'react-router-dom';
 import Login from "./pages/Login";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
-<<<<<<< HEAD
-import Home from "./components/Home";
-import Signup from "./components/Signup";
-import Profil from "./components/Profil";
-import Explore from "./components/Explore";
-import Register from "./components/Register";
-import ConfirmEmail from "./components/ConfirmEmail";
-import Chat from "./components/Chat";
-import Notification from "./components/Notification"; 
-=======
 import Home from "./pages/Home";
 import Signup from "./pages/Signup";
 import Profil from "./pages/Profil";
@@ -28,7 +18,6 @@ import Register from "./pages/Register";
 import ConfirmEmail from "./pages/ConfirmEmail";
 import Chat from "./pages/Chat";
 import Notification from "./pages/Notification";
->>>>>>> 0620a995d4c26aa45a89c6c862217bee1c2614f2
 
 // interface User {
 //   id: number;
@@ -79,11 +68,7 @@ function App() {
         <Route path="/profil/:username" element={<ProtectedRoute><Profil /></ProtectedRoute>} />
         <Route path="/chat" element={<ProtectedRoute ><Chat></Chat></ProtectedRoute>} />
         <Route path="/chat/:match_id" element={<ProtectedRoute ><Chat></Chat></ProtectedRoute>} />
-<<<<<<< HEAD
         <Route path="/notification" element={<ProtectedRoute><Notification /></ProtectedRoute>} />
-=======
-        <Route path="/notification" element={<ProtectedRoute ><Notification></Notification></ProtectedRoute>} />
->>>>>>> 0620a995d4c26aa45a89c6c862217bee1c2614f2
         </Routes>
         <Footer />
       </Router>

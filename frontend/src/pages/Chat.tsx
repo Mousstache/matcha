@@ -16,10 +16,9 @@ const Message = () => {
     console.log("match_id", cleanMatchId);
 
 
+
     useEffect(() => {
         // Récupérer les messages existants
-
-        console.log("HHOPOOOOOOHHOOOOOO");
         const fetchMessages = async () => {
             try {
                 const response = await fetch(`http://localhost:5001/api/getMessages/${cleanMatchId}`, {
@@ -29,12 +28,8 @@ const Message = () => {
                         "Content-Type": "application/json",
                     },
                 });
-
+    
                 const data = await response.json();
-                // if (response.ok) {
-                //     setMessages(data.messages);
-                //     console.log("los messares", data);
-                // }
                 if (response.ok && Array.isArray(data.messages)) {
                     setMessages(data.messages);
                 } else {
@@ -44,18 +39,60 @@ const Message = () => {
                 console.error("Erreur lors de la récupération des messages :", error);
             }
         };
-
+    
         fetchMessages();
-
-        // Écouter les messages en temps réel
-        socket.on("SERVER_MSG", (messages) => {
-            setMessages((prevMessages) => [...prevMessages, messages]);
+    
+        // ✅ **Écoute les nouveaux messages en temps réel**
+        socket.on("SERVER_MSG", (newMessage) => {
+            setMessages((prevMessages) => [...prevMessages, newMessage]);
         });
-
+    
         return () => {
             socket.off("SERVER_MSG");
         };
     }, [cleanMatchId]);
+
+
+    // useEffect(() => {
+    //     // Récupérer les messages existants
+
+    //     console.log("HHOPOOOOOOHHOOOOOO");
+    //     const fetchMessages = async () => {
+    //         try {
+    //             const response = await fetch(`http://localhost:5001/api/getMessages/${cleanMatchId}`, {
+    //                 method: "GET",
+    //                 headers: {
+    //                     Authorization: `Bearer ${localStorage.getItem("token")}`,
+    //                     "Content-Type": "application/json",
+    //                 },
+    //             });
+
+    //             const data = await response.json();
+    //             // if (response.ok) {
+    //             //     setMessages(data.messages);
+    //             //     console.log("los messares", data);
+    //             // }
+    //             if (response.ok && Array.isArray(data.messages)) {
+    //                 setMessages(data.messages);
+    //             } else {
+    //                 setMessages([]); // Évite d'avoir `undefined`
+    //             }
+    //         } catch (error) {
+    //             console.error("Erreur lors de la récupération des messages :", error);
+    //         }
+    //     };
+
+    //     fetchMessages();
+
+    //     // Écouter les messages en temps réel
+    //     socket.on("SERVER_MSG", (messages) => {
+    //         setMessages((prevMessages) => [...prevMessages, messages]);
+    //     });
+
+    //     return () => {
+    //         socket.off("SERVER_MSG");
+    //     };
+    // }, [cleanMatchId]);
 
     const sendMessage = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
