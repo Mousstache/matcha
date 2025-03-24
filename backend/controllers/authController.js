@@ -281,6 +281,9 @@ export async function logUser (req, res){
   
 export async function imageUpload (req, res){
 try {
+
+  console.log("req.files", req.files);
+  
     if (!req.files || req.files.length === 0) {
     return res.status(400).json({ error: "Aucune image reçue" });
     }
@@ -295,7 +298,12 @@ try {
     const profilePicture = images[0];
     const otherPictures = images.slice(1);
 
-    console.log("profilePicture:", profilePicture);
+    if (!profilePicture.length > 4) {
+      console.log("haaaaaaa>>>>>");
+      console.log("profilePicture.length", profilePicture.length);
+    }
+
+    // console.log("profilePicture:", profilePicture);
 
     await db.update(
     'users',

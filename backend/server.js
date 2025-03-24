@@ -21,6 +21,7 @@ const port = 5001;
 // Création du serveur HTTP
 const server = createServer(app);
 
+
 // Configuration CORS
 app.use(cors({
   origin: [
@@ -47,7 +48,9 @@ const io = new Server(server, {
   }
 });
 
-const connectedUsers = {}; // Stocke les utilisateurs connectés
+const connectedUsers = {};
+
+const notifications = {}; 
 
 io.on("connection", (socket) => {
   console.log(`Utilisateur connecté : ${socket.id}`);
@@ -57,6 +60,22 @@ io.on("connection", (socket) => {
     console.log("Message reçu :", message);
     io.emit("SERVER_MSG", message); // Diffuser à tous les clients connectés
   });
+
+  socket.on("SEND_NOTIFICATION", ({ userId, type,  message }) => {
+    if (!notifications[userId]) {
+      notifications[userId] = [];
+    }
+    const newNotification = { type, message, is_read:false,  created_at: new Date() };
+    notifications[userId].push(newNotification);
+
+    console.log("🔔 Notification reçue :", newNotification);
+
+    // Vérifier si l'utilisateur est en ligne
+    const userSocketId = connectedUsers[userId];
+    if (userSocketId) {
+      io.to(userSocketId).emit("RECEIVE_NOTIFICATION", newNotification);
+    }
+});
 
   // Associer un utilisateur à son socket lorsqu'il s'authentifie
   socket.on("userConnected", (userId) => {

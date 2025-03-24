@@ -1,7 +1,7 @@
 //import { Calendar } from "lucide-react";
 import { Card, CardContent, CardTitle } from "../components/ui/card"
 import { useState } from "react";
-import useGeolocation from "./useGeolocation";
+import useGeolocation from "../hooks/useGeolocation";
 import useReverseGeolocation from "../hooks/useReverseGeolocation";
 import { useNavigate } from "react-router-dom";
 

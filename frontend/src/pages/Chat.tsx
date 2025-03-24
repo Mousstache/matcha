@@ -7,9 +7,10 @@ const socket = io("http://localhost:5001");
 
 const Message = () => {
     const [messages, setMessages] = useState<{ sender_id: number; message_text: string }[]>([]);
+    const [receiver, setReceiver] = useState<string>("");
     const [messageText, setMessageText] = useState("");
     const { match_id } = useParams<{ match_id: string }>();
-    const { id } = useAuth(); // ID de l'utilisateur connecté
+    const { id } = useAuth();
 
     const cleanMatchId = match_id ? match_id.replace(":", "") : null;
 
@@ -18,7 +19,6 @@ const Message = () => {
 
 
     useEffect(() => {
-        // Récupérer les messages existants
         const fetchMessages = async () => {
             try {
                 const response = await fetch(`http://localhost:5001/api/getMessages/${cleanMatchId}`, {
@@ -33,7 +33,7 @@ const Message = () => {
                 if (response.ok && Array.isArray(data.messages)) {
                     setMessages(data.messages);
                 } else {
-                    setMessages([]); // Évite d'avoir `undefined`
+                    setMessages([]);
                 }
             } catch (error) {
                 console.error("Erreur lors de la récupération des messages :", error);
@@ -42,57 +42,27 @@ const Message = () => {
     
         fetchMessages();
     
-        // ✅ **Écoute les nouveaux messages en temps réel**
         socket.on("SERVER_MSG", (newMessage) => {
             setMessages((prevMessages) => [...prevMessages, newMessage]);
         });
+
+        socket.emit("SEND_NOTIFICATION", {
+            userId: Number(receiver),  // L'ID du destinataire du message
+            type: "message",
+            message: `📩 Nouveau message de ${id}`,
+        });
+
+        // socket.on("SEND_NOTIFICATION", (newNotification) => {
+        //     userId: receiverId.user2_id,
+        //     type: "message",
+        //     message: `📩 Nouveau message de ${sender_id}`,
+        // });
+  
     
         return () => {
             socket.off("SERVER_MSG");
         };
     }, [cleanMatchId]);
-
-
-    // useEffect(() => {
-    //     // Récupérer les messages existants
-
-    //     console.log("HHOPOOOOOOHHOOOOOO");
-    //     const fetchMessages = async () => {
-    //         try {
-    //             const response = await fetch(`http://localhost:5001/api/getMessages/${cleanMatchId}`, {
-    //                 method: "GET",
-    //                 headers: {
-    //                     Authorization: `Bearer ${localStorage.getItem("token")}`,
-    //                     "Content-Type": "application/json",
-    //                 },
-    //             });
-
-    //             const data = await response.json();
-    //             // if (response.ok) {
-    //             //     setMessages(data.messages);
-    //             //     console.log("los messares", data);
-    //             // }
-    //             if (response.ok && Array.isArray(data.messages)) {
-    //                 setMessages(data.messages);
-    //             } else {
-    //                 setMessages([]); // Évite d'avoir `undefined`
-    //             }
-    //         } catch (error) {
-    //             console.error("Erreur lors de la récupération des messages :", error);
-    //         }
-    //     };
-
-    //     fetchMessages();
-
-    //     // Écouter les messages en temps réel
-    //     socket.on("SERVER_MSG", (messages) => {
-    //         setMessages((prevMessages) => [...prevMessages, messages]);
-    //     });
-
-    //     return () => {
-    //         socket.off("SERVER_MSG");
-    //     };
-    // }, [cleanMatchId]);
 
     const sendMessage = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -104,15 +74,13 @@ const Message = () => {
         }
     
         const message = {
-            sender_id: Number(id),  // ✅ Conversion en nombre
+            sender_id: Number(id),
             message_text: messageText,
             match_id: Number(cleanMatchId),
         };
     
-        // Envoyer via WebSocket
         socket.emit("CLIENT_MesSaGes", message);
     
-        // Sauvegarde dans la base de données
         try {
             const response = await fetch("http://localhost:5001/api/sendMessage", {
                 method: "POST",
@@ -122,7 +90,10 @@ const Message = () => {
                 },
                 body: JSON.stringify(message),
             });
-    
+            
+            const data = await response.json();
+            
+            setReceiver(data.receiver);
             if (response.ok) {
                 setMessages((prevMessages) => [
                     ...prevMessages,
@@ -135,48 +106,9 @@ const Message = () => {
         }
     };
 
-    // const sendMessage = async (e: React.FormEvent<HTMLFormElement>) => {
-    //     e.preventDefault();
-
-    //     if (!messageText.trim()) return;
-
-    //     const message = {
-    //         sender_id: id,
-    //         message_text: messageText,
-    //         match_id,
-    //     };
-
-    //     // Envoyer via WebSocket
-    //     socket.emit("CLIENT_MesSaGes", message);
-
-    //     // Sauvegarder dans la BDD
-    //     try {
-    //         const response = await fetch("http://localhost:5001/api/sendMessage", {
-    //             method: "POST",
-    //             headers: {
-    //                 Authorization: `Bearer ${localStorage.getItem("token")}`,
-    //                 "Content-Type": "application/json",
-    //             },
-    //             body: JSON.stringify(message),
-    //         });
-
-    //         if (response.ok) {
-    //             setMessages((prevMessages) => [...prevMessages, message]);
-    //             setMessageText(""); // Reset input
-    //         }
-    //     } catch (error) {
-    //         console.error("Erreur lors de l'envoi du message :", error);
-    //     }
-    // };
-
     return (
         <div className="flex flex-col h-screen max-w-lg mx-auto bg-gray-100 border rounded-lg shadow-lg">
-            {/* Titre */}
-            <div className="bg-blue-600 text-white text-xl font-bold p-4 rounded-t-lg">
-                Chat Room
-            </div>
 
-            {/* Liste des messages */}
             <div className="flex-1 p-4 overflow-y-auto space-y-2">
                 {messages?.map((messages, index) => (
                     <div
@@ -190,7 +122,6 @@ const Message = () => {
                 ))}
             </div>
 
-            {/* Formulaire d'envoi */}
             <form onSubmit={sendMessage} className="flex p-2 bg-white border-t rounded-b-lg">
                 <input
                     type="text"

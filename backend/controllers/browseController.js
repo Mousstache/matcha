@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import db from '../config/db.js';
+import { io } from '../server.js';
 
 export async function recordProfileView (req, res){
     try {
@@ -45,6 +46,14 @@ export async function recordProfileView (req, res){
           { viewed_at: new Date() }
         );
       }
+
+      if (io) {
+        io.to(`user_${viewedId}`).emit("SEND_NOTIFICATION", {
+          userId: viewerId,
+          type: "view",
+          message: `${viewerId} a visité votre profil`,
+      });
+    }
       
       return res.status(200).json({
         success: true,
@@ -62,7 +71,7 @@ export async function recordProfileView (req, res){
   
   
   
-  export async function getAllUsers (req, res){
+export async function getAllUsers (req, res){
     try {
       const {
         minAge,
@@ -73,8 +82,10 @@ export async function recordProfileView (req, res){
         longitude,
         maxDistance,
         ordered,
-        interests
+        interests,
+        // id
       } = req.body;
+
       console.log('minAge:', minAge);
       console.log('maxAge:', maxAge);
       console.log('sexualPreference:', sexualPreference);
@@ -83,7 +94,7 @@ export async function recordProfileView (req, res){
       console.log('longitude:', longitude);
       console.log('maxDistance:', maxDistance);
       
-      let query = `SELECT id, email, firstname, lastname, description, interests, age, city`;
+      let query = `SELECT id, email, firstname, lastname, description, interests, age, city, profile_picture`;
   
       if (latitude && longitude) {
         query += `,
@@ -99,9 +110,9 @@ export async function recordProfileView (req, res){
   
       const params = [];
   
-      if (latitude && longitude) {
-        params.push(parseFloat(latitude), parseFloat(longitude));
-      }
+      // if (latitude && longitude) {
+      //   params.push(parseFloat(latitude), parseFloat(longitude));
+      // }
       
       if (minAge) {
         query += ` AND age >= $${params.length + 1}`;
@@ -123,29 +134,29 @@ export async function recordProfileView (req, res){
         params.push(gender);
       }
   
-      if (latitude && longitude && maxDistance) {
-        query += ` HAVING distance <= $${paramIndex}`;
-        params.push(parseFloat(maxDistance));
-        paramIndex++;
-      }
+      // if (latitude && longitude && maxDistance) {
+      //   query += ` HAVING distance <= $${paramIndex}`;
+      //   params.push(parseFloat(maxDistance));
+      //   paramIndex++;
+      // }
   
-      if (ordered){
-        if (ordered === "age"){
-          if (age){
-            query += ` ORDER BY age`;
-          }
-        }
-        if (ordered === "distance"){
-          if (latitude && longitude) {
-            query += ` ORDER BY distance`;
-          }
-        }
-        if (ordered === "interests"){
-          if (interests){
-            query += ` ORDER BY interests`;
-          }
-        }
-      }
+      // if (ordered){
+      //   if (ordered === "age"){
+          // if (age){
+          //   query += ` ORDER BY age`;
+          // }
+      //   }
+      //   if (ordered === "distance"){
+      //     if (latitude && longitude) {
+      //       query += ` ORDER BY distance`;
+      //     }
+      //   }
+      //   if (ordered === "interests"){
+      //     if (interests){
+      //       query += ` ORDER BY interests`;
+      //     }
+      //   }
+      // }
   
       const users = await db.query(query, params);
       

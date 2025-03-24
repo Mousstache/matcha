@@ -1,5 +1,7 @@
 import jwt from 'jsonwebtoken';
 import db from '../config/db.js';
+// import { socket } from '../server.js';
+
 
 let io;
 
@@ -48,30 +50,53 @@ export async function likeUser (req, res){
         await db.update('users', { fame_rate: fameRate2 }, { id: liker_id });
         await db.insert('matches', {user1_id: liker_id, user2_id: liked_id, created_at: new Date()});
   
-        if (io) {
-          const receiverSocket = connectedUsers[liked_id];
-          if (receiverSocket) {
-              io.to(receiverSocket).emit("receive_notification", {
-                  message: `🔥 C'est un match avec ${liker_id} ! 🎉`,
-              });
-          }
-      }
+      //   if (io) {
+      //     const receiverSocket = connectedUsers[liked_id];
+      //     if (receiverSocket) {
+      //         io.to(receiverSocket).emit("receive_notification", {
+      //             message: `🔥 C'est un match avec ${liker_id} ! 🎉`,
+      //         });
+      //     }
+      // }
+
+      // if (io) {
+        io.to(`user_${liker_id}`).emit("SEND_NOTIFICATION", {
+          userId: liked_id,
+          type: "match",
+          message: `🎉 Vous avez un match avec ${liked_id} !`,
+      });
+      io.to(`user_${liked_id}`).emit("SEND_NOTIFICATION", {
+          userId: liker_id,
+          type: "match",
+          message: `🎉 Vous avez un match avec ${liker_id} !`,
+      });
+    // }
+
+    
+    return res.status(201).json({
+      message: "c'est un match",
+    })
+  }
   
-        return res.status(201).json({
-          message: "c'est un match",
-        })
-      }
+  await db.insert('likes', {liker_id, liked_id});
   
-      await db.insert('likes', {liker_id, liked_id});
-  
-      if (io) {
-        const receiverSocket = connectedUsers[liked_id];
-        if (receiverSocket) {
-            io.to(receiverSocket).emit("receive_notification", {
-                message: `💖 Vous avez reçu un like de ${liker_id} !`,
-            });
-        }
-    }
+  // if (io) {
+      io.to(`user_${liker_id}`).emit("SEND_NOTIFICATION", {
+        userId: liked_id,
+        type: "like",
+        message: `${liker_id} vous a liké !`,
+    });
+  // }
+
+
+  // if (io) {
+  //   const receiverSocket = connectedUsers[liked_id];
+  //       if (receiverSocket) {
+  //           io.to(receiverSocket).emit("receive_notification", {
+  //               message: `💖 Vous avez reçu un like de ${liker_id} !`,
+  //           });
+  //       }
+  //   }
   
       return res.status(201).json({
         message: "like ajouter",
@@ -94,6 +119,14 @@ export async function likeUser (req, res){
       fameRate = user.fame_rate - 1;
       
       const like = await db.findOne('likes', {liker_id, liked_id});
+
+      if (io) {
+        io.to(`user_${liker_id}`).emit("SEND_NOTIFICATION", {
+        userId: liker_id,
+        type: "unlike",
+        message: `${unlikerName} ne vous aime plus 😢`,
+    });
+  }    
   
       await db.update();
   
@@ -141,6 +174,14 @@ export async function likeUser (req, res){
       fameRate = user.fame_rate - 1;
   
       db.update('users', { fame_rate: fameRate });
+
+      if (io) {
+        io.to(`user_unliker`).emit("SEND_NOTIFICATION", {
+        userId: unlike_id,
+        type: "unlike",
+        message: `${unlikerName} ne vous aime plus 😢`,
+    });
+  }    
       
       return res.status(201).json({
         message: "unlike pour la fame rate",
@@ -209,4 +250,4 @@ export async function likeUser (req, res){
     }
   };
 
-export default { likeUser, unlikeUser, getLikes, getOtherLikes, getMatches, setSocket };
+export default { likeUser, unlikeUser, getLikes, getOtherLikes, getMatches, setSocket, dislikeUser };

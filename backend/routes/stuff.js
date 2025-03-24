@@ -12,7 +12,7 @@ router.post('/register', userCtrl.registerUser);
 router.put('/fillInfo', userCtrl.fillInfo);
 router.get('/confirm-email/:token', userCtrl.confirmEmail);
 router.post('/login', userCtrl.logUser);
-router.post("/upload", authMiddleware, upload.array("images", 5), userCtrl.imageUpload);
+router.post('/upload', authMiddleware, upload.array("images", 5), userCtrl.imageUpload);
 
 
 router.get('/user', authMiddleware, userCtrl.getUser);
@@ -21,10 +21,8 @@ router.post('/allUsers', authMiddleware, userCtrl.getAllUsers);
 
 router.post('/record-profile-view', authMiddleware, userCtrl.recordProfileView);
 router.post('/likeUser', userCtrl.likeUser);
-// router.delete('/dislikeUser', userCtrl.dislikeUser);
+router.delete('/dislikeUser', userCtrl.dislikeUser);
 router.post('/unlikeUser', userCtrl.unlikeUser);
-// router.post('/blockUser', userCtrl.blockUser);
-// router.delete('/unblockUser', userCtrl.unblockUser);
 router.get('/getLikes', userCtrl.getLikes);
 router.get('/getOtherLikes', userCtrl.getOtherLikes);
 router.get('/getMatches', userCtrl.getMatches);
@@ -32,13 +30,19 @@ router.get('/getMatches', userCtrl.getMatches);
 router.get('/getMessages/:match_id', authMiddleware, userCtrl.getMessages);
 router.post('/sendMessage', authMiddleware, userCtrl.sendMessage);
 router.get('/getNotifications', authMiddleware, userCtrl.getNotifications);
+router.post('/sendNotification', authMiddleware, userCtrl.sendNotification);
 
 router.put('/updateUser', authMiddleware, userCtrl.updateUser);
+// router.post('/blockUser', userCtrl.blockUser);
+// router.delete('/unblockUser', userCtrl.unblockUser);
+
 // router.put('/logout', authMiddleware, userCtrl.logoutUser);
-
-
 
 // router.post('/forgot-password', userController.forgotPassword);
 // router.post('/reset-password', userController.resetPassword);
+
+
+
+
 
 export default router;

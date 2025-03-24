@@ -109,6 +109,9 @@ const Profile = () => {
 
       const data = await response.json();
 
+      if (response.ok) {
+        alert('Profil mis à jour avec succès !');
+      }
       if (!data)
         return ;
 
@@ -146,7 +149,6 @@ const Profile = () => {
         const response = await fetch("http://localhost:5001/api/upload", {
           headers: {
             'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
         },
           method: "POST",
           body: formData,

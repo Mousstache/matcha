@@ -1,8 +1,11 @@
 import { Link } from "react-router-dom";
 import { Heart, User, Mail } from "lucide-react";
+import { useNotifications } from "@/context/NotificationContext";
 
 const Navbar = () => {
-
+  
+  const { notifications } = useNotifications();
+  const unreadCount = notifications.filter((n:any) => !n.read).length;
   const handleLogout = async () => {
 
     const token = localStorage.getItem("token");
@@ -39,6 +42,18 @@ const Navbar = () => {
             </Link>
           </li>
           <li className="hover">
+              <nav className="p-4 bg-gray-800 text-white flex justify-between">
+                <div className="relative">
+                    <button className="relative">
+                        🔔
+                        {unreadCount > 0 && (
+                            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+                                {unreadCount}
+                            </span>
+                        )}
+                    </button>
+                </div>
+            </nav>
             <Link to="/notification" className="flex items-center space-x-1">
               <Mail /> <span>Mes notif</span>
             </Link>

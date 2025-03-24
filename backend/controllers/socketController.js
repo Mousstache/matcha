@@ -1,19 +1,26 @@
 import db from '../config/db.js';
+import { io } from '../server.js';
+
+
+
 
 export async function sendMessage (req, res) {
-    try {
-  
+  try {
+
       const { sender_id, match_id, message_text } = req.body;
+
+      const receiverId = await db.findOne('matches', {match_id})
   
       const messages = await db.insert('messages', {sender_id, match_id, message_text, created_at: new Date()});
   
       return res.status(200).json({
         message: "listes des messages",
         messages: messages,
+        receiver: receiverId,
       })
   
     }catch (error){
-      console.log('Error lors de la recup des matches', error);
+      console.log("Error lors de l'envoi de message", error);
     }
   };
   
@@ -41,6 +48,23 @@ export async function getMessages (req, res) {
       console.log('Error lors de la recup des matches', error);
     }
   };
+
+export async function sendNotification (req, res) {
+    try {
+  
+      const { user_id, notification_text } = req.body;
+  
+      const notifications = await db.insert('notification', {user_id, notification_text, created_at: new Date()});
+  
+      return res.status(200).json({
+        message: "listes des notifications",
+        notifications: notifications,
+      })
+  
+    }catch (error){
+      console.log('Error lors de la recup des matches', error);
+    }
+  }; 
   
 export async function getNotifications(req, res) {
     try {
@@ -61,5 +85,5 @@ export async function getNotifications(req, res) {
     }
   };
 
-export default { getMessages , getNotifications, sendMessage };
+export default { getMessages , getNotifications, sendNotification, sendMessage };
   

@@ -1,27 +1,32 @@
-import { useNotifications } from "@/context/NotificationContext.tsx";
-
-interface Notification {
-    message: string;
-    notif: string;
-    index: number;
-}
+import { useNotifications } from "@/context/NotificationContext";
 
 const Notification = () => {
-    const { notifications } = useNotifications();
+    const { notifications, setNotifications } = useNotifications();
+
+    const markAllAsRead = () => {
+        setNotifications((prev:any) => prev.map((n:any) => ({ ...n, read: true })));
+    };
 
     return (
-        <div className="fixed bg-white shadow-lg p-4 rounded-lg">
-            <h3 className="text-lg font-bold">🔔 Notifications</h3>
-            {notifications.length === 0 ? (
-                <p>Aucune notification</p>
-            ) : (
-                notifications.map((notif:string, index:number) => (
-                    <div key={index} className="p-2 bg-gray-100 my-1 rounded">
-                        {notif}
-                    </div>
-                ))
-            )}
-        </div>
+        <nav className="p-4 bg-gray-800 text-white flex justify-between">
+            <h1>Mon App</h1>
+            <div className="relative">
+                <button className="relative" onClick={markAllAsRead}>
+                    🔔 {notifications.some((n:any) => !n.read) && "•"}
+                </button>
+                <div className="absolute right-0 mt-2 w-64 bg-white text-black shadow-lg rounded-lg">
+                    {notifications.length === 0 ? (
+                        <p className="p-2 text-gray-500">Aucune notification</p>
+                    ) : (
+                        notifications.map((notif:any, i:any) => (
+                            <p key={i} className={`p-2 ${notif.read ? "text-gray-500" : "font-bold"}`}>
+                                {notif.message}
+                            </p>
+                        ))
+                    )}
+                </div>
+            </div>
+        </nav>
     );
 };
 
