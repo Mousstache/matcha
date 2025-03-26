@@ -9,12 +9,21 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
 
 
     useEffect(() => {
-        socket.on("NEW_NOTIFICATION", (notification) => {
+
+        socket.on("SEND_NOTIFICATION",(notification) =>
+        {
+            alert(`Nouvelle notification : ${notification.message}`);
+        })
+
+        socket.on("RECEIVE_NOTIFICATION", (notification) => {
+            console.log("🔔 Notification reçue dans le provider", notification);
+            alert(`Nouvelle notification : ${notification.message}`);
             setNotifications((prev) => [...prev, notification]);
         });
 
         return () => {
-            socket.off("NEW_NOTIFICATION");
+            socket.off("RECEIVE_NOTIFICATION");
+            socket.off("SEND_NOTIFICATION");
         };
     }, []);
 

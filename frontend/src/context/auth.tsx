@@ -99,12 +99,11 @@ export const AuthContextProvider = ({ children }: { children: React.ReactNode })
     fetchUserData();
   }, []);
 
-
   useEffect(() => {
-    if (id) {
-        socket.emit("userConnected", id);
+    if(id) {
+      socket.emit("userConnected", id);
     }
-}, [id]);
+  }, [id]);
 
   return (
     <AuthContext.Provider 
