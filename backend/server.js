@@ -48,41 +48,62 @@ const io = new Server(server, {
   }
 });
 
+// setSocket(io);
+
 const connectedUsers = {};
 
 const notifications = {}; 
 
+
 io.on("connection", (socket) => {
   console.log(`Utilisateur connecté : ${socket.id}`);
+  
+  // Associer un utilisateur à son socket lorsqu'il s'authentifie
+  socket.on("userConnected", (userId) => {
+    console.log("👤 Utilisateur connecté :", userId, "➡️ Socket ID :", socket.id);
+    console.log("Utilisateurs connectés:", connectedUsers);
+    for (const id in connectedUsers) {
+      if (connectedUsers[id] === socket.id) {
+          delete connectedUsers[id];
+      }
+  }
 
+  connectedUsers[userId] = socket.id;
+  });
+  
   // Écoute des messages envoyés par un client
   socket.on("CLIENT_MesSaGes", async (message) => {
     console.log("Message reçu :", message);
-    io.emit("SERVER_MSG", message); // Diffuser à tous les clients connectés
+    io.emit("SERVER_MSG", message);
+
   });
 
+
+  
   socket.on("SEND_NOTIFICATION", ({ userId, type,  message }) => {
+    console.log("🛑 Événement SEND_NOTIFICATION reçu pour :", userId);
+    console.log("📩 Contenu du message :", message);
+    console.log('rentre cici');
     if (!notifications[userId]) {
       notifications[userId] = [];
     }
+
     const newNotification = { type, message, is_read:false,  created_at: new Date() };
     notifications[userId].push(newNotification);
-
+    
     console.log("🔔 Notification reçue :", newNotification);
-
+    
     // Vérifier si l'utilisateur est en ligne
     const userSocketId = connectedUsers[userId];
+    console.log("connectUser[]userId =", connectedUsers[userId]);
     if (userSocketId) {
+      console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>");
+      // io.emit("RECEIVE_NOTIFICATION", newNotification);
       io.to(userSocketId).emit("RECEIVE_NOTIFICATION", newNotification);
     }
-});
-
-  // Associer un utilisateur à son socket lorsqu'il s'authentifie
-  socket.on("userConnected", (userId) => {
-    connectedUsers[userId] = socket.id;
-    console.log("Utilisateurs connectés:", connectedUsers);
   });
-
+  
+  
   // Supprimer l'utilisateur quand il se déconnecte
   socket.on("disconnect", () => {
     for (const userId in connectedUsers) {
@@ -93,7 +114,11 @@ io.on("connection", (socket) => {
       }
     }
   });
+  
 });
+
+app.set("io", io);
+app.set("connectedUsers", connectedUsers);
 
 // Démarrage du serveur HTTP
 server.listen(port, () => {

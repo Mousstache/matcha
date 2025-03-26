@@ -7,7 +7,7 @@ const socket = io("http://localhost:5001");
 
 const Message = () => {
     const [messages, setMessages] = useState<{ sender_id: number; message_text: string }[]>([]);
-    const [receiver, setReceiver] = useState<string>("");
+    // const [receiver, setReceiver] = useState<string>("");
     const [messageText, setMessageText] = useState("");
     const { match_id } = useParams<{ match_id: string }>();
     const { id } = useAuth();
@@ -46,11 +46,11 @@ const Message = () => {
             setMessages((prevMessages) => [...prevMessages, newMessage]);
         });
 
-        socket.emit("SEND_NOTIFICATION", {
-            userId: Number(receiver),  // L'ID du destinataire du message
-            type: "message",
-            message: `📩 Nouveau message de ${id}`,
-        });
+        // socket.emit("SEND_NOTIFICATION", {
+        //     userId: Number(receiver),  // L'ID du destinataire du message
+        //     type: "message",
+        //     message: `📩 Nouveau message de ${id}`,
+        // });
 
         // socket.on("SEND_NOTIFICATION", (newNotification) => {
         //     userId: receiverId.user2_id,
@@ -80,6 +80,14 @@ const Message = () => {
         };
     
         socket.emit("CLIENT_MesSaGes", message);
+
+        const notif = { 
+            userId: id, 
+            type: "message",
+            message: `📩 Nouveau message de ${id}`
+        };
+
+        socket.emit("SEND_NOTIFICATION", notif);
     
         try {
             const response = await fetch("http://localhost:5001/api/sendMessage", {
@@ -91,9 +99,6 @@ const Message = () => {
                 body: JSON.stringify(message),
             });
             
-            const data = await response.json();
-            
-            setReceiver(data.receiver);
             if (response.ok) {
                 setMessages((prevMessages) => [
                     ...prevMessages,

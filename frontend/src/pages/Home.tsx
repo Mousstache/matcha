@@ -3,7 +3,7 @@ import { Card, CardContent, CardTitle, } from "@/components/ui/card";
 import { useEffect } from "react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom"; 
-import { Send, Ban} from 'lucide-react';
+import { Send, Ban, Flag } from 'lucide-react';
 // import { Link } from "react-router-dom";
 
 
@@ -106,6 +106,31 @@ const Home = () => {
     matchList();
   }, []);
 
+  // const handleUnlike = async () =>{
+
+  //   try {
+  //     const token = localStorage.getItem("token");
+  //           const res = await fetch('http://localhost:5001/api/unlikeUser', {
+  //             method: "DELETE",
+  //             headers:{
+  //               'Authorization': `bearer ${token}`,
+  //               'Content-Type': 'application/json'
+  //             },
+  //             body: JSON.stringify({liker_id, liked_id, match_id})
+  //           })
+            
+  //           const data = await res.json();
+  
+  //           if (!res)
+  //             return ;
+              
+  //           if (!data)
+  //             return ;
+  //   }catch (error){
+  //     console.log(error);
+  //   }
+  // };
+
   
   return (
     <div className="flex items-center justify-center min-h-screen text-3xl font-bold">
@@ -122,11 +147,16 @@ const Home = () => {
                   <li key={match.id} className="p-2 border border-gray-300 rounded-lg shadow-sm">
                     <p className="font-semibold">{match.firstname}</p>
                     <p className="text-gray-500">{match.email}</p>
-                    <Ban></Ban>
                     {/* <Link to="/chat/:${match.match_id}" className="flex items-center space-x-1">
                       <Send/> <span>chatter</span>
                     </Link> */}
-                    
+
+                    <button className="text-white" onClick={ () => navigate(`/chat/:${match.match_id}`)}>block user <Ban></Ban> </button>
+
+                    <button className="text-white" onClick={ () => navigate(`/chat/:${match.match_id}`)}>signal user <Flag></Flag> </button>
+
+                    {/* <button className="text-white" onClick={ () => handleUnlike}>unlike user <HeartCrack></HeartCrack> </button> */}
+
                     <button className="text-white" onClick={ () => navigate(`/chat/:${match.match_id}`)}>commencer le chat <Send></Send> </button>
                   </li>
                 ))}

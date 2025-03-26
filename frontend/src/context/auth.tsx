@@ -1,4 +1,7 @@
 import { createContext, useContext, useState, useEffect } from 'react';
+import { io } from "socket.io-client";
+
+const socket = io("http://localhost:5001", { transports: ["websocket"] });
 
 interface AuthContextType {
   id: string;
@@ -95,6 +98,12 @@ export const AuthContextProvider = ({ children }: { children: React.ReactNode })
   useEffect(() => {
     fetchUserData();
   }, []);
+
+  useEffect(() => {
+    if(id) {
+      socket.emit("userConnected", id);
+    }
+  }, [id]);
 
   return (
     <AuthContext.Provider 

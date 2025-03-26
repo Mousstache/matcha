@@ -1,14 +1,6 @@
 import jwt from 'jsonwebtoken';
 import db from '../config/db.js';
-// import { socket } from '../server.js';
-
-
-let io;
-
-export const setSocket = (socketIo) => {
-    io = socketIo;
-};
-
+import { io } from '../server.js';
 
 
 export async function likeUser (req, res){
@@ -28,7 +20,13 @@ export async function likeUser (req, res){
         return res.status(400).json({
           message: "ya pas de like",
         })
-  
+
+      const io = req.app.get("io");
+      const connectedUsers = req.app.get("connectedUsers");
+
+      const likedSocketId = connectedUsers[liked_id];
+      const likerSocketId = connectedUsers[liker_id];
+        
       if (liker_id === liked_id)
         return res.status(400).json({
           message : "pas de like sois meme",
@@ -49,55 +47,43 @@ export async function likeUser (req, res){
         await db.update('users', { fame_rate: fameRate3 }, { id: liked_id });
         await db.update('users', { fame_rate: fameRate2 }, { id: liker_id });
         await db.insert('matches', {user1_id: liker_id, user2_id: liked_id, created_at: new Date()});
-  
-      //   if (io) {
-      //     const receiverSocket = connectedUsers[liked_id];
-      //     if (receiverSocket) {
-      //         io.to(receiverSocket).emit("receive_notification", {
-      //             message: `🔥 C'est un match avec ${liker_id} ! 🎉`,
-      //         });
-      //     }
-      // }
 
-      // if (io) {
-        io.to(`user_${liker_id}`).emit("SEND_NOTIFICATION", {
+
+      io.emit("SEND_NOTIFICATION", {
           userId: liked_id,
           type: "match",
           message: `🎉 Vous avez un match avec ${liked_id} !`,
       });
-      io.to(`user_${liked_id}`).emit("SEND_NOTIFICATION", {
+      io.to(liked_id).emit("SEND_NOTIFICATION", {
           userId: liker_id,
           type: "match",
           message: `🎉 Vous avez un match avec ${liker_id} !`,
       });
-    // }
 
+      
+      
+      return res.status(201).json({
+        message: "c'est un match",
+      })
+    }
     
-    return res.status(201).json({
-      message: "c'est un match",
-    })
-  }
-  
-  await db.insert('likes', {liker_id, liked_id});
-  
-  // if (io) {
-      io.to(`user_${liker_id}`).emit("SEND_NOTIFICATION", {
-        userId: liked_id,
-        type: "like",
-        message: `${liker_id} vous a liké !`,
-    });
-  // }
+    await db.insert('likes', {liker_id, liked_id});
+    
+    console.log("📌 Utilisateurs connectés :", connectedUsers);
+    console.log(`👀 Receiver ID : ${liker_id}`);
 
+  //   io.emit("RECEIVE_NOTIFICATION", {
+  //     userId: liked_id,
+  //     type: "match",
+  //     message: `🎉 Vous avez un match avec ${liked_id} !`,
+  // });
+    
+    io.emit("SEND_NOTIFICATION", {
+      userId: liked_id,
+      type: "like",
+      message: `${liker_id} vous a liké !`,
+  });
 
-  // if (io) {
-  //   const receiverSocket = connectedUsers[liked_id];
-  //       if (receiverSocket) {
-  //           io.to(receiverSocket).emit("receive_notification", {
-  //               message: `💖 Vous avez reçu un like de ${liker_id} !`,
-  //           });
-  //       }
-  //   }
-  
       return res.status(201).json({
         message: "like ajouter",
       })
@@ -112,11 +98,15 @@ export async function likeUser (req, res){
   
   export async function unlikeUser (req, res){
     try{
-      const {liked_id, liker_id} = req.body;
+      const {liked_id, liker_id, match_id} = req.body;
   
       const user = db.findOne('users', { id: liked_id });
   
       fameRate = user.fame_rate - 1;
+
+      await db.delete('likes', {liked_id, liker_id});
+
+      await db.delete('matches', {match_id});
       
       const like = await db.findOne('likes', {liker_id, liked_id});
 
@@ -250,4 +240,4 @@ export async function likeUser (req, res){
     }
   };
 
-export default { likeUser, unlikeUser, getLikes, getOtherLikes, getMatches, setSocket, dislikeUser };
+export default { likeUser, unlikeUser, getLikes, getOtherLikes, getMatches, dislikeUser };

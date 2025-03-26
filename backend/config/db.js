@@ -65,7 +65,22 @@ const db = {
     
     const result = await db.query(sql, values);
     return result;
-  }
+  },
+
+  delete: async (table, conditions) => {
+    const keys = Object.keys(conditions);
+    if (keys.length === 0) return null;
+
+    // Construire la clause WHERE dynamiquement
+    const whereClause = keys.map((key, idx) => `${key} = $${idx + 1}`).join(' AND ');
+    const values = keys.map(key => conditions[key]);
+
+    // Requête SQL de suppression avec possibilité de retourner les lignes supprimées
+    const sql = `DELETE FROM ${table} WHERE ${whereClause} RETURNING *`;
+    
+    const result = await db.query(sql, values);
+    return result;
+  },
 };
 
 export default db;
