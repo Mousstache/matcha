@@ -62,17 +62,19 @@ io.on("connection", (socket) => {
   });
 
   socket.on("SEND_NOTIFICATION", ({ userId, type,  message }) => {
+    // console.log("user <>>>", userId);
     if (!notifications[userId]) {
       notifications[userId] = [];
     }
     const newNotification = { type, message, is_read:false,  created_at: new Date() };
     notifications[userId].push(newNotification);
 
-    console.log("🔔 Notification reçue :", newNotification);
+    console.log("🔔 Notification reçue :", `${userId}`, newNotification);
 
     // Vérifier si l'utilisateur est en ligne
     const userSocketId = connectedUsers[userId];
     if (userSocketId) {
+      console.log("loooolo");
       io.to(userSocketId).emit("RECEIVE_NOTIFICATION", newNotification);
     }
 });

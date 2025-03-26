@@ -8,15 +8,33 @@ export async function sendMessage (req, res) {
   try {
 
       const { sender_id, match_id, message_text } = req.body;
-
-      const receiverId = await db.findOne('matches', {match_id})
   
       const messages = await db.insert('messages', {sender_id, match_id, message_text, created_at: new Date()});
+
+      const match = await db.findOne('matches', {match_id});
+
+      const receiverId = match.user2_id;
+
+      const io = req.app.get("io"); // Récupère l'instance de Socket.IO
+
+      const connectedUsers = req.app.get("connectedUsers");
+
+      const receiverSocketId = connectedUsers[receiverId];
+
+      console.log("receiver socket", receiverSocketId);
+
+
+      if (receiverSocketId) {
+        io.to(receiverSocketId).emit("SEND_NOTIFICATION", {
+            userId: receiverId,
+            type: "message",
+            message: `💖 ${sender_id} vous a liké !`,
+        });
+      }
   
       return res.status(200).json({
         message: "listes des messages",
         messages: messages,
-        receiver: receiverId,
       })
   
     }catch (error){
@@ -27,8 +45,14 @@ export async function sendMessage (req, res) {
 export async function getMessages (req, res) {
     try {
       const { match_id } = req.params;
+
+      const match = await db.findOne('matches', {match_id})
+
+      const receiverId = match.user1_id;
+
+
   
-      console.log("le matchid == ", match_id);
+      console.log("le matchid == ", receiverId);
   
       const messages = await db.query(
         "SELECT * FROM messages WHERE match_id = $1 ORDER BY current_timestamp ASC",
@@ -42,6 +66,7 @@ export async function getMessages (req, res) {
       return res.status(200).json({
         message: "listes des messages",
         messages: messages ,
+        receiver: receiverId,
       })
   
     }catch (error){
