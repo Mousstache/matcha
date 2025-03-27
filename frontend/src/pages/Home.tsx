@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom"; 
 import { Send, Ban, Flag } from 'lucide-react';
+import { useAuth } from "@/context/auth";
 // import { Link } from "react-router-dom";
 
 
@@ -30,6 +31,7 @@ const Home = () => {
   const [likes, setLikes] = useState<User[]>([]);
   const [otherLikes, setOtherLikes] = useState<User[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
+  const { id } = useAuth();
 
   const navigate = useNavigate();
 
@@ -106,6 +108,34 @@ const Home = () => {
     matchList();
   }, []);
 
+
+
+  const handleBlock = async (match_id:any) =>{
+
+    try {
+      const token = localStorage.getItem("token");
+            const res = await fetch('http://localhost:5001/api/blockUser', {
+              method: "POST",
+              headers:{
+                'Authorization': `bearer ${token}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({match_id , id})
+            })
+            
+            const data = await res.json();
+  
+            if (!res)
+              return ;
+              
+            if (!data)
+              return ;
+    }catch (error){
+      console.log(error);
+    }
+  };
+
+
   // const handleUnlike = async () =>{
 
   //   try {
@@ -151,7 +181,7 @@ const Home = () => {
                       <Send/> <span>chatter</span>
                     </Link> */}
 
-                    <button className="text-white" onClick={ () => navigate(`/chat/:${match.match_id}`)}>block user <Ban></Ban> </button>
+                    <button className="text-white" onClick={ () => handleBlock(match.id)}>block user <Ban></Ban> </button>
 
                     <button className="text-white" onClick={ () => navigate(`/chat/:${match.match_id}`)}>signal user <Flag></Flag> </button>
 

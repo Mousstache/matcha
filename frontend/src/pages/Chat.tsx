@@ -1,16 +1,17 @@
 import { useState, useEffect } from "react";
-import io from "socket.io-client";
+// import io from "socket.io-client";
 import { useParams } from "react-router-dom";
 import { useAuth } from "@/context/auth";
 
-const socket = io("http://localhost:5001");
+
 
 const Message = () => {
     const [messages, setMessages] = useState<{ sender_id: number; message_text: string }[]>([]);
     // const [receiver, setReceiver] = useState<string>("");
     const [messageText, setMessageText] = useState("");
     const { match_id } = useParams<{ match_id: string }>();
-    const { id } = useAuth();
+    const [receiverId, setReceiverId] = useState<string>("");
+    const { id, socket } = useAuth();
 
     const cleanMatchId = match_id ? match_id.replace(":", "") : null;
 
@@ -30,6 +31,9 @@ const Message = () => {
                 });
     
                 const data = await response.json();
+                console.log(data);
+                console.log(data.receiver);
+                setReceiverId(data.receiver);
                 if (response.ok && Array.isArray(data.messages)) {
                     setMessages(data.messages);
                 } else {
@@ -41,45 +45,55 @@ const Message = () => {
         };
     
         fetchMessages();
-    
+
+        if (!socket)
+            return ;
+
+        // console.log("📡 Connexion socket ID :", socket.id);
+        
+        
         socket.on("SERVER_MSG", (newMessage) => {
+            console.log("📩 Nouveau message reçu sur le client :", newMessage);
             setMessages((prevMessages) => [...prevMessages, newMessage]);
         });
-
+        
         // socket.emit("SEND_NOTIFICATION", {
-        //     userId: Number(receiver),  // L'ID du destinataire du message
-        //     type: "message",
-        //     message: `📩 Nouveau message de ${id}`,
-        // });
-
-        // socket.on("SEND_NOTIFICATION", (newNotification) => {
-        //     userId: receiverId.user2_id,
-        //     type: "message",
-        //     message: `📩 Nouveau message de ${sender_id}`,
-        // });
-  
-    
-        return () => {
-            socket.off("SERVER_MSG");
-        };
-    }, [cleanMatchId]);
-
-    const sendMessage = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-    
-        if (!messageText.trim()) return;
-        if (!cleanMatchId) {
-            console.error("Erreur: cleanMatchId est undefined !");
-            return;
-        }
-    
+            //     userId: Number(receiver),  // L'ID du destinataire du message
+            //     type: "message",
+            //     message: `📩 Nouveau message de ${id}`,
+            // });
+            
+            // socket.on("SEND_NOTIFICATION", (newNotification) => {
+                //     userId: receiverId.user2_id,
+                //     type: "message",
+                //     message: `📩 Nouveau message de ${sender_id}`,
+                // });
+                
+                
+                return () => {
+                    socket.off("SERVER_MSG");
+                };
+            }, [socket]);
+            
+            const sendMessage = async (e: React.FormEvent<HTMLFormElement>) => {
+                e.preventDefault();
+                
+                if (!messageText.trim()) return;
+                if (!cleanMatchId) {
+                    console.error("Erreur: cleanMatchId est undefined !");
+                    return;
+                }
+                
         const message = {
+            receiverId: receiverId,
             sender_id: Number(id),
             message_text: messageText,
             match_id: Number(cleanMatchId),
         };
     
-        socket.emit("CLIENT_MesSaGes", message);
+        if (socket){
+            socket.emit("CLIENT_MesSaGes", message);
+        }
 
         const notif = { 
             userId: id, 
@@ -87,7 +101,9 @@ const Message = () => {
             message: `📩 Nouveau message de ${id}`
         };
 
-        socket.emit("SEND_NOTIFICATION", notif);
+        if (socket){
+            socket.emit("SEND_NOTIFICATION", notif);
+        }
     
         try {
             const response = await fetch("http://localhost:5001/api/sendMessage", {
@@ -98,11 +114,12 @@ const Message = () => {
                 },
                 body: JSON.stringify(message),
             });
-            
+        
+
             if (response.ok) {
                 setMessages((prevMessages) => [
                     ...prevMessages,
-                    { sender_id: Number(id), message_text: messageText }  // ✅ Format correct
+                    { sender_id: Number(id), message_text: messageText }
                 ]);
                 setMessageText("");
             }

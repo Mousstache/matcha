@@ -33,8 +33,10 @@ router.get('/getNotifications', authMiddleware, userCtrl.getNotifications);
 router.post('/sendNotification', authMiddleware, userCtrl.sendNotification);
 
 router.put('/updateUser', authMiddleware, userCtrl.updateUser);
-// router.post('/blockUser', userCtrl.blockUser);
+router.post('/blockUser', userCtrl.blockUser);
+router.post('/getBlockUser', userCtrl.getBlockUser);
 // router.delete('/unblockUser', userCtrl.unblockUser);
+// router.post('/signalUser', authMiddleware , userCtrl.signalUser);
 
 // router.put('/logout', authMiddleware, userCtrl.logoutUser);
 

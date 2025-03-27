@@ -1,7 +1,5 @@
-import { createContext, useContext, useState, useEffect } from 'react';
-import { io } from "socket.io-client";
-
-const socket = io("http://localhost:5001", { transports: ["websocket"] });
+import { createContext, useContext, useState, useEffect } from "react";
+import { io, Socket } from "socket.io-client";
 
 interface AuthContextType {
   id: string;
@@ -15,6 +13,7 @@ interface AuthContextType {
   description: string;
   loading: boolean;
   error: string | null;
+  socket: Socket | null;  // Ajout du socket dans le contexte
   setId: React.Dispatch<React.SetStateAction<string>>;
   setFirstname: React.Dispatch<React.SetStateAction<string>>;
   setLastname: React.Dispatch<React.SetStateAction<string>>;
@@ -32,63 +31,62 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 };
 
 export const AuthContextProvider = ({ children }: { children: React.ReactNode }) => {
-  const [firstname, setFirstname] = useState<string>('');
-  const [lastname, setLastname] = useState<string>('');
+  const [firstname, setFirstname] = useState<string>("");
+  const [lastname, setLastname] = useState<string>("");
   const [age, setAge] = useState<number>(0);
-  const [gender, setGender] = useState<string>('');
-  const [sexualPreference, setSexualPreference] = useState<string>('');
+  const [gender, setGender] = useState<string>("");
+  const [sexualPreference, setSexualPreference] = useState<string>("");
   const [latitude, setLatitude] = useState<number>(0);
   const [longitude, setLongitude] = useState<number>(0);
-  const [description, setDescription] = useState<string>('');
-  const [id, setId] = useState<string>('');
+  const [description, setDescription] = useState<string>("");
+  const [id, setId] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [socket, setSocket] = useState<Socket | null>(null); // Stocke le socket
 
   const fetchUserData = async () => {
     try {
       setLoading(true);
       setError(null);
-      
-      const token = localStorage.getItem('token');
+
+      const token = localStorage.getItem("token");
       if (!token) {
         setLoading(false);
         return;
       }
-      
+
       const response = await fetch("http://localhost:5001/api/user", {
         method: "GET",
-        headers: { "Authorization": `Bearer ${token}` },
+        headers: { Authorization: `Bearer ${token}` },
       });
-      
+
       if (response.ok) {
         const data = await response.json();
-        console.log("mes données de l'authProvider :", data);
-        
-        // Mise à jour de toutes les données du profil
-        setId(data.user.id || '');
-        setFirstname(data.user.firstname || '');
-        setLastname(data.user.lastname || '');
+        console.log("🔐 Données utilisateur :", data);
+
+        setId(data.user.id || "");
+        setFirstname(data.user.firstname || "");
+        setLastname(data.user.lastname || "");
         setAge(data.user.age || 0);
-        setGender(data.user.gender || '');
-        setSexualPreference(data.user.preference || '');
+        setGender(data.user.gender || "");
+        setSexualPreference(data.user.preference || "");
         setLatitude(data.user.latitude || 0);
         setLongitude(data.user.longitude || 0);
-        setDescription(data.user.description || '');
+        setDescription(data.user.description || "");
       } else if (response.status === 401) {
-        // Token invalide ou expiré
-        localStorage.removeItem('token');
+        localStorage.removeItem("token");
         setError("Session expirée. Veuillez vous reconnecter.");
       } else {
         setError("Erreur lors de la récupération des données utilisateur");
       }
     } catch (error) {
-      console.error("Erreur de requête:", error);
+      console.error("🚨 Erreur de requête:", error);
       setError("Problème de connexion au serveur");
     } finally {
       setLoading(false);
@@ -100,35 +98,54 @@ export const AuthContextProvider = ({ children }: { children: React.ReactNode })
   }, []);
 
   useEffect(() => {
-    if(id) {
-      socket.emit("userConnected", id);
+    if (id) {
+      // Initialise le socket uniquement après que l'ID de l'utilisateur soit défini
+      const newSocket = io("http://localhost:5001", {
+        transports: ["websocket"],
+      });
+
+      newSocket.on("connect", () => {
+        console.log("✅ Socket connecté ! ID :", newSocket.id);
+        newSocket.emit("userConnected", id);
+      });
+
+      // newSocket.on("connect_error", (error) => {
+      //   console.error("❌ Erreur de connexion socket :", error);
+      // });
+
+      setSocket(newSocket);
+
+      return () => {
+        newSocket.disconnect();
+      };
     }
-  }, [id]);
+  }, [id]); // Reconnecte le socket si `id` change
 
   return (
-    <AuthContext.Provider 
+    <AuthContext.Provider
       value={{
-        id, 
-        firstname, 
-        lastname, 
-        age, 
-        latitude, 
-        longitude, 
-        description, 
-        sexualPreference, 
-        gender, 
+        id,
+        firstname,
+        lastname,
+        age,
+        latitude,
+        longitude,
+        description,
+        sexualPreference,
+        gender,
         loading,
         error,
-        setFirstname, 
-        setLastname, 
-        setAge, 
-        setGender, 
-        setId, 
-        setDescription, 
-        setLatitude, 
-        setLongitude, 
+        socket, // On expose le socket
+        setFirstname,
+        setLastname,
+        setAge,
+        setGender,
+        setId,
+        setDescription,
+        setLatitude,
+        setLongitude,
         setSexualPreference,
-        refreshUserData: fetchUserData
+        refreshUserData: fetchUserData,
       }}
     >
       {children}

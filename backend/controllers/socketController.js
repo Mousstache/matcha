@@ -21,9 +21,14 @@ export async function sendMessage (req, res) {
 
       const match = await db.findOne('matches', {match_id})
 
-      const receiverId = match.user2_id;
+      let receiverId;
 
-      console.log("receiver == ", receiverId);
+      if (match_id.user1_id === sender_id) {
+        receiverId = match.user2_id;
+      }else {
+        receiverId = match.user1_id;
+      }
+
 
       const io = req.app.get("io");
       const connectedUsers = req.app.get("connectedUsers");
@@ -32,7 +37,6 @@ export async function sendMessage (req, res) {
       const receiverSocketId = connectedUsers[receiverId];
       const senderSocketId = connectedUsers[sender_id];
 
-      console.log("receiver SOcket >>>>", receiverSocketId);
       if (!receiverSocketId) {
           console.log("⚠️ Le destinataire n'est pas connecté !");
           return res.status(400).json({ message: "Le destinataire n'est pas en ligne" });
@@ -49,43 +53,13 @@ export async function sendMessage (req, res) {
         created_at: new Date()
       };
 
-      console.log("📌 Utilisateurs connectés :", connectedUsers);
-      console.log(`👀 Receiver ID : ${receiverId}`);
-      console.log(`🎯 Socket du receiver : ${receiverSocketId}`);
-      console.log(`🎯 Socket du receiver : ${sender_id}`);
-      console.log("le socket sender :", senderSocketId);
-
-
-      io.to(receiverSocketId).emit("SEND_NOTIFICATION", { 
-        userId: receiverId, 
-        type: "message",
-        message: `📩 Nouveau message de ${sender_id}`
-    });
-
-    //   if (receiverSocketId) {
-    //     console.log(`Envoi de notification à ${receiverId} via socket ${receiverSocketId}`);
-    //     // io.to(receiverSocketId).emit("SEND_NOTIFICATION", {senderSocketId, type:'message',message: `📩 Nouveau message de ${sender_id}`});
-    //     io.to(receiverId).emit("SEND_NOTIFICATION", { 
-    //       userId: receiverId, 
-    //       type: "message",
-    //       message: `📩 Nouveau message de ${sender_id}`
-    //   });
-      
-        
-    //     // Émettre directement à l'utilisateur destinataire
-    //     io.to(receiverSocketId).emit("RECEIVE_NOTIFICATION", notification);
-    // } else {
-    //     console.log(`Utilisateur ${receiverId} non connecté`);
-    // }
-      
-
-      // io.emit("RECEIVE_NOTIFICATION", notification);
-      // console.log("📤 Envoi de notification à :", receiverSocketId);
-      // console.log("📨 Contenu de la notification :", notification);
-
       return res.status(200).json({
         message: "listes des messages",
         messages: messages,
+        receiverId: receiverId,
+        receiverSocketId: receiverSocketId,
+        senderSocketId: senderSocketId,
+        sender_id: sender_id,
       })
   
     }catch (error){

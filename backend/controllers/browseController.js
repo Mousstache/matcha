@@ -194,5 +194,59 @@ export async function getAllUsers (req, res){
   } 
   };
 
+export async function blockUser(req, res) {
 
-export default { recordProfileView, getAllUsers, getUser };
+  try {
+    const { id, match_id} = req.body;
+  
+    const match = await db.findOne('matches', match_id);
+  
+    let blocked_id;
+  
+    if (match_id.user1_id === id) {
+      blocked_id = match.user2_id;
+    }else {
+      blocked_id = match.user1_id;
+    }
+    
+    await db.insert('block', { bloker_id: id , blocked_id: blocked_id})
+  
+    res.status(200).json({
+      message: 'utilisateur bloquer avec succès',
+    });
+  }catch (error){
+    console.error('Erreur lors du block de l\'utilisateur:', error);
+    res.status(500).json({ 
+      message: 'Erreur serveur lors du block de l\'utilisateur'
+    });
+  } 
+};
+
+// export async function getBlockUser(req, res) {
+//   try{
+//     const token = req.headers.authorization?.split(' ')[1];
+//     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+//     const user = await db.findOne('block', {id} });
+
+//     res.status(200).json({
+//       user: user
+//     });
+    
+//   }catch(error){
+//   console.error('Erreur lors de la récupération de l\'utilisateur:', error);
+//   res.status(500).json({ 
+//     message: 'Erreur serveur lors de la récupération de l\'utilisateur'
+//   });
+// };
+
+// export async function unblockUser(req, res) {
+
+// };
+
+// export async function signalUser(req, res) {
+
+// };
+
+
+export default { recordProfileView, getAllUsers, getUser, blockUser };

@@ -73,8 +73,24 @@ io.on("connection", (socket) => {
   
   // Écoute des messages envoyés par un client
   socket.on("CLIENT_MesSaGes", async (message) => {
-    console.log("Message reçu :", message);
-    io.emit("SERVER_MSG", message);
+    // console.log("Message reçu :", message);
+    // console.log("receiver ====", message.receiverId);
+
+    // console.log(">>>>> <<<<<<", connectedUsers[message.sender_id]);
+
+    // console.log("📌 Utilisateurs connectés :", connectedUsers);
+
+
+    // io.to(message.receiverSocketId).emit("SERVER_MSG", message);
+
+    const receiverSocketId = connectedUsers[message.receiverId]; // Trouver le socket du destinataire
+
+    if (receiverSocketId) {
+        io.to(receiverSocketId).emit("SERVER_MSG", message);
+        console.log(`📨 Message envoyé à ${message.receiverId} (Socket: ${receiverSocketId})`);
+    } else {
+        console.log(`❌ Utilisateur ${message.receiver_id} non connecté.`);
+    }
 
   });
 
@@ -83,7 +99,6 @@ io.on("connection", (socket) => {
   socket.on("SEND_NOTIFICATION", ({ userId, type,  message }) => {
     console.log("🛑 Événement SEND_NOTIFICATION reçu pour :", userId);
     console.log("📩 Contenu du message :", message);
-    console.log('rentre cici');
     if (!notifications[userId]) {
       notifications[userId] = [];
     }
@@ -95,7 +110,7 @@ io.on("connection", (socket) => {
     
     // Vérifier si l'utilisateur est en ligne
     const userSocketId = connectedUsers[userId];
-    console.log("connectUser[]userId =", connectedUsers[userId]);
+    console.log("connectUser[userId] = ", connectedUsers[userId]);
     if (userSocketId) {
       console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>");
       // io.emit("RECEIVE_NOTIFICATION", newNotification);

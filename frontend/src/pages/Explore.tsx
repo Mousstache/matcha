@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Slider } from "@/components/ui/slider"
 import { useAuth } from "../context/auth";
-import { socket } from  "../context/NotificationContext";
+// import { socket } from  "../context/NotificationContext";
 // import { stringify } from "querystring";
 // import { Badge } from '@/components/ui/badge';
 
@@ -25,7 +25,7 @@ const Explore = () => {
   const authContext = useAuth();
   console.log("AuthContext dans Explore:", authContext);
   
-  const { id, firstname, lastname, sexualPreference, gender, loading, longitude, latitude} = useAuth();
+  const { id, firstname, lastname, sexualPreference, gender, loading, longitude, latitude, socket} = useAuth();
   // const [minage, setMinage] = useState<number>(0);
   // const [maxage, setMaxage] = useState<number>(0);
   // // const [distance, setDistance] = useState<number>(0);
@@ -51,6 +51,7 @@ const Explore = () => {
     setAgeRange([minAge, maxAge]);
     setDistanceValue([distance]);
   }, []);
+
   
   // Gestionnaires d'événements
   const handleAgeChange = (values: number[]) => {
@@ -64,6 +65,13 @@ const Explore = () => {
     setDistance(values[0]);
   };
   
+  const notif = { 
+    userId: id, 
+    type: "like",
+    message: `📩 Nouveau like de ${id}`
+};
+
+
   const getUsers = async () => {
     try {
 
@@ -161,7 +169,9 @@ const Explore = () => {
         });
         if (!res)
           return ;
-        socket.emit("send_like", { liker_id: id, liked_id: likedId });
+        if (socket){
+            socket.emit("SEND_NOTIFICATION",  notif);
+        }
         markViewed(likedId);
       }catch (error){
         console.error(error);
