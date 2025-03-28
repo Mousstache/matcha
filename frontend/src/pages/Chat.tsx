@@ -11,7 +11,7 @@ const Message = () => {
     const [messageText, setMessageText] = useState("");
     const { match_id } = useParams<{ match_id: string }>();
     const [receiverId, setReceiverId] = useState<string>("");
-    const { id, socket } = useAuth();
+    const { id, socket, firstname } = useAuth();
 
     const cleanMatchId = match_id ? match_id.replace(":", "") : null;
 
@@ -48,8 +48,6 @@ const Message = () => {
 
         if (!socket)
             return ;
-
-        // console.log("📡 Connexion socket ID :", socket.id);
         
         
         socket.on("SERVER_MSG", (newMessage) => {
@@ -57,18 +55,6 @@ const Message = () => {
             setMessages((prevMessages) => [...prevMessages, newMessage]);
         });
         
-        // socket.emit("SEND_NOTIFICATION", {
-            //     userId: Number(receiver),  // L'ID du destinataire du message
-            //     type: "message",
-            //     message: `📩 Nouveau message de ${id}`,
-            // });
-            
-            // socket.on("SEND_NOTIFICATION", (newNotification) => {
-                //     userId: receiverId.user2_id,
-                //     type: "message",
-                //     message: `📩 Nouveau message de ${sender_id}`,
-                // });
-                
                 
                 return () => {
                     socket.off("SERVER_MSG");
@@ -92,13 +78,14 @@ const Message = () => {
         };
     
         if (socket){
+            console.log("le receiver", receiverId);
             socket.emit("CLIENT_MesSaGes", message);
         }
 
         const notif = { 
-            userId: id, 
+            userId: receiverId, 
             type: "message",
-            message: `📩 Nouveau message de ${id}`
+            message: `📩 Nouveau message de ${firstname}`
         };
 
         if (socket){

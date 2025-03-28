@@ -197,7 +197,7 @@ export async function getAllUsers (req, res){
 export async function blockUser(req, res) {
 
   try {
-    const { id, match_id} = req.body;
+    const { id, match_id, blockedId} = req.body;
   
     const match = await db.findOne('matches', match_id);
   
@@ -222,31 +222,57 @@ export async function blockUser(req, res) {
   } 
 };
 
-// export async function getBlockUser(req, res) {
-//   try{
-//     const token = req.headers.authorization?.split(' ')[1];
-//     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+export async function getBlockUser(req, res) {
+    try {
+      const token = req.headers.authorization?.split(' ')[1];
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const user = await db.findOne('users',  { email: decoded.email });
+  
+      const sql = `
+      SELECT b.block_id, u.id AS user_id, u.email, u.userName, u.firstName, u.lastName
+      FROM blocks b
+      JOIN users u ON b.blocked_id = u.id
+      WHERE b.blocker_id = $1
+      UNION
+      SELECT b.block_id, u.id AS user_id, u.email, u.userName, u.firstName, u.lastName
+      FROM blocks b
+      JOIN users u ON b.blocker_id = u.id
+      WHERE b.blocked_id = $1;
+      `;
+  
+    const matches = await db.query(sql, [user.id]);
 
-//     const user = await db.findOne('block', {id} });
-
-//     res.status(200).json({
-//       user: user
-//     });
+    res.status(200).json({
+      user: user
+    });
     
-//   }catch(error){
-//   console.error('Erreur lors de la récupération de l\'utilisateur:', error);
-//   res.status(500).json({ 
-//     message: 'Erreur serveur lors de la récupération de l\'utilisateur'
-//   });
-// };
+  }catch(error){
+  }
+  console.error('Erreur lors de la récupération de l\'utilisateur:', error);
+  res.status(500).json({ 
+    message: 'Erreur serveur lors de la récupération de l\'utilisateur'
+  });
+};
 
-// export async function unblockUser(req, res) {
+export async function unblockUser(req, res) {
+  try{
+    const {unblocked_id, unblocker_id, match_id} = req.body;
 
-// };
+    const user = db.findOne('users', { id: unblocked_id });
+
+    await db.delete('blocks', {unblocked_id, unblocker_id});
+
+    return res.status(201).json({
+      message: "utilisateur debloquer",
+    })
+  }catch (error){
+    console.error('Error lors du dislike', error);
+  }
+};
 
 // export async function signalUser(req, res) {
 
 // };
 
 
-export default { recordProfileView, getAllUsers, getUser, blockUser };
+export default { recordProfileView, getAllUsers, getUser, blockUser, getBlockUser, unblockUser };

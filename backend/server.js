@@ -58,7 +58,6 @@ const notifications = {};
 io.on("connection", (socket) => {
   console.log(`Utilisateur connecté : ${socket.id}`);
   
-  // Associer un utilisateur à son socket lorsqu'il s'authentifie
   socket.on("userConnected", (userId) => {
     console.log("👤 Utilisateur connecté :", userId, "➡️ Socket ID :", socket.id);
     console.log("Utilisateurs connectés:", connectedUsers);
@@ -71,19 +70,9 @@ io.on("connection", (socket) => {
   connectedUsers[userId] = socket.id;
   });
   
-  // Écoute des messages envoyés par un client
   socket.on("CLIENT_MesSaGes", async (message) => {
-    // console.log("Message reçu :", message);
-    // console.log("receiver ====", message.receiverId);
 
-    // console.log(">>>>> <<<<<<", connectedUsers[message.sender_id]);
-
-    // console.log("📌 Utilisateurs connectés :", connectedUsers);
-
-
-    // io.to(message.receiverSocketId).emit("SERVER_MSG", message);
-
-    const receiverSocketId = connectedUsers[message.receiverId]; // Trouver le socket du destinataire
+    const receiverSocketId = connectedUsers[message.receiverId]; 
 
     if (receiverSocketId) {
         io.to(receiverSocketId).emit("SERVER_MSG", message);
@@ -106,14 +95,10 @@ io.on("connection", (socket) => {
     const newNotification = { type, message, is_read:false,  created_at: new Date() };
     notifications[userId].push(newNotification);
     
-    console.log("🔔 Notification reçue :", newNotification);
     
     // Vérifier si l'utilisateur est en ligne
     const userSocketId = connectedUsers[userId];
-    console.log("connectUser[userId] = ", connectedUsers[userId]);
     if (userSocketId) {
-      console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>");
-      // io.emit("RECEIVE_NOTIFICATION", newNotification);
       io.to(userSocketId).emit("RECEIVE_NOTIFICATION", newNotification);
     }
   });

@@ -18,6 +18,7 @@ router.post('/upload', authMiddleware, upload.array("images", 5), userCtrl.image
 router.get('/user', authMiddleware, userCtrl.getUser);
 router.post('/allUsers', authMiddleware, userCtrl.getAllUsers);
 // router.get('user/:id', authMiddleware, userCtrl.getUser);
+// router.get('consult-profil/:id', authMiddleware, userCtrl.getConsultProfil);
 
 router.post('/record-profile-view', authMiddleware, userCtrl.recordProfileView);
 router.post('/likeUser', userCtrl.likeUser);
@@ -35,7 +36,7 @@ router.post('/sendNotification', authMiddleware, userCtrl.sendNotification);
 router.put('/updateUser', authMiddleware, userCtrl.updateUser);
 router.post('/blockUser', userCtrl.blockUser);
 router.post('/getBlockUser', userCtrl.getBlockUser);
-// router.delete('/unblockUser', userCtrl.unblockUser);
+router.delete('/unblockUser', userCtrl.unblockUser);
 // router.post('/signalUser', authMiddleware , userCtrl.signalUser);
 
 // router.put('/logout', authMiddleware, userCtrl.logoutUser);

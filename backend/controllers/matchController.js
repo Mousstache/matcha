@@ -109,14 +109,6 @@ export async function likeUser (req, res){
       await db.delete('matches', {match_id});
       
       const like = await db.findOne('likes', {liker_id, liked_id});
-
-      if (io) {
-        io.to(`user_${liker_id}`).emit("SEND_NOTIFICATION", {
-        userId: liker_id,
-        type: "unlike",
-        message: `${unlikerName} ne vous aime plus 😢`,
-    });
-  }    
   
       await db.update();
   

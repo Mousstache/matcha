@@ -13,7 +13,8 @@ interface AuthContextType {
   description: string;
   loading: boolean;
   error: string | null;
-  socket: Socket | null;  // Ajout du socket dans le contexte
+  socket: Socket | null;
+  blockedUsers: number[];
   setId: React.Dispatch<React.SetStateAction<string>>;
   setFirstname: React.Dispatch<React.SetStateAction<string>>;
   setLastname: React.Dispatch<React.SetStateAction<string>>;
@@ -49,6 +50,7 @@ export const AuthContextProvider = ({ children }: { children: React.ReactNode })
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [socket, setSocket] = useState<Socket | null>(null); // Stocke le socket
+  const [blockedUsers, setBlockedUsers] = useState<number[]>([]);
 
   const fetchUserData = async () => {
     try {
@@ -109,17 +111,36 @@ export const AuthContextProvider = ({ children }: { children: React.ReactNode })
         newSocket.emit("userConnected", id);
       });
 
-      // newSocket.on("connect_error", (error) => {
-      //   console.error("❌ Erreur de connexion socket :", error);
-      // });
-
       setSocket(newSocket);
 
       return () => {
         newSocket.disconnect();
       };
     }
-  }, [id]); // Reconnecte le socket si `id` change
+  }, [id]);
+
+
+
+const fetchBlockedUsers = async () => {
+    try {
+        const response = await fetch(`http://localhost:5001/api/getBlockedUsers`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        });
+
+        const data = await response.json();
+        setBlockedUsers(data.user);
+        if (!blockedUsers)
+          console.log('');
+    } catch (error) {
+        console.error("Erreur récupération des utilisateurs bloqués :", error);
+    }
+};
+
+useEffect(() => {
+    if (id) {
+        fetchBlockedUsers();
+    }
+}, [id]);
 
   return (
     <AuthContext.Provider
@@ -135,7 +156,8 @@ export const AuthContextProvider = ({ children }: { children: React.ReactNode })
         gender,
         loading,
         error,
-        socket, // On expose le socket
+        socket,
+        blockedUsers,
         setFirstname,
         setLastname,
         setAge,

@@ -105,16 +105,16 @@ CREATE TABLE notifications (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- CREATE TABLE blocks (
---   id INT AUTO_INCREMENT PRIMARY KEY,
---   blocker_id INT NOT NULL,
---   blocked_id INT NOT NULL,
---   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
---   UNIQUE KEY unique_block (blocker_id, blocked_id),
---   FOREIGN KEY (blocker_id) REFERENCES users(id) ON DELETE CASCADE,
---   FOREIGN KEY (blocked_id) REFERENCES users(id) ON DELETE CASCADE
--- );
-
+CREATE TABLE reports (
+    id SERIAL PRIMARY KEY,
+    reporter_id INT NOT NULL, 
+    reported_id INT NOT NULL, 
+    reason TEXT NOT NULL CHECK (reason IN ('fake account')),
+    created_at TIMESTAMP DEFAULT NOW(),
+    FOREIGN KEY (reporter_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (reported_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE(reporter_id, reported_id) 
+);
 
 INSERT INTO users (
   email, password, userName, firstName, lastName, description, 

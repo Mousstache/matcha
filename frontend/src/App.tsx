@@ -13,11 +13,13 @@ import Footer from "./components/Footer";
 import Home from "./pages/Home";
 import Signup from "./pages/Signup";
 import Profil from "./pages/Profil";
+import ConsultProfil from "./pages/ConsultProfil";
 import Explore from "./pages/Explore";
 import Register from "./pages/Register";
 import ConfirmEmail from "./pages/ConfirmEmail";
 import Chat from "./pages/Chat";
 import Notification from "./pages/Notification";
+import BlockList  from "./pages/BlockList";
 
 // interface User {
 //   id: number;
@@ -65,7 +67,8 @@ function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/register" element={<Register />} />
         <Route path="/profil" element={<ProtectedRoute><Profil /></ProtectedRoute>} />
-        <Route path="/profil/:username" element={<ProtectedRoute><Profil /></ProtectedRoute>} />
+        <Route path="/block" element={<ProtectedRoute><BlockList /></ProtectedRoute>} />
+        <Route path="/consult-profil/:username" element={<ProtectedRoute><ConsultProfil /></ProtectedRoute>} />
         <Route path="/chat" element={<ProtectedRoute ><Chat></Chat></ProtectedRoute>} />
         <Route path="/chat/:match_id" element={<ProtectedRoute ><Chat></Chat></ProtectedRoute>} />
         <Route path="/notification" element={<ProtectedRoute><Notification /></ProtectedRoute>} />
