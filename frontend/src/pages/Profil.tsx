@@ -14,6 +14,8 @@ interface User{
   gender: number;
   preference: number;
   birthDate: number;
+  city: string;
+  age: number;
 }
 
 
@@ -186,6 +188,13 @@ const Profile = () => {
           <input value={user.firstname || ''} onChange={(e) => setUser({ ...user, firstname: e.target.value })}/>
           <label>LastName :</label>
           <input value={user.lastname || ''}  onChange={(e) => setUser({ ...user, lastname: e.target.value })} />
+          <label>email :</label>
+          <input value={user.email || ''}  onChange={(e) => setUser({ ...user, email: e.target.value })} />
+          <label>city :</label>
+          <input value={user.city || ''}  onChange={(e) => setUser({ ...user, city: e.target.value })} />
+          <label>age :</label>
+          <input type="number" value={user.age}  onChange={(e) => setUser({ ...user, age: Number(e.target.value) })} />
+
           {/* <p className='value'>{user.description}</p> */}
           
 

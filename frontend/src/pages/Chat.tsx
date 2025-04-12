@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 // import io from "socket.io-client";
 import { useParams } from "react-router-dom";
 import { useAuth } from "@/context/auth";
@@ -32,8 +32,8 @@ const Message = () => {
     
                 const data = await response.json();
                 console.log(data);
-                console.log(data.receiver);
-                setReceiverId(data.receiver);
+                console.log(data.receiverId);
+                setReceiverId(data.receiverId);
                 if (response.ok && Array.isArray(data.messages)) {
                     setMessages(data.messages);
                 } else {
@@ -82,7 +82,7 @@ const Message = () => {
             socket.emit("CLIENT_MesSaGes", message);
         }
 
-        const notif = { 
+        const notif = {
             userId: receiverId, 
             type: "message",
             message: `📩 Nouveau message de ${firstname}`
@@ -103,6 +103,11 @@ const Message = () => {
             });
         
 
+            const data = await response.json();
+                console.log(data);
+                console.log(data.receiverId);
+                setReceiverId(data.receiverId);
+                
             if (response.ok) {
                 setMessages((prevMessages) => [
                     ...prevMessages,
@@ -114,36 +119,54 @@ const Message = () => {
             console.error("Erreur lors de l'envoi du message :", error);
         }
     };
+    
+            const messageContainerRef = useRef<HTMLDivElement | null>(null);
+        
+            useEffect(() => {
+            if (messageContainerRef.current) {
+                messageContainerRef.current.scrollTop = messageContainerRef.current.scrollHeight;
+            }
+            }, [messages]); 
 
     return (
-        <div className="flex flex-col h-screen max-w-lg mx-auto bg-gray-100 border rounded-lg shadow-lg">
+        <div className="flex flex-col  max-w-lg mx-auto bg-gray-100 border rounded-lg shadow-lg">
+      {/* Zone des messages */}
+      <div
+        ref={messageContainerRef}
+        className="flex-1 p-4 overflow-y-auto space-y-4 "
+        style={{ maxHeight: "calc(50vh - 50px)" }}
+      >
+        {messages?.map((message, index) => (
+          <div
+            key={index}
+            className={`p-2 max-w-xs rounded-lg ${
+              Number(message.sender_id) === Number(id)
+                ? "bg-blue-500 text-white ml-auto"
+                : "bg-gray-200 text-black mr-auto"
+            }`}
+          >
+            {message.message_text}
+          </div>
+        ))}
+      </div>
 
-            <div className="flex-1 p-4 overflow-y-auto space-y-2">
-                {messages?.map((messages, index) => (
-                    <div
-                        key={index}
-                        className={`p-2 max-w-xs rounded-lg ${
-                            Number(messages.sender_id) === Number(id) ? "bg-blue-500 text-white ml-auto" : "bg-gray-200 text-black mr-auto"
-                        }`}
-                    >
-                        {messages.message_text}
-                    </div>
-                ))}
-            </div>
-
-            <form onSubmit={sendMessage} className="flex p-2 bg-white border-t rounded-b-lg">
-                <input
-                    type="text"
-                    value={messageText}
-                    onChange={(e) => setMessageText(e.target.value)}
-                    placeholder="Votre message..."
-                    className="flex-1 p-2 border rounded-lg focus:outline-none"
-                />
-                <button type="submit" className="ml-2 bg-blue-600 text-white px-4 py-2 rounded-lg">
-                    Envoyer
-                </button>
-            </form>
-        </div>
+      {/* Input */}
+      <form onSubmit={sendMessage} className="flex p-2 bg-white border-t rounded-b-lg">
+        <input
+          type="text"
+          value={messageText}
+          onChange={(e) => setMessageText(e.target.value)}
+          placeholder="Votre message..."
+          className="flex-1 p-2 border rounded-lg focus:outline-none"
+        />
+        <button
+          type="submit"
+          className="ml-2 bg-blue-600 text-white px-4 py-2 rounded-lg"
+        >
+          Envoyer
+        </button>
+      </form>
+    </div>
     );
 };
 

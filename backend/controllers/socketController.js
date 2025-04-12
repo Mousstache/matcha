@@ -1,5 +1,7 @@
 import db from '../config/db.js';
 import { io } from '../server.js';
+import jwt from 'jsonwebtoken';
+
 // import { getSocket } from './matchController.js';
 
 // let socket = io("http://localhost:5001");
@@ -23,7 +25,7 @@ export async function sendMessage (req, res) {
 
       let receiverId;
 
-      if (match_id.user1_id === sender_id) {
+      if (match.user1_id === sender_id) {
         receiverId = match.user2_id;
       }else {
         receiverId = match.user1_id;
@@ -69,16 +71,29 @@ export async function sendMessage (req, res) {
   
 export async function getMessages (req, res) {
     try {
+
+      const token = req.headers.authorization?.split(' ')[1];
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const user = await db.findOne('users',  { email: decoded.email });
+
       const { match_id } = req.params;
 
       const match = await db.findOne('matches', {match_id})
 
-      const receiverId = match.user1_id;
+      // const receiverId = match.user1_id;
+
+      let receiverId;
+
+      if (match.user1_id === user.id) {
+        receiverId = match.user2_id;
+      }else {
+        receiverId = match.user1_id;
+      }
 
 
   
       console.log("le matchid == ", receiverId);
-  
+
       const messages = await db.query(
         "SELECT * FROM messages WHERE match_id = $1 ORDER BY current_timestamp ASC",
         [match_id]
@@ -88,7 +103,7 @@ export async function getMessages (req, res) {
       return res.status(200).json({
         message: "listes des messages",
         messages: messages ,
-        receiver: receiverId,
+        receiverId: receiverId,
       })
   
     }catch (error){

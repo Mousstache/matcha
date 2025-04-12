@@ -11,9 +11,12 @@ stop:
 
 clean:
 	docker-compose -f $(COMPOSE_FILE) down --volumes --remove-orphans
-	docker system prune -a -f
-	docker volume prune -f
-
+	docker stop `docker ps -q`
+	docker rm `docker ps -aq`
+	docker rmi `docker image -aq`
+	docker volume rm `docker volume ls -q`
+	docker network rm `docker network ls -q`
+	docker system prune -af
 
 # clean-images:
 # 	docker rm -f $$(docker ps -aq)

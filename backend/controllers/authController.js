@@ -141,24 +141,29 @@ export async function registerUser(req,res){
 
       console.log("dans le back", user.id, ">>>>>>>", user.email);
 
+      
       if (!user) {
         return res.status(400).json({ message: "ID utilisateur requis" });
       }
-
+      
       console.log("user id = ", user.id);
-
-      const {lastName, firstName, description, gender, birthDate, preference, interests} = req.body;
+      
+      const {email, lastname, firstname, description, gender, birthDate, preference, interests, city, age} = req.body;
+      console.log(firstname, lastname, description);
 
       const conditions = { id: user.id};
 
       const updateData = {};
-      if (firstName !== undefined) updateData.firstName = firstName;
-      if (lastName !== undefined) updateData.lastName = lastName;
+      if (firstname !== undefined) updateData.firstname = firstname;
+      if (lastname !== undefined) updateData.lastname = lastname;
       if (description !== undefined) updateData.description = description;
       if (gender !== undefined) updateData.gender = gender;
       if (birthDate !== undefined) updateData.birthDate = birthDate;
       if (preference !== undefined) updateData.preference = preference;
       if (interests !== undefined) updateData.interests = interests;
+      if (city !== undefined) updateData.city = city;
+      if (email !== undefined) updateData.email = email;
+      if (age !== undefined) updateData.age = age;
 
 
       await db.update('users', updateData , conditions);

@@ -1,0 +1,94 @@
+import React from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+
+interface User {
+  id: number;
+  firstname: string;
+  lastname: string;
+  age: number;
+  gender: string;
+  description: string;
+  latitude?: number;
+  longitude?: number;
+  // ajoute d'autres props si besoin
+}
+
+interface Props {
+  isOpen: boolean;
+  onClose: () => void;
+  user: User | null;
+}
+
+const UserProfileModal: React.FC<Props> = ({ isOpen, onClose, user }) => {
+  if (!user) return null;
+
+const getInitials = () => {
+  return `${user.firstname.charAt(0)}${user.lastname.charAt(0)}`;
+};
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+    <DialogContent className="max-w-md">
+      <DialogHeader>
+        <div className="flex items-center gap-4">
+          <Avatar className="h-12 w-12">
+            {/* Remplacer par une vraie image si disponible */}
+            <AvatarImage src={`/avatars/${user.id}.jpg`} alt={`${user.firstname} ${user.lastname}`} />
+            <AvatarFallback className="bg-blue-100 text-blue-600">
+              {getInitials()}
+            </AvatarFallback>
+          </Avatar>
+          <DialogTitle className="text-xl font-semibold">
+            {user.firstname} {user.lastname}
+          </DialogTitle>
+        </div>
+      </DialogHeader>
+
+      <Card className="border-none shadow-none mt-2">
+        <CardContent className="p-0 space-y-4">
+          <div className="flex items-center justify-between">
+            <span className="text-gray-500">Âge</span>
+            <span className="font-medium">{user.age} ans</span>
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <span className="text-gray-500">Genre</span>
+            <Badge variant="outline" className="font-normal">
+              {user.gender}
+            </Badge>
+          </div>
+          
+          <div className="space-y-2">
+            <span className="text-gray-500">Biographie</span>
+            <p className="text-gray-700 bg-gray-50 p-3 rounded-md">
+              {user.description || "Aucune biographie disponible."}
+            </p>
+          </div>
+
+          {(user.latitude && user.longitude) && (
+            <div className="space-y-2">
+              <span className="text-gray-500">Localisation</span>
+              <div className="bg-gray-50 p-3 rounded-md">
+                <p className="text-gray-700">Lat: {user.latitude.toFixed(6)}</p>
+                <p className="text-gray-700">Long: {user.longitude.toFixed(6)}</p>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <DialogFooter>
+        <Button onClick={onClose} className="w-full">
+          Fermer
+        </Button>
+      </DialogFooter>
+    </DialogContent>
+  </Dialog>
+);
+};
+
+export default UserProfileModal;

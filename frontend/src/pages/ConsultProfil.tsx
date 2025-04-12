@@ -15,7 +15,7 @@
 // }
 
 
-const ConsultProfile = () => {
+const ConsultProfil = () => {
 //   const [user, setUser] = useState<User | null>(null);
 //   const [images, setImages] = useState<File[]>([]);
 //   const [preview, setPreview] = useState<string[]>([]);
@@ -98,4 +98,4 @@ const ConsultProfile = () => {
     );
   };
   
-export default ConsultProfile;
+export default ConsultProfil;

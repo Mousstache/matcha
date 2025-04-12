@@ -83,7 +83,7 @@ export async function getAllUsers (req, res){
         maxDistance,
         ordered,
         interests,
-        // id
+        id,
       } = req.body;
 
       console.log('minAge:', minAge);
@@ -93,22 +93,41 @@ export async function getAllUsers (req, res){
       console.log('latitude:', latitude);
       console.log('longitude:', longitude);
       console.log('maxDistance:', maxDistance);
+
+      const currentUserId = req.user.id;
+
+      const blocked_id = req.user.getBlockUsers;
+
+      console.log('blocked_id:', blocked_id);
+      console.log('id :', currentUserId);
+
+      const params = [];
       
       let query = `SELECT id, email, firstname, lastname, description, interests, age, city, profile_picture`;
-  
+      
       if (latitude && longitude) {
         query += `,
-          ( 6371 * acos( cos( radians($1) ) * 
-            cos( radians( latitude ) ) * 
-            cos( radians( longitude ) - radians($2) ) + 
-            sin( radians($1) ) * 
-            sin( radians( latitude ) ) 
-          ) ) AS distance`;
+        ROUND( 6371 * acos( cos( radians($1) ) * 
+        cos( radians( latitude ) ) * 
+        cos( radians( longitude ) - radians($2) ) + 
+        sin( radians($1) ) * 
+        sin( radians( latitude ) ) 
+        )) AS distance`;
+        params.push(parseFloat(latitude), parseFloat(longitude));
       }
       
-      query += ` FROM users WHERE 1=1`;
+      query += ` FROM users u
+      WHERE u.id != $${params.length + 1}
+      AND u.id NOT IN (
+        SELECT blocked_id FROM blocks WHERE blocker_id = $${params.length + 1}
+        UNION
+        SELECT blocker_id FROM blocks WHERE blocked_id = $${params.length + 1}
+        )`;
+        params.push(currentUserId);
+      // AND u.id NOT IN (
+      //   SELECT user_id FROM blocked_users WHERE blocked_user_id = $${blocked_id}
+      // )`;
   
-      const params = [];
   
       // if (latitude && longitude) {
       //   params.push(parseFloat(latitude), parseFloat(longitude));
@@ -195,21 +214,20 @@ export async function getAllUsers (req, res){
   };
 
 export async function blockUser(req, res) {
-
   try {
-    const { id, match_id, blockedId} = req.body;
+    const { blocker_id, match_id} = req.body;
   
-    const match = await db.findOne('matches', match_id);
+    const match = await db.findOne('matches', {match_id});
   
     let blocked_id;
   
-    if (match_id.user1_id === id) {
+    if (match.user1_id === blocker_id) {
       blocked_id = match.user2_id;
     }else {
       blocked_id = match.user1_id;
     }
     
-    await db.insert('block', { bloker_id: id , blocked_id: blocked_id})
+    await db.insert('blocks', { blocker_id: blocker_id , blocked_id: blocked_id})
   
     res.status(200).json({
       message: 'utilisateur bloquer avec succès',
@@ -240,27 +258,30 @@ export async function getBlockUser(req, res) {
       WHERE b.blocked_id = $1;
       `;
   
-    const matches = await db.query(sql, [user.id]);
+    const block = await db.query(sql, [user.id]);
+
+    console.log('block:', block);
+  
 
     res.status(200).json({
-      user: user
+      list: block,
     });
     
-  }catch(error){
+  } catch(error) {
+    console.error('Erreur lors de la récupération de l\'utilisateur:', error);
+    res.status(500).json({ 
+      message: 'Erreur serveur lors de la récupération de l\'utilisateur'
+    });
   }
-  console.error('Erreur lors de la récupération de l\'utilisateur:', error);
-  res.status(500).json({ 
-    message: 'Erreur serveur lors de la récupération de l\'utilisateur'
-  });
 };
 
 export async function unblockUser(req, res) {
   try{
-    const {unblocked_id, unblocker_id, match_id} = req.body;
+    const {block_id, id} = req.body;
 
-    const user = db.findOne('users', { id: unblocked_id });
+    const user = db.findOne('users', { id: id });
 
-    await db.delete('blocks', {unblocked_id, unblocker_id});
+    await db.delete('blocks', {block_id});
 
     return res.status(201).json({
       message: "utilisateur debloquer",
@@ -270,9 +291,35 @@ export async function unblockUser(req, res) {
   }
 };
 
-// export async function signalUser(req, res) {
+export async function signalUser(req, res) {
+  try {
+    const { reporter_id, match_id, reason} = req.body;
+  
+    const match = await db.findOne('matches', {match_id});
+  
+    let reported_id;
+  
+    if (match.user1_id === reporter_id) {
+      reported_id = match.user2_id;
+    }else {
+      reported_id = match.user1_id;
+    }
 
-// };
+    console.log('reported_id:', reported_id);
+    console.log('reporter_id:', reporter_id);
+    
+    await db.insert('reports', { reporter_id: reporter_id , reported_id: reported_id, reason: reason})
+  
+    res.status(200).json({
+      message: 'utilisateur bloquer avec succès',
+    });
+  }catch (error){
+    console.error('Erreur lors du block de l\'utilisateur:', error);
+    res.status(500).json({ 
+      message: 'Erreur serveur lors du block de l\'utilisateur'
+    });
+  } 
+};
 
 
-export default { recordProfileView, getAllUsers, getUser, blockUser, getBlockUser, unblockUser };
+export default { recordProfileView, getAllUsers, getUser, blockUser, getBlockUser, unblockUser, signalUser };

@@ -35,6 +35,16 @@ CREATE TABLE profile_views (
 );
 
 
+CREATE TABLE consult_profile (
+  id SERIAL PRIMARY KEY,
+  viewer_id INTEGER NOT NULL REFERENCES users(id),
+  viewed_id INTEGER NOT NULL REFERENCES users(id),
+  viewed_at TIMESTAMP NOT NULL DEFAULT NOW(),
+  UNIQUE(viewer_id, viewed_id)
+);
+
+
+
 CREATE TABLE IF NOT EXISTS likes (
     like_id SERIAL PRIMARY KEY,
     liker_id INT NOT NULL,
@@ -125,41 +135,41 @@ INSERT INTO users (
 ) 
 VALUES
 ('john.doe@example.com', 'hashedpassword1', 'johndoe', 'John', 'Doe', 'Passionné de voyage et de photographie.', 
- 'Femme', 'Homme', '1990-05-14', 34, 'voyage,photo,lecture', '@/frontend/src/assets/images/robbieLens.jpeg', 
+ 'Femme', 'Homme', '1990-05-14', 34, 'voyage,photo,lecture', 'https://res.cloudinary.com/doteizfou/image/upload/v1744039260/user_pictures/fvikjfknp6v7d7cpsyoi.jpg', 
  false, NULL, 0, 48.8566, 2.3522, 'Paris', 'France', NULL, NULL, false, NOW(), NOW()),
 
 ('alice.smith@example.com', 'hashedpassword2', 'alicesmith', 'Alice', 'Smith', 'Amatrice de cuisine et de sport.', 
- 'Homme', 'FeHomme', '1995-08-22', 29, 'cuisine,sport,musique', '@/frontend/src/assets/images/robbieLens.jpeg', 
+ 'Homme', 'FeHomme', '1995-08-22', 29, 'cuisine,sport,musique', 'https://res.cloudinary.com/doteizfou/image/upload/v1744039260/user_pictures/fvikjfknp6v7d7cpsyoi.jpg', 
  false, NULL, 0, 40.7128, -74.0060, 'New York', 'USA', NULL, NULL, false, NOW(), NOW()),
 
 ('michael.brown@example.com', 'hashedpassword3', 'michaelb', 'Michael', 'Brown', 'Geek de la technologie et des jeux vidéo.', 
- 'Femme', 'Homme', '1988-02-10', 36, 'jeux,technologie,cinéma', '@/frontend/src/assets/images/robbieLens.jpeg', 
+ 'Femme', 'Homme', '1988-02-10', 36, 'jeux,technologie,cinéma', 'https://res.cloudinary.com/doteizfou/image/upload/v1744039260/user_pictures/fvikjfknp6v7d7cpsyoi.jpg', 
  false, NULL, 0, 51.5074, -0.1278, 'London', 'UK', NULL, NULL, false, NOW(), NOW()),
 
 ('sophia.johnson@example.com', 'hashedpassword4', 'sophiaj', 'Sophia', 'Johnson', 'Grande passionnée d’art et de dessin.', 
- 'Homme', 'Femme', '1997-06-30', 27, 'art,dessin,musique', '@/frontend/src/assets/images/robbieLens.jpeg', 
+ 'Homme', 'Femme', '1997-06-30', 27, 'art,dessin,musique', 'https://res.cloudinary.com/doteizfou/image/upload/v1744039260/user_pictures/fvikjfknp6v7d7cpsyoi.jpg', 
  false, NULL, 0, 34.0522, -118.2437, 'Los Angeles', 'USA', NULL, NULL, false, NOW(), NOW()),
 
 ('william.taylor@example.com', 'hashedpassword5', 'williamt', 'William', 'Taylor', 'Fan de randonnée et de nature.', 
- 'Femme', 'Homme', '1993-11-05', 31, 'randonnée,nature,lecture', '@/frontend/src/assets/images/robbieLens.jpeg', 
+ 'Femme', 'Homme', '1993-11-05', 31, 'randonnée,nature,lecture', 'https://res.cloudinary.com/doteizfou/image/upload/v1744039260/user_pictures/fvikjfknp6v7d7cpsyoi.jpg', 
  false, NULL, 0, 41.9028, 12.4964, 'Rome', 'Italy', NULL, NULL, false, NOW(), NOW()),
 
 ('emma.martin@example.com', 'hashedpassword6', 'emmam', 'Emma', 'Martin', 'J’adore la danse et le théâtre.', 
- 'Homme', 'Femme', '2000-01-12', 24, 'danse,théâtre,lecture', '@/frontend/src/assets/images/robbieLens.jpeg', 
+ 'Homme', 'Femme', '2000-01-12', 24, 'danse,théâtre,lecture', 'https://res.cloudinary.com/doteizfou/image/upload/v1744039260/user_pictures/fvikjfknp6v7d7cpsyoi.jpg', 
  false, NULL, 0, 35.6895, 139.6917, 'Tokyo', 'Japan', NULL, NULL, false, NOW(), NOW()),
 
 ('james.white@example.com', 'hashedpassword7', 'jamesw', 'James', 'White', 'Passionné de sport et de fitness.', 
- 'Les deux', 'Homme', '1985-07-19', 39, 'sport,fitness,musique', '@/frontend/src/assets/images/robbieLens.jpeg', 
+ 'Les deux', 'Homme', '1985-07-19', 39, 'sport,fitness,musique', 'https://res.cloudinary.com/doteizfou/image/upload/v1744039260/user_pictures/fvikjfknp6v7d7cpsyoi.jpg', 
  false, NULL, 0, 55.7558, 37.6173, 'Moscow', 'Russia', NULL, NULL, false, NOW(), NOW()),
 
 ('olivia.davis@example.com', 'hashedpassword8', 'oliviad', 'Olivia', 'Davis', 'Grande lectrice et écrivaine amateur.', 
- 'Homme', 'Femme', '1998-09-25', 26, 'lecture,écriture,histoire', '@/frontend/src/assets/images/robbieLens.jpeg', 
+ 'Homme', 'Femme', '1998-09-25', 26, 'lecture,écriture,histoire', 'https://res.cloudinary.com/doteizfou/image/upload/v1744039260/user_pictures/fvikjfknp6v7d7cpsyoi.jpg', 
  false, NULL, 0, 37.7749, -122.4194, 'San Francisco', 'USA', NULL, NULL, false, NOW(), NOW()),
 
 ('benjamin.moore@example.com', 'hashedpassword9', 'benjaminm', 'Benjamin', 'Moore', 'Fan de science-fiction et d’astronomie.', 
- 'Femme', 'Homme', '1992-04-17', 32, 'science-fiction,astronomie,jeux', '@/frontend/src/assets/images/robbieLens.jpeg', 
+ 'Femme', 'Homme', '1992-04-17', 32, 'science-fiction,astronomie,jeux', 'https://res.cloudinary.com/doteizfou/image/upload/v1744039260/user_pictures/fvikjfknp6v7d7cpsyoi.jpg', 
  false, NULL, 0, 28.7041, 77.1025, 'Delhi', 'India', NULL, NULL, false, NOW(), NOW()),
 
 ('charlotte.thomas@example.com', 'hashedpassword10', 'charlottet', 'Charlotte', 'Thomas', 'Amoureuse des animaux et de la nature.', 
- 'Homme', 'Femme', '1996-12-03', 28, 'animaux,nature,photographie', '@/frontend/src/assets/images/robbieLens.jpeg', 
+ 'Homme', 'Femme', '1996-12-03', 28, 'animaux,nature,photographie', 'https://res.cloudinary.com/doteizfou/image/upload/v1744039260/user_pictures/fvikjfknp6v7d7cpsyoi.jpg', 
  false, NULL, 0, 48.1351, 11.5820, 'Munich', 'Germany', NULL, NULL, false, NOW(), NOW());

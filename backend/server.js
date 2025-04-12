@@ -59,8 +59,8 @@ io.on("connection", (socket) => {
   console.log(`Utilisateur connecté : ${socket.id}`);
   
   socket.on("userConnected", (userId) => {
-    console.log("👤 Utilisateur connecté :", userId, "➡️ Socket ID :", socket.id);
-    console.log("Utilisateurs connectés:", connectedUsers);
+    // console.log("👤 Utilisateur connecté :", userId, "➡️ Socket ID :", socket.id);
+    // console.log("Utilisateurs connectés:", connectedUsers);
     for (const id in connectedUsers) {
       if (connectedUsers[id] === socket.id) {
           delete connectedUsers[id];
@@ -76,9 +76,9 @@ io.on("connection", (socket) => {
 
     if (receiverSocketId) {
         io.to(receiverSocketId).emit("SERVER_MSG", message);
-        console.log(`📨 Message envoyé à ${message.receiverId} (Socket: ${receiverSocketId})`);
+        // console.log(`📨 Message envoyé à ${message.receiverId} (Socket: ${receiverSocketId})`);
     } else {
-        console.log(`❌ Utilisateur ${message.receiver_id} non connecté.`);
+        // console.log(`❌ Utilisateur ${message.receiver_id} non connecté.`);
     }
 
   });
@@ -86,8 +86,8 @@ io.on("connection", (socket) => {
 
   
   socket.on("SEND_NOTIFICATION", ({ userId, type,  message }) => {
-    console.log("🛑 Événement SEND_NOTIFICATION reçu pour :", userId);
-    console.log("📩 Contenu du message :", message);
+    // console.log("🛑 Événement SEND_NOTIFICATION reçu pour :", userId);
+    // console.log("📩 Contenu du message :", message);
     if (!notifications[userId]) {
       notifications[userId] = [];
     }

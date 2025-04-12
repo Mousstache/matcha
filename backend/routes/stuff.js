@@ -7,6 +7,12 @@ import upload from "../routes/uploadMiddleware.js";
 
 const router = express.Router();
 
+router.get("/test", function test(req, res) {
+    res.status(200).json(
+        { "pureedsdsdsfdsf": "SADASDA" }
+    );
+
+})
 
 router.post('/register', userCtrl.registerUser);
 router.put('/fillInfo', userCtrl.fillInfo);
@@ -22,11 +28,13 @@ router.post('/allUsers', authMiddleware, userCtrl.getAllUsers);
 
 router.post('/record-profile-view', authMiddleware, userCtrl.recordProfileView);
 router.post('/likeUser', userCtrl.likeUser);
-router.delete('/dislikeUser', userCtrl.dislikeUser);
-router.post('/unlikeUser', userCtrl.unlikeUser);
+router.post('/dislikeUser', userCtrl.dislikeUser);
+router.delete('/unlikeUser', userCtrl.unlikeUser);
 router.get('/getLikes', userCtrl.getLikes);
 router.get('/getOtherLikes', userCtrl.getOtherLikes);
 router.get('/getMatches', userCtrl.getMatches);
+router.post('/ConsultProfile', userCtrl.ConsultProfile);
+
 
 router.get('/getMessages/:match_id', authMiddleware, userCtrl.getMessages);
 router.post('/sendMessage', authMiddleware, userCtrl.sendMessage);
@@ -35,9 +43,9 @@ router.post('/sendNotification', authMiddleware, userCtrl.sendNotification);
 
 router.put('/updateUser', authMiddleware, userCtrl.updateUser);
 router.post('/blockUser', userCtrl.blockUser);
-router.post('/getBlockUser', userCtrl.getBlockUser);
+router.get('/getBlockUser', userCtrl.getBlockUser);
 router.delete('/unblockUser', userCtrl.unblockUser);
-// router.post('/signalUser', authMiddleware , userCtrl.signalUser);
+router.post('/signalUser', userCtrl.signalUser);
 
 // router.put('/logout', authMiddleware, userCtrl.logoutUser);
 

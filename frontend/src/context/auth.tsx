@@ -1,6 +1,14 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { io, Socket } from "socket.io-client";
 
+interface Block {
+  match_id: number;
+  block_id: number;
+  email: string;
+  firstname: string;
+  lastname: string;
+}
+
 interface AuthContextType {
   id: string;
   firstname: string;
@@ -14,7 +22,7 @@ interface AuthContextType {
   loading: boolean;
   error: string | null;
   socket: Socket | null;
-  blockedUsers: number[];
+  blockedUsers: Block[];
   setId: React.Dispatch<React.SetStateAction<string>>;
   setFirstname: React.Dispatch<React.SetStateAction<string>>;
   setLastname: React.Dispatch<React.SetStateAction<string>>;
@@ -50,7 +58,7 @@ export const AuthContextProvider = ({ children }: { children: React.ReactNode })
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [socket, setSocket] = useState<Socket | null>(null); // Stocke le socket
-  const [blockedUsers, setBlockedUsers] = useState<number[]>([]);
+  const [blockedUsers, setBlockedUsers] = useState<Block[]>([]);
 
   const fetchUserData = async () => {
     try {
@@ -123,25 +131,28 @@ export const AuthContextProvider = ({ children }: { children: React.ReactNode })
 
 const fetchBlockedUsers = async () => {
     try {
-        const response = await fetch(`http://localhost:5001/api/getBlockedUsers`, {
+        const response = await fetch(`http://localhost:5001/api/getBlockUser`, {
             headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
 
         const data = await response.json();
-        setBlockedUsers(data.user);
-        if (!blockedUsers)
-          console.log('');
-    } catch (error) {
+
+        setBlockedUsers(data.list);
+        console.log("data == ", data.list);
+        return data.list;
+      } catch (error) {
         console.error("Erreur récupération des utilisateurs bloqués :", error);
-    }
-};
-
-useEffect(() => {
-    if (id) {
-        fetchBlockedUsers();
-    }
-}, [id]);
-
+        return [];
+      }
+    };
+    
+    useEffect(() => {
+      if (id) {
+        fetchBlockedUsers()
+          console.log("📌 blockedUsers après mise à jour :", blockedUsers);
+      }
+    }, [id]);
+    
   return (
     <AuthContext.Provider
       value={{
