@@ -322,6 +322,7 @@ import { Heart, X, SlidersHorizontal, Search } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import UserProfilModal from "@/components/UserProfilModal";
 
+
 // import { socket } from  "../context/NotificationContext";
 // import { socket } from  "../context/NotificationContext";
 
@@ -339,6 +340,14 @@ interface Profile {
   interests: string[];
   profile_image: string;
   gender: string;
+  fame_rate: number;
+  lastConnection: string;
+  isonline: boolean;
+}
+
+interface Interest {
+  id: string;
+  label: string;
 }
 
 
@@ -356,8 +365,21 @@ const Explore = () => {
   const [minAge, setMinAge] = useState(18);
   const [maxAge, setMaxAge] = useState(40);
   const [distance, setDistance] = useState(25);
+  const [fame, setFame] = useState(0);
+  const [interests, setInterests] = useState<string[]>([]);
 
-  const {socket} = useAuth();
+  const interestsList: Interest[] = [
+    { id: "sports", label: "Sports" },
+    { id: "music", label: "Musique" },
+    { id: "cinema", label: "Cinéma" },
+    { id: "technology", label: "Technologie" },
+    { id: "travel", label: "Voyages" },
+    { id: "cooking", label: "Cuisine" },
+    { id: "art", label: "Art" },
+    { id: "literature", label: "Littérature" }
+];
+
+  const {socket, firstname} = useAuth();
 
   const [selectedUser, setSelectedUser] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -367,6 +389,8 @@ const Explore = () => {
     defaultValues: {
       ageRange: [minAge, maxAge],
       distance: [distance],
+      fame_rate: [fame],
+      interests: [],
     },
   });
 
@@ -376,8 +400,10 @@ const Explore = () => {
     form.reset({
       ageRange: [minAge, maxAge],
       distance: [distance],
+      fame_rate: [fame],
+      interests: [],
     });
-  }, [minAge, maxAge, distance]);
+  }, [minAge, maxAge, distance, fame, interests]);
 
   const handleAgeChange = (values:number[]) => {
     setMinAge(values[0]);
@@ -387,6 +413,17 @@ const Explore = () => {
   const handleDistanceChange = (values:number[]) => {
     setDistance(values[0]);
   };
+
+  const handleFameChange = (values:number[]) => {
+    setFame(values[0]);
+  };
+
+  const handleInterestChange = (values:string[]) => {
+    setInterests(values);
+    console.log("Valeurs des intérêts sélectionnés :", values);
+    // Vous pouvez mettre à jour l'état ou effectuer d'autres actions ici
+  };
+
 
 
   const markViewed = async (viewed_id:string) => {
@@ -424,8 +461,14 @@ const Explore = () => {
       });
       if (!res)
         return ;
-      if (socket)
-        socket.emit("send_like", { liker_id: id, liked_id: profileId });
+      const notif_like = { 
+        userId: liked_id,
+        type: "like",
+        message: `📩 Nouveau like de ${firstname}`
+    };
+      if (socket){
+          socket.emit("SEND_NOTIFICATION",  notif_like);
+      }
       markViewed(profileId);
     }catch (error){
       console.error(error);
@@ -462,6 +505,16 @@ const Explore = () => {
     }, 300);
   };
 
+  // function parsePostgresArray(str: string | null): string[] {
+  //   if (!str) return [];
+  //   return str
+  //     ?.replace(/[{}"]/g, "") // Enlève { } et " autour
+  //     .split(",")             // Sépare par virgule
+  //     .map((item) => item.trim()); // Enlève les espaces
+  // }
+
+  // const interestsArray = parsePostgresArray(user.interests);
+
   // const handleConsult = async (profileId:string) => {
   //   try{
   //     const liked_id = profileId;
@@ -496,11 +549,13 @@ const Explore = () => {
         body: JSON.stringify({
           minAge,
           maxAge,
-          distance,
+          maxDistance: distance,
           sexualPreference: gender,
           gender: sexualPreference,
           longitude,
           latitude,
+          fame_rate: fame,
+          interests,
           id
         }),
       });
@@ -547,8 +602,15 @@ const Explore = () => {
         body: JSON.stringify({viewedId, viewerId}),
       });
 
-      if (socket)
-        socket.emit("send_view", { viewerId: id, viewedId: viewedId });
+
+      const notif_seen = { 
+        userId: viewed_id,
+        type: "like",
+        message: `📩 ${firstname} a consulter votre profil`
+    };
+      if (socket){
+          socket.emit("SEND_NOTIFICATION",  notif_seen);
+      }
       if (!res)
         return ;
     }catch (error){
@@ -556,7 +618,22 @@ const Explore = () => {
     }
   };
 
+  // const currentProfile = profiles[currentProfileIndex];
 
+  // const interestsArray =
+  //   typeof currentProfile?.interests === "string"
+  //     ? currentProfile.interests.split(",").map((i: string) => i.trim())
+  //     : Array.isArray(currentProfile?.interests)
+  //     ? currentProfile.interests
+  //     : [];
+
+  const interestsArray =
+  typeof currentProfile?.interests === "string"
+    ? (currentProfile.interests as string).split(",").map((i: string) => i.trim())
+    : Array.isArray(currentProfile?.interests)
+    ? currentProfile.interests
+    : [];
+  
 
   return (
     <div className="w-full max-w-md mx-auto py-8">
@@ -565,9 +642,9 @@ const Explore = () => {
         <h1 className="text-2xl font-bold">Explore</h1>
         <Sheet>
           <SheetTrigger asChild>
-            <Button variant="outline" size="icon" className='text-gray-500'>
+            <button className='text-gray-500'>
               <SlidersHorizontal className="h-5 w-5" />
-            </Button>
+            </button>
           </SheetTrigger>
           <SheetContent>
             <SheetHeader>
@@ -618,6 +695,111 @@ const Explore = () => {
                             handleDistanceChange(values);
                           }}
                           value={field.value}
+                          max={10000}
+                          min={1}
+                          step={50}
+                          className="mt-2"
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        Rayon de recherche autour de votre position
+                      </FormDescription>
+                    </FormItem>
+                  )}
+                />
+
+
+                {/* <FormField
+                  control={form.control}
+                  name="interests"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Interets commun </FormLabel>
+                      <FormControl>
+                        <select
+                          multiple
+                          value={field.value}
+                          onChange={(e) => {
+                            const selectedOptions = Array.from(e.target.selectedOptions, option => option.value);
+                            field.onChange(selectedOptions);
+                            handleInterestChange(selectedOptions);
+                          }}
+                          className="mt-2"
+                        >
+                          {interestsList.map((interest) => (
+                            <option key={interest.id} value={interest.label}>
+                              {interest.label}
+                            </option>
+                          ))}
+                        </select>
+                      </FormControl>
+                      <FormDescription>
+                        Interets
+                      </FormDescription>
+                    </FormItem>
+                  )}
+                /> */}
+
+
+<FormField
+  control={form.control}
+  name="interests"
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel>Intérêts communs</FormLabel>
+      <FormControl>
+        <div className="max-h-60 overflow-y-auto border rounded-md p-2 space-y-2">
+          {interestsList.map((interest) => (
+            <div key={interest.id} className="flex items-center">
+              <input
+                type="checkbox"
+                id={`interest-${interest.id}`}
+                value={interest.label}
+                // checked={field.value && field.value}
+                onChange={(e) => {
+                  const currentValues = field.value || [];
+                  let newValues;
+                  
+                  if (e.target.checked) {
+                    // Ajouter à la sélection
+                    newValues = [...currentValues, interest.label];
+                  } else {
+                    // Retirer de la sélection
+                    newValues = currentValues.filter(val => val !== interest.label);
+                  }
+                  
+                  field.onChange(newValues);
+                  handleInterestChange(newValues);
+                }}
+                className="mr-2"
+              />
+              <label htmlFor={`interest-${interest.id}`} className="cursor-pointer">
+                {interest.label}
+              </label>
+            </div>
+          ))}
+        </div>
+      </FormControl>
+      <FormDescription>
+        Sélectionnez vos centres d'intérêt
+      </FormDescription>
+    </FormItem>
+  )}
+/>
+
+                  <FormField
+                  control={form.control}
+                  name="fame_rate"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Fame_Rate: {fame} </FormLabel>
+                      <FormControl>
+                        <Slider
+                          onValueChange={(values) => {
+                            field.onChange(values);
+                            handleFameChange(values);
+                          }}
+                          value={field.value}
                           max={100}
                           min={1}
                           step={1}
@@ -625,7 +807,7 @@ const Explore = () => {
                         />
                       </FormControl>
                       <FormDescription>
-                        Rayon de recherche autour de votre position
+                        Interets
                       </FormDescription>
                     </FormItem>
                   )}
@@ -667,12 +849,18 @@ const Explore = () => {
                 </p>
               </div>
             </div>
+                    <div className="flex items-center justify-between">
+            <span className="text-gray-500">Genre</span>
+            {/* <Badge variant="outline" className="font-normal">
+              { currentProfile.interests}
+            </Badge> */}
+          </div>
             <CardContent className="p-4 space-y-2">
               <div className="flex items-center gap-2">
                 <Badge variant="secondary">{currentProfile.gender}</Badge>
-                {/* {currentProfile.interests && currentProfile.interests.map((interest, i) => (
-                  <Badge key={i} variant="outline">{interest}</Badge>
-                ))} */}
+                {currentProfile.interests && interestsArray.map((interests, i) => (
+                  <Badge key={i} variant="outline">{interests}</Badge>
+                ))}
               </div>
               <p className="text-gray-700">{currentProfile.description}</p>
             </CardContent>

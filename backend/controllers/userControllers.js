@@ -1,14 +1,14 @@
-import { registerUser, fillInfo, updateUser, confirmEmail, logUser, imageUpload, } from './authController.js';
+import { getUserImages, registerUser, fillInfo, updateUser, confirmEmail, logUser, imageUpload, } from './authController.js';
 import {  recordProfileView, getAllUsers, getUser, blockUser, getBlockUser, unblockUser, signalUser } from './browseController.js';
-import { likeUser, unlikeUser, dislikeUser, getLikes, getOtherLikes, getMatches, ConsultProfile } from './matchController.js';
+import { likeUser, unlikeUser, dislikeUser, getLikes, getOtherLikes, getMatches, ConsultProfile, getViewlist } from './matchController.js';
 import { getMessages, sendMessage, getNotifications, sendNotification } from './socketController.js';
 
 
-export { registerUser, fillInfo, confirmEmail, logUser, imageUpload, recordProfileView, likeUser,
+export {getUserImages, registerUser, fillInfo, confirmEmail, logUser, imageUpload, recordProfileView, likeUser,
     unlikeUser, getLikes, getAllUsers, getUser, updateUser, getOtherLikes, getMatches, getMessages,
-    sendMessage, getNotifications, dislikeUser, sendNotification, blockUser , unblockUser, getBlockUser, signalUser , ConsultProfile };
+    sendMessage, getNotifications, dislikeUser, sendNotification, blockUser , unblockUser, getBlockUser, signalUser , ConsultProfile, getViewlist };
 
-export default { registerUser, fillInfo, confirmEmail, logUser, imageUpload, recordProfileView, likeUser,
+export default {getUserImages, registerUser, fillInfo, confirmEmail, logUser, imageUpload, recordProfileView, likeUser,
     unlikeUser, getLikes, getAllUsers, getUser, updateUser, getOtherLikes, getMatches, getMessages, sendMessage,
-    getNotifications, dislikeUser, sendNotification, blockUser, unblockUser, getBlockUser, signalUser , ConsultProfile };
+    getNotifications, dislikeUser, sendNotification, blockUser, unblockUser, getBlockUser, signalUser , ConsultProfile, getViewlist };
 

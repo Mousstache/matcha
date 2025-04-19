@@ -26,6 +26,16 @@ CREATE TABLE IF NOT EXISTS users (
   updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE user_images (
+  id SERIAL PRIMARY KEY,
+  user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  image_url VARCHAR(255) NOT NULL,
+  position INT CHECK (position BETWEEN 1 AND 5),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (user_id, position)
+);
+
+
 CREATE TABLE profile_views (
   id SERIAL PRIMARY KEY,
   viewer_id INTEGER NOT NULL REFERENCES users(id),

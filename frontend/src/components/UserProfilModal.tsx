@@ -2,7 +2,7 @@ import React from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+// import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
 interface User {
@@ -14,14 +14,29 @@ interface User {
   description: string;
   latitude?: number;
   longitude?: number;
+  fame_rate: number;
+  city: string;
+  interests: string[];
+  lastconnection: string;
+  isonline: boolean;
   // ajoute d'autres props si besoin
 }
+
+
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
   user: User | null;
 }
+
+// const interestsArray = Array.isArray(user.interests)
+//   ? user.interests
+//   : typeof user.interests === "string"
+//   ? user.interests.split(",").map((i) => i.trim())
+//   : [];
+
+
 
 const UserProfileModal: React.FC<Props> = ({ isOpen, onClose, user }) => {
   if (!user) return null;
@@ -50,17 +65,72 @@ const getInitials = () => {
 
       <Card className="border-none shadow-none mt-2">
         <CardContent className="p-0 space-y-4">
+
+          <div className="flex items-center justify-between">
+            <span className="text-gray-500">Fame Rate</span>
+            <span className="font-medium">{user.fame_rate}</span>
+          </div>
+{/* 
+          <div className="flex items-center justify-between">
+            <span className="text-gray-500">Fame Rate</span>
+            <span className="font-medium">{user.isOnline}</span>
+          </div> */}
+
+          <div className="flex items-center justify-between">
+            <span className="text-gray-500">Dernière connexion</span>
+            <span className="font-medium">
+              {new Date(user.lastconnection).toLocaleString("fr-FR", {
+                dateStyle: "medium",
+                timeStyle: "short",
+              })}
+              {/* {user.lastconnection} */}
+            </span>
+          </div>
+
           <div className="flex items-center justify-between">
             <span className="text-gray-500">Âge</span>
             <span className="font-medium">{user.age} ans</span>
           </div>
           
           <div className="flex items-center justify-between">
+            <span className="text-gray-500">City</span>
+            <span className="font-medium">{user.city}</span>
+          </div>
+
+          <div className="flex items-center justify-between">
             <span className="text-gray-500">Genre</span>
             <Badge variant="outline" className="font-normal">
               {user.gender}
             </Badge>
           </div>
+
+          <div className="flex items-center justify-between">
+            <span className="text-gray-500">Statut</span>
+            <Badge variant={user.isonline ? "default" : "outline"} className="font-normal">
+              {user.isonline ? "En ligne" : "Hors ligne"}
+            </Badge>
+          </div>
+
+
+          <div className="flex items-center justify-between">
+            <span className="text-gray-500">Interests</span>
+            <Badge variant="outline" className="font-normal">
+              {user.interests}
+            </Badge>
+          </div>
+
+{/* {interestsArray.length > 0 && (
+  <div className="space-y-1">
+    <span className="text-gray-500">Centres d'intérêt</span>
+    <div className="flex flex-wrap gap-2 mt-1">
+      {interestsArray.map((tag, idx) => (
+        <Badge key={idx} variant="outline" className="font-normal">
+          {tag}
+        </Badge>
+      ))}
+    </div>
+  </div>
+)} */}
           
           <div className="space-y-2">
             <span className="text-gray-500">Biographie</span>
@@ -82,9 +152,9 @@ const getInitials = () => {
       </Card>
 
       <DialogFooter>
-        <Button onClick={onClose} className="w-full">
+        <button onClick={onClose} className="w-full">
           Fermer
-        </Button>
+        </button>
       </DialogFooter>
     </DialogContent>
   </Dialog>

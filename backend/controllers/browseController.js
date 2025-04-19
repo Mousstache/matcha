@@ -22,12 +22,12 @@ export async function recordProfileView (req, res){
         });
       }
       
-      // if (viewerId === parseInt(viewedId)) {
-      //   return res.status(400).json({
-      //     success: false,
-      //     message: "Impossible d'enregistrer une vue sur son propre profil"
-      //   });
-      // }
+      if (viewerId === parseInt(viewedId)) {
+        return res.status(400).json({
+          success: false,
+          message: "Impossible d'enregistrer une vue sur son propre profil"
+        });
+      }
       
       const existingView = await db.findOne('profile_views', {
         viewer_id: viewerId,
@@ -71,7 +71,7 @@ export async function recordProfileView (req, res){
   
   
   
-export async function getAllUsers (req, res){
+  export async function getAllUsers(req, res) {
     try {
       const {
         minAge,
@@ -83,9 +83,10 @@ export async function getAllUsers (req, res){
         maxDistance,
         ordered,
         interests,
+        fame_rate,
         id,
       } = req.body;
-
+  
       console.log('minAge:', minAge);
       console.log('maxAge:', maxAge);
       console.log('sexualPreference:', sexualPreference);
@@ -93,46 +94,45 @@ export async function getAllUsers (req, res){
       console.log('latitude:', latitude);
       console.log('longitude:', longitude);
       console.log('maxDistance:', maxDistance);
-
+  
       const currentUserId = req.user.id;
-
       const blocked_id = req.user.getBlockUsers;
-
+  
       console.log('blocked_id:', blocked_id);
       console.log('id :', currentUserId);
-
+  
+      // Solution: Utiliser une sous-requête pour pouvoir utiliser l'alias "distance" dans le filtrage
+      let query = `
+      SELECT * FROM (
+        SELECT 
+          id, email, firstname, lastname, description, interests, age, city, 
+          profile_picture, gender, preference, fame_rate, lastConnection, isonline`;
+      
       const params = [];
       
-      let query = `SELECT id, email, firstname, lastname, description, interests, age, city, profile_picture`;
-      
+      // Ajout du calcul de distance si les coordonnées sont fournies
       if (latitude && longitude) {
         query += `,
-        ROUND( 6371 * acos( cos( radians($1) ) * 
-        cos( radians( latitude ) ) * 
-        cos( radians( longitude ) - radians($2) ) + 
-        sin( radians($1) ) * 
-        sin( radians( latitude ) ) 
+        ROUND(6371 * acos(
+          cos(radians($1)) *
+          cos(radians(latitude)) *
+          cos(radians(longitude) - radians($2)) +
+          sin(radians($1)) *
+          sin(radians(latitude))
         )) AS distance`;
         params.push(parseFloat(latitude), parseFloat(longitude));
       }
       
       query += ` FROM users u
-      WHERE u.id != $${params.length + 1}
-      AND u.id NOT IN (
-        SELECT blocked_id FROM blocks WHERE blocker_id = $${params.length + 1}
-        UNION
-        SELECT blocker_id FROM blocks WHERE blocked_id = $${params.length + 1}
+        WHERE u.id != $${params.length + 1}
+        AND u.id NOT IN (
+          SELECT blocked_id FROM blocks WHERE blocker_id = $${params.length + 1}
+          UNION
+          SELECT blocker_id FROM blocks WHERE blocked_id = $${params.length + 1}
         )`;
-        params.push(currentUserId);
-      // AND u.id NOT IN (
-      //   SELECT user_id FROM blocked_users WHERE blocked_user_id = $${blocked_id}
-      // )`;
-  
-  
-      // if (latitude && longitude) {
-      //   params.push(parseFloat(latitude), parseFloat(longitude));
-      // }
+      params.push(currentUserId);
       
+      // Filtres d'âge
       if (minAge) {
         query += ` AND age >= $${params.length + 1}`;
         params.push(parseInt(minAge));
@@ -143,45 +143,57 @@ export async function getAllUsers (req, res){
         params.push(parseInt(maxAge));
       }
       
+      // Filtres de préférence et genre
       if (sexualPreference) {
         query += ` AND preference = $${params.length + 1}`;
         params.push(sexualPreference);
       }
   
-      if (gender){
+      if (gender) {
         query += ` AND gender = $${params.length + 1}`;
         params.push(gender);
       }
-  
-      // if (latitude && longitude && maxDistance) {
-      //   query += ` HAVING distance <= $${paramIndex}`;
-      //   params.push(parseFloat(maxDistance));
-      //   paramIndex++;
+
+      if (fame_rate) {
+        query += ` AND fame_rate <= $${params.length + 1}`;
+        params.push(parseInt(fame_rate));
+      }
+
+      // if (interests) {
+      //   const interestsArray = interests.split(',').map(interest => interest.trim());
+      //   const placeholders = interestsArray.map((_, index) => `$${params.length + index + 1}`).join(', ');
+      //   query += ` AND interests && ARRAY[${placeholders}]`;
+      //   params.push(...interestsArray);
       // }
+      
+      // Fermer la sous-requête
+      query += `) AS filtered_users`;
+      
+      // Maintenant on peut filtrer par distance puisque c'est une colonne dans la sous-requête
+      if (latitude && longitude && maxDistance) {
+        query += ` WHERE distance <= $${params.length + 1}`;
+        params.push(parseFloat(maxDistance));
+      }
   
-      // if (ordered){
-      //   if (ordered === "age"){
-          // if (age){
-          //   query += ` ORDER BY age`;
-          // }
-      //   }
-      //   if (ordered === "distance"){
-      //     if (latitude && longitude) {
-      //       query += ` ORDER BY distance`;
-      //     }
-      //   }
-      //   if (ordered === "interests"){
-      //     if (interests){
-      //       query += ` ORDER BY interests`;
-      //     }
-      //   }
-      // }
+      // Tri des résultats
+      if (ordered) {
+        if (ordered === "age") {
+          query += ` ORDER BY age`;
+        } else if (ordered === "distance" && latitude && longitude) {
+          query += ` ORDER BY distance`;
+        } else if (ordered === "interests") {
+          query += ` ORDER BY interests`;
+        }
+      } else if (latitude && longitude) {
+        // Par défaut, trier par distance si les coordonnées sont fournies
+        query += ` ORDER BY distance`;
+      }
   
-      const users = await db.query(query, params);
+      const result = await db.query(query, params);
       
       res.status(200).json({
         message: 'Liste des utilisateurs récupérée avec succès',
-        users: users
+        users: result.rows || result // Adaptation selon le retour de votre module db
       });
     } catch (error) {
       console.error('Erreur lors de la récupération des utilisateurs:', error);
@@ -190,6 +202,9 @@ export async function getAllUsers (req, res){
       });
     }
   };
+  
+  
+  
   
   export async function getUser (req, res){
     try{

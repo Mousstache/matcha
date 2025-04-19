@@ -161,12 +161,12 @@ export async function likeUser (req, res){
       SELECT u.id, u.email, u.userName, u.firstName, u.lastName 
       FROM likes l
       JOIN users u ON l.liked_id = u.id
-      WHERE l.liker_id = $1;
+      WHERE l.liker_id = $1
       AND u.id NOT IN (
         SELECT blocked_id FROM blocks WHERE blocker_id = $1
         UNION
         SELECT blocker_id FROM blocks WHERE blocked_id = $1
-      )
+      );
     `;
   
       const likes = await db.query(sql, [user.id]);
@@ -210,13 +210,13 @@ export async function likeUser (req, res){
       SELECT u.id, u.email, u.userName, u.firstName, u.lastName 
       FROM likes l
       JOIN users u ON l.liker_id = u.id
-      WHERE l.liked_id = $1;
+      WHERE l.liked_id = $1
       AND u.id NOT IN (
         SELECT blocked_id FROM blocks WHERE blocker_id = $1
         UNION
         SELECT blocker_id FROM blocks WHERE blocked_id = $1
-      )
-    `;
+      );
+      `;
   
       const Otherlikes = await db.query(sql, [user.id]);
   
@@ -237,7 +237,7 @@ export async function likeUser (req, res){
     const user = await db.findOne('users', { email: decoded.email });
     
     const sql = `
-      SELECT m.match_id, u.id AS user_id, u.email, u.userName, u.firstName, u.lastName
+      SELECT m.match_id, u.id AS id, u.email, u.userName, u.firstName, u.lastName
       FROM matches m
       JOIN users u ON m.user2_id = u.id
       WHERE m.user1_id = $1
@@ -249,7 +249,7 @@ export async function likeUser (req, res){
       
       UNION
       
-      SELECT m.match_id, u.id AS user_id, u.email, u.userName, u.firstName, u.lastName
+      SELECT m.match_id, u.id AS id, u.email, u.userName, u.firstName, u.lastName
       FROM matches m
       JOIN users u ON m.user1_id = u.id
       WHERE m.user2_id = $1
@@ -275,4 +275,35 @@ export async function likeUser (req, res){
   }
 }
 
-export default { ConsultProfile, likeUser, unlikeUser, getLikes, getOtherLikes, getMatches, dislikeUser };
+export async function getViewlist (req, res){
+  try{
+
+    const token = req.headers.authorization?.split(' ')[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await db.findOne('users',  { email: decoded.email });
+
+    const sql = `
+    SELECT u.id, u.email, u.userName, u.firstName, u.lastName 
+    FROM consult_profile l
+    JOIN users u ON l.viewer_id = u.id
+    WHERE l.viewed_id = $1
+    AND u.id NOT IN (
+      SELECT blocked_id FROM blocks WHERE blocker_id = $1
+      UNION
+      SELECT blocker_id FROM blocks WHERE blocked_id = $1
+    );
+    `;
+
+    const viewlist = await db.query(sql, [user.id]);
+
+    return res.status(200).json({
+      message: "liste des other likes",
+      viewlist: viewlist,
+    })
+
+  }catch (error){
+    console.log('Error lors de la recup other likes', error);
+  }
+};
+
+export default { ConsultProfile, likeUser, unlikeUser, getLikes, getOtherLikes, getMatches, dislikeUser , getViewlist};

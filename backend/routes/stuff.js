@@ -19,7 +19,7 @@ router.put('/fillInfo', userCtrl.fillInfo);
 router.get('/confirm-email/:token', userCtrl.confirmEmail);
 router.post('/login', userCtrl.logUser);
 router.post('/upload', authMiddleware, upload.array("images", 5), userCtrl.imageUpload);
-
+router.get('/user-images', authMiddleware, userCtrl.getUserImages);
 
 router.get('/user', authMiddleware, userCtrl.getUser);
 router.post('/allUsers', authMiddleware, userCtrl.getAllUsers);
@@ -34,6 +34,8 @@ router.get('/getLikes', userCtrl.getLikes);
 router.get('/getOtherLikes', userCtrl.getOtherLikes);
 router.get('/getMatches', userCtrl.getMatches);
 router.post('/ConsultProfile', userCtrl.ConsultProfile);
+router.get('/getViewlist', userCtrl.getViewlist);
+
 
 
 router.get('/getMessages/:match_id', authMiddleware, userCtrl.getMessages);
