@@ -67,7 +67,7 @@ a:hover {
 
 body {
   margin: 0;
-  display: flex;
+  /* display: flex; */
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
@@ -78,7 +78,7 @@ h1 {
   line-height: 1.1;
 }
 
-button {
+/* button {
   border-radius: 8px;
   border: 1px solid transparent;
   padding: 0.6em 1.2em;
@@ -95,6 +95,47 @@ button:hover {
 button:focus,
 button:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
+} */
+
+
+button {
+  border-radius: 999px; /* Boutons ronds pour un look plus doux */
+  border: 1px solid transparent;
+  padding: 0.7em 1.5em;
+  font-size: 1em;
+  font-weight: 600;
+  font-family: inherit;
+  background-color: #ec4899;
+  /* background: linear-gradient(to right, #ec4899, #8b5cf6); Dégradé rose-violet */
+  color: white;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(236, 72, 153, 0.1);
+}
+
+/* Effet de survol */
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(236, 72, 153, 0.2);
+  border-color: transparent;
+}
+
+/* États de focus */
+button:focus,
+button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.4);
+}
+
+/* Variante secondaire (pour les boutons moins importants) */
+button.secondary {
+  background: transparent;
+  color: #ec4899;
+  border: 1px solid #ec4899;
+}
+
+button.secondary:hover {
+  background: rgba(236, 72, 153, 0.1);
 }
 
 @media (prefers-color-scheme: light) {

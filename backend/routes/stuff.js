@@ -14,6 +14,7 @@ router.get("/test", function test(req, res) {
 
 })
 
+// AUTHENTICATION
 router.post('/register', userCtrl.registerUser);
 router.put('/fillInfo', userCtrl.fillInfo);
 router.get('/confirm-email/:token', userCtrl.confirmEmail);
@@ -37,12 +38,14 @@ router.post('/ConsultProfile', userCtrl.ConsultProfile);
 router.get('/getViewlist', userCtrl.getViewlist);
 
 
-
+// SOCKET 
 router.get('/getMessages/:match_id', authMiddleware, userCtrl.getMessages);
 router.post('/sendMessage', authMiddleware, userCtrl.sendMessage);
 router.get('/getNotifications', authMiddleware, userCtrl.getNotifications);
 router.post('/sendNotification', authMiddleware, userCtrl.sendNotification);
 
+
+// BLOCK SIGNAL UPDATE
 router.put('/updateUser', authMiddleware, userCtrl.updateUser);
 router.post('/blockUser', userCtrl.blockUser);
 router.get('/getBlockUser', userCtrl.getBlockUser);

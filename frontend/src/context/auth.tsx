@@ -23,6 +23,7 @@ interface AuthContextType {
   error: string | null;
   socket: Socket | null;
   blockedUsers: Block[];
+  profile_picture: string;
   setId: React.Dispatch<React.SetStateAction<string>>;
   setFirstname: React.Dispatch<React.SetStateAction<string>>;
   setLastname: React.Dispatch<React.SetStateAction<string>>;
@@ -32,6 +33,7 @@ interface AuthContextType {
   setLatitude: React.Dispatch<React.SetStateAction<number>>;
   setLongitude: React.Dispatch<React.SetStateAction<number>>;
   setDescription: React.Dispatch<React.SetStateAction<string>>;
+  setProfilePicture: React.Dispatch<React.SetStateAction<string>>;
   refreshUserData: () => Promise<void>;
 }
 
@@ -54,6 +56,7 @@ export const AuthContextProvider = ({ children }: { children: React.ReactNode })
   const [latitude, setLatitude] = useState<number>(0);
   const [longitude, setLongitude] = useState<number>(0);
   const [description, setDescription] = useState<string>("");
+  const [profile_picture, setProfilePicture] = useState<string>("");
   const [id, setId] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -89,6 +92,8 @@ export const AuthContextProvider = ({ children }: { children: React.ReactNode })
         setLatitude(data.user.latitude || 0);
         setLongitude(data.user.longitude || 0);
         setDescription(data.user.description || "");
+        setProfilePicture(data.user.profile_picture || "");
+
       } else if (response.status === 401) {
         localStorage.removeItem("token");
         setError("Session expirée. Veuillez vous reconnecter.");
@@ -169,6 +174,7 @@ const fetchBlockedUsers = async () => {
         error,
         socket,
         blockedUsers,
+        profile_picture,
         setFirstname,
         setLastname,
         setAge,
@@ -179,6 +185,7 @@ const fetchBlockedUsers = async () => {
         setLongitude,
         setSexualPreference,
         refreshUserData: fetchUserData,
+        setProfilePicture
       }}
     >
       {children}

@@ -107,13 +107,23 @@ export async function registerUser(req,res){
       if (gender !== undefined) updateData.gender = gender;
       if (birthDate !== undefined) updateData.birthDate = birthDate;
       if (preference !== undefined) updateData.preference = preference;
-      if (interests !== undefined) updateData.interests = interests;
       if (city !== undefined) updateData.city = city;
       if (country !== undefined) updateData.country = country;
       if (latitude !== undefined) updateData.latitude = latitude;
       if (longitude !== undefined) updateData.longitude = longitude;
       if (age !== undefined) updateData.age = age;
+      // if (interests !== undefined) updateData.interests = interests;
+      if (interests !== undefined) {
+        if (typeof interests === 'string') {
+          // Gère le format spécial {"item1","item2"}
+          const cleaned = interests.replace(/^{|}$/g, ''); // Enlève les accolades
+          updateData.interests = cleaned.split(',').map(item => item.replace(/"/g, '').trim());
+        } else if (Array.isArray(interests)) {
+          updateData.interests = interests;
+        }
+      }
 
+      console.log("intersts", interests);
       
 
 
@@ -121,8 +131,8 @@ export async function registerUser(req,res){
 
       res.status(200).json({ 
         message: "Informations mises à jour avec succès",
-        email: user.email, // On renvoie l'email
-        password: user.password // ⚠️ Optionnel : Seulement si tu veux aussi pré-remplir le mot de passe
+        email: user.email, 
+        password: user.password
     });
 
     }catch (error){
@@ -284,15 +294,12 @@ export async function logUser (req, res){
       });
     }
 };
-  
-  
-export async function imageUpload (req, res){
-try {
 
-  console.log("req.files", req.files);
-  
+
+export async function imageUpload(req, res) {
+  try {
     if (!req.files || req.files.length === 0) {
-    return res.status(400).json({ error: "Aucune image reçue" });
+      return res.status(400).json({ error: "Aucune image reçue" });
     }
 
     const token = req.headers.authorization?.split(" ")[1];
@@ -301,12 +308,12 @@ try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const userId = decoded.id;
 
+    // Supprimer les anciennes images
     await db.query('DELETE FROM user_images WHERE user_id = $1', [userId]);
 
-
     const insertImageQuery = `
-    INSERT INTO user_images (user_id, image_url, position)
-    VALUES ($1, $2, $3)
+      INSERT INTO user_images (user_id, image_url, position)
+      VALUES ($1, $2, $3)
     `;
 
     const images = req.files;
@@ -315,32 +322,82 @@ try {
       await db.query(insertImageQuery, [userId, images[i].path, i + 1]);
     }
 
-    // const profilePicture = images[0];
-    // const otherPictures = images.slice(1);
-
-    if (!profilePicture.length > 4) {
-      console.log("profilePicture.length", profilePicture.length);
-    }
-
-    // console.log("profilePicture:", profilePicture);
-
-    // await db.update(
-    // 'users',
-    // { profile_picture: profilePicture },
-    // { id: userId }
-    // );
+    // Définir la photo de profil dans la table `users`
+    const profilePicture = images[0]; // Première image comme profil
+    await db.query(
+      'UPDATE users SET profile_picture = $1 WHERE id = $2',
+      [profilePicture.path, userId]
+    );
 
     res.status(200).json({
-    message: "Images uploadées avec succès",
-    images: images.map(img => img.path),
-    profilePicture,
-    otherPictures,
+      message: "Images uploadées avec succès",
+      images: images.map(img => img.path),
+      profilePicture: profilePicture.path,
+      otherPictures: images.slice(1).map(img => img.path),
     });
-} catch (error) {
+  } catch (error) {
     console.error("Erreur d'upload :", error);
     res.status(500).json({ error: "Erreur lors de l'upload des images" });
+  }
 }
-};
+
+  
+  
+// export async function imageUpload (req, res){
+// try {
+
+//   console.log("req.files", req.files);
+  
+//     if (!req.files || req.files.length === 0) {
+//     return res.status(400).json({ error: "Aucune image reçue" });
+//     }
+
+//     const token = req.headers.authorization?.split(" ")[1];
+//     if (!token) return res.status(401).json({ error: "Token manquant" });
+
+//     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+//     const userId = decoded.id;
+
+//     await db.query('DELETE FROM user_images WHERE user_id = $1', [userId]);
+
+
+//     const insertImageQuery = `
+//     INSERT INTO user_images (user_id, image_url, position)
+//     VALUES ($1, $2, $3)
+//     `;
+
+//     const images = req.files;
+
+//     for (let i = 0; i < images.length && i < 5; i++) {
+//       await db.query(insertImageQuery, [userId, images[i].path, i + 1]);
+//     }
+
+//     const profilePicture = images[0];
+//     const otherPictures = images.slice(1);
+
+//     if (!profilePicture.length > 4) {
+//       console.log("profilePicture.length", profilePicture.length);
+//     }
+
+//     console.log("profilePicture:", profilePicture);
+
+//     await db.update(
+//     'user_images',
+//     { image_url: profilePicture },
+//     { id: userId }
+//     );
+
+//     res.status(200).json({
+//     message: "Images uploadées avec succès",
+//     images: images.map(img => img.path),
+//     profilePicture,
+//     otherPictures,
+//     });
+// } catch (error) {
+//     console.error("Erreur d'upload :", error);
+//     res.status(500).json({ error: "Erreur lors de l'upload des images" });
+// }
+// };
 
 export async function getUserImages(req, res) {
   try {
@@ -350,6 +407,8 @@ export async function getUserImages(req, res) {
       'SELECT image_url, position FROM user_images WHERE user_id = $1 ORDER BY position',
       [userId]
     );
+
+    console.log("result", result.rows);
 
     res.status(200).json({ images: result.rows });
   } catch (error) {

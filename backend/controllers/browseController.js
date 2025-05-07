@@ -87,6 +87,7 @@ export async function recordProfileView (req, res){
         id,
       } = req.body;
   
+      console.log('>>>>>>>>>>>>');
       console.log('minAge:', minAge);
       console.log('maxAge:', maxAge);
       console.log('sexualPreference:', sexualPreference);
@@ -94,6 +95,10 @@ export async function recordProfileView (req, res){
       console.log('latitude:', latitude);
       console.log('longitude:', longitude);
       console.log('maxDistance:', maxDistance);
+      console.log('ordered:', ordered);
+      console.log('interests:', interests);
+      console.log('>>>>>>>>>>>>');
+
   
       const currentUserId = req.user.id;
       const blocked_id = req.user.getBlockUsers;
@@ -143,7 +148,7 @@ export async function recordProfileView (req, res){
         params.push(parseInt(maxAge));
       }
       
-      // Filtres de préférence et genre
+
       if (sexualPreference) {
         query += ` AND preference = $${params.length + 1}`;
         params.push(sexualPreference);
@@ -165,6 +170,79 @@ export async function recordProfileView (req, res){
       //   query += ` AND interests && ARRAY[${placeholders}]`;
       //   params.push(...interestsArray);
       // }
+
+    //   if (interests) {
+    //     let interestsArray = [];
+      
+    //     if (Array.isArray(interests)) {
+    //       interestsArray = interests;
+    //     } else if (typeof interests === 'string') {
+    //       interestsArray = interests.replace(/[{}"]/g, '').split(',').map(i => i.trim());
+    //     }
+      
+    //     if (interestsArray.length > 0) {
+    //       const placeholders = interestsArray.map((_, index) => `$${params.length + index + 1}`).join(', ');
+    //       query += ` AND interests && ARRAY[${placeholders}]`;
+    //       params.push(...interestsArray);
+    //     }
+    //   }
+
+    // if (interests) {
+    //     let interestsArray = [];
+      
+    //     if (Array.isArray(interests)) {
+    //       interestsArray = interests;
+    //     } else if (typeof interests === 'string') {
+    //       interestsArray = interests.replace(/[{}"]/g, '').split(',').map(i => i.trim());
+    //     }
+
+    //     console.log('interestsArray:', interestsArray);
+      
+    //     if (interestsArray.length > 0) {
+    //       const placeholders = interestsArray.map((_, index) => `$${params.length + index + 1}`).join(', ');
+          
+    //       // Filtre : au moins un intérêt commun
+    //       query += ` AND interests && ARRAY[${placeholders}]`;
+      
+    //       // Ajout pour tri : calcul du nombre d’intérêts communs
+    //       query = query.replace(
+    //         'SELECT ',
+    //         `SELECT cardinality(interests && ARRAY[${placeholders}]) AS common_interests, `
+    //       );
+      
+    //       params.push(...interestsArray);
+    //     }
+    //   }
+
+    if (interests) {
+      let interestsArray = [];
+    
+      if (Array.isArray(interests)) {
+        interestsArray = interests;
+      } else if (typeof interests === 'string') {
+        interestsArray = interests.replace(/[{}"]/g, '').split(',').map(i => i.trim());
+      }
+    
+      console.log('interestsArray:', interestsArray);
+    
+      if (interestsArray.length > 0) {
+        const nextParamIndex = params.length + 1;
+    
+        query += ` AND interests && $${nextParamIndex}::text[]`; // Filtre : au moins un intérêt commun
+    
+        // Ajout du calcul des intérêts communs
+        query = query.replace(
+          'SELECT ',
+          `SELECT cardinality(ARRAY(
+             SELECT UNNEST(interests)
+             INTERSECT
+             SELECT UNNEST($${nextParamIndex}::text[])
+           )) AS common_interests, `
+        );
+    
+        params.push(interestsArray);
+      }
+    }
       
       // Fermer la sous-requête
       query += `) AS filtered_users`;
@@ -174,26 +252,27 @@ export async function recordProfileView (req, res){
         query += ` WHERE distance <= $${params.length + 1}`;
         params.push(parseFloat(maxDistance));
       }
-  
+      
+      
       // Tri des résultats
-      if (ordered) {
-        if (ordered === "age") {
-          query += ` ORDER BY age`;
-        } else if (ordered === "distance" && latitude && longitude) {
-          query += ` ORDER BY distance`;
-        } else if (ordered === "interests") {
-          query += ` ORDER BY interests`;
-        }
-      } else if (latitude && longitude) {
-        // Par défaut, trier par distance si les coordonnées sont fournies
-        query += ` ORDER BY distance`;
-      }
+      // if (ordered) {
+        //   if (ordered === "age") {
+            //     query += ` ORDER BY age`;
+            //   } else if (ordered === "distance" && latitude && longitude) {
+                //     query += ` ORDER BY distance`;
+                //   } else if (ordered === "interests") {
+                    // query += ` ORDER BY interests`;
+                    //   }
+      // } else if (latitude && longitude) {
+      //   // Par défaut, trier par distance si les coordonnées sont fournies
+      //   query += ` ORDER BY distance`;
+      // }
   
       const result = await db.query(query, params);
       
       res.status(200).json({
         message: 'Liste des utilisateurs récupérée avec succès',
-        users: result.rows || result // Adaptation selon le retour de votre module db
+        users: result.rows || result
       });
     } catch (error) {
       console.error('Erreur lors de la récupération des utilisateurs:', error);
