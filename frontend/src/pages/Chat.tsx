@@ -129,6 +129,7 @@ const Message = () => {
             }, [messages]); 
 
     return (
+        <div className="flex flex-col items-center justify-center min-h-screen bg-red-200">
         <div className="flex flex-col  max-w-lg mx-auto bg-gray-100 border rounded-lg shadow-lg">
       {/* Zone des messages */}
       <div
@@ -167,6 +168,7 @@ const Message = () => {
         </button>
       </form>
     </div>
+        </div>
     );
 };
 

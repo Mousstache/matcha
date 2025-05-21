@@ -1,0 +1,21 @@
+Terminer l'authentificaion signup :
+- ne pas laisser acces si le mec n'est pas authentifié jusqu'à la fin
+- parser les informations de l'utilisateur (exemple interdit au moins de 18 , la politique de mot de passe)
+- redirection vers la page de confirmation d'email
+
+
+reset-password :
+- forgot password
+- envoi d'un mail de reset password
+
+
+photo :
+- gerer 5 photos par profil 
+
+
+geolocalisation :
+- les utilisateurs peuvent changer leur position dans la page de profil
+
+autres :
+- responsive
+- bonus belek 

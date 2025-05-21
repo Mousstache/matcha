@@ -741,7 +741,7 @@ return (
       
       <div className="bg-white rounded-xl shadow-lg overflow-hidden">
         <Tabs defaultValue="matches" className="w-full">
-          <TabsList className="flex h-auto w-full bg-gray-100 p-0 rounded-none border-b">
+          <TabsList className="flex h-auto w-full bg-gray-100 p-0 rounded-none ">
             <TabsTrigger 
               value="matches" 
               className="flex-1 data-[state=active]:bg-white data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-pink-500 rounded-none py-3 px-6"

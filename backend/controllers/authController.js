@@ -403,14 +403,16 @@ export async function getUserImages(req, res) {
   try {
     const userId = req.user.id;
 
+    console.log("userId", userId);
+
     const result = await db.query(
       'SELECT image_url, position FROM user_images WHERE user_id = $1 ORDER BY position',
       [userId]
     );
 
-    console.log("result", result.rows);
+    console.log("result", result);
 
-    res.status(200).json({ images: result.rows });
+    res.status(200).json({ images: result });
   } catch (error) {
     console.error("Erreur lors de la récupération des images :", error);
     res.status(500).json({ error: "Erreur serveur" });

@@ -633,6 +633,7 @@ const Profile = () => {
         if (!response.ok) {
           throw new Error(data.message || 'Erreur lors de la récupération des images');
         }
+        // console.log("imageUrls >>>", data.);
         
         // setImageUrls(data.profile_picture);
         setImageUrls(data.images.map((img: any) => img.image_url));

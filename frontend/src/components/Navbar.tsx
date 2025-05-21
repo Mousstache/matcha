@@ -25,7 +25,7 @@ const Navbar = () => {
       <div className="container mx-auto flex justify-between items-center space-x-4">
         {/* Logo */}
         <Link to="/" className="flex items-center space-x-2">
-          <img src="logo.webp" alt="Logo" className="w-10 h-10 rounded-full" />
+          <img src="/logo.webp" alt="Logo" className="w-10 h-10 rounded-full" />
           <span className="text-white text-2xl font-serif">Matcha</span>
         </Link>
 

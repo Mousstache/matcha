@@ -8,8 +8,7 @@ import { Navigate } from 'react-router-dom';
 // import { ReactNode } from 'react';
 
 import Login from "./pages/Login";
-import Navbar from "./components/Navbar";
-import Footer from "./components/Footer";
+import Layout from "./components/Layout";
 import Home from "./pages/Home";
 import Signup from "./pages/Signup";
 import Profil from "./pages/Profil";
@@ -20,6 +19,8 @@ import ConfirmEmail from "./pages/ConfirmEmail";
 import Chat from "./pages/Chat";
 import Notification from "./pages/Notification";
 import BlockList  from "./pages/BlockList";
+import ForgotPassword  from "./pages/ForgotPassword";
+import ResetPassword  from "./pages/ResetPassword";
 
 // interface User {
 //   id: number;
@@ -54,28 +55,89 @@ const RouteNotFound = () => {
 function App() {
   
   return (
-      <Router>
-        <title>Matcha</title>
-        <Navbar />
-        <Routes>
-        <Route path="*" element={<RouteNotFound />} />
-        {/* <Route path="/404" element={<RouteNotFound />} /> */}
-        <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
+   <Router>
+      <Routes>
+        {/* Pages SANS Layout (pas de Navbar) */}
         <Route path="/login" element={<Login />} />
-        <Route path="/confirm-email" element={<ConfirmEmail />} />
-        <Route path="/explore" element={<ProtectedRoute><Explore /></ProtectedRoute>} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/register" element={<Register />} />
-        <Route path="/profil" element={<ProtectedRoute><Profil /></ProtectedRoute>} />
-        <Route path="/block" element={<ProtectedRoute><BlockList /></ProtectedRoute>} />
-        <Route path="/consult-profil/:username" element={<ProtectedRoute><ConsultProfil /></ProtectedRoute>} />
-        <Route path="/chat" element={<ProtectedRoute ><Chat></Chat></ProtectedRoute>} />
-        <Route path="/chat/:match_id" element={<ProtectedRoute ><Chat></Chat></ProtectedRoute>} />
-        <Route path="/notification" element={<ProtectedRoute><Notification /></ProtectedRoute>} />
-        </Routes>
-        <Footer />
-      </Router>
-  )
+        <Route path="/confirm-email" element={<ConfirmEmail />} />
+        <Route path="*" element={<RouteNotFound />} />
+
+        {/* Pages AVEC Layout */}
+        <Route
+          path="/"
+          element={<Layout> <ProtectedRoute>
+                <Home />
+              </ProtectedRoute> </Layout>
+          }
+        />
+        <Route
+          path="/explore"
+          element={<Layout><ProtectedRoute>
+                <Explore />
+              </ProtectedRoute> </Layout>
+          }
+        />
+        <Route
+          path="/profil"
+          element={<Layout><ProtectedRoute>
+                <Profil />
+              </ProtectedRoute> </Layout>
+          }
+        />
+        <Route
+          path="/block"
+          element={<Layout><ProtectedRoute>
+                <BlockList />
+              </ProtectedRoute> </Layout>
+          }
+        />
+        <Route
+          path="/consult-profil/:username"
+          element={<Layout><ProtectedRoute>
+                <ConsultProfil />
+              </ProtectedRoute> </Layout>
+          }
+        />
+        <Route
+          path="/chat"
+          element={<Layout><ProtectedRoute>
+                <Chat />
+              </ProtectedRoute> </Layout>
+          }
+        />
+        <Route
+          path="/chat/:match_id"
+          element={<Layout><ProtectedRoute>
+                <Chat />
+              </ProtectedRoute> </Layout>
+          }
+        />
+         <Route
+          path="/chat/:match_id"
+          element={<Layout><ProtectedRoute>
+                <ResetPassword />
+              </ProtectedRoute> </Layout>
+          }
+        />
+         <Route
+          path="/chat/:match_id"
+          element={<Layout><ProtectedRoute>
+                <ForgotPassword />
+              </ProtectedRoute> </Layout>
+          }
+        />
+        <Route
+          path="/notification"
+          element={<Layout><ProtectedRoute>
+                <Notification />
+              </ProtectedRoute> </Layout>
+          }
+        />
+      </Routes>
+    </Router>
+  );
 }
 
 
