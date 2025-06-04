@@ -1,17 +1,25 @@
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
+
 
 const ConfirmEmail = () => {
   const [status, setStatus] = useState('loading');
   const location = useLocation();
   const token = new URLSearchParams(location.search).get('token');
+  const navigate = useNavigate();
 
-  console.log("ici");
+
+  console.log("ICCCCCCCCCCCCCCCCCCCCCIIIIIIIIIIIIII", token);
 
   console.log('Tentative de confirmation avec token:', token);
   useEffect(() => {
-    const confirmEmail = async () => {
+    let called = false;
+
+    const confirmEmailtoken = async () => {
       try {
+        if (called) return;
+        called = true;
 
         // const token_id = localStorage.getItem('token');
         console.log('here');
@@ -26,10 +34,13 @@ const ConfirmEmail = () => {
         })
 
         const data = await response.json();
+
+        console.log(data);
         
         if (response.ok) {
           console.log('Confirmation réussie:', data);
           setStatus('success');
+          navigate("/signup");
         } else {
           console.error('Erreur de confirmation:', data);
           setStatus('error');
@@ -42,12 +53,12 @@ const ConfirmEmail = () => {
     };
 
     if (token) {
-      confirmEmail();
+      confirmEmailtoken();
     } else {
       setStatus('error');
       console.log('puree');
     }
-  }, [token]);
+  }, []);
 
   return (
     <div>

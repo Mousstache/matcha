@@ -129,7 +129,7 @@ const Register = () => {
         setLoading(false);
       } else {
         localStorage.setItem("token", data.token);
-        navigate("/signup");
+        // navigate("/confirm-email");
       }
     } catch (error) {
       console.error(error);

@@ -1,6 +1,6 @@
 import jwt from 'jsonwebtoken';
 
-const authMiddleware = (req, res, next) => {
+export const authMiddleware = (req, res, next) => {
   
   const token = req.header('Authorization');
 
@@ -19,4 +19,12 @@ const authMiddleware = (req, res, next) => {
   }
 };
 
-export default authMiddleware;
+export const ensureEmailConfirmed = (req, res, next) => {
+  console.log(req.user);
+  if (!req.user.emailConfirmed) {
+    return res.status(403).json({ message: 'Email non confirmé' });
+  }
+  next();
+};
+
+export default { authMiddleware, ensureEmailConfirmed};

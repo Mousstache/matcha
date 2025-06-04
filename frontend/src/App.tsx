@@ -33,14 +33,36 @@ interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
+// const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
+//   const isAuthenticated = localStorage.getItem('token') !== null;
+//   console.log(isAuthenticated);
+//   if (!isAuthenticated) {
+//     return <Navigate to="/login" replace />;
+//   }
+  
+//   return children;
+// };
+
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const isAuthenticated = localStorage.getItem('token') !== null;
-  console.log(isAuthenticated);
-  if (!isAuthenticated) {
+  const token = localStorage.getItem('token');
+
+  if (!token) {
     return <Navigate to="/login" replace />;
   }
-  
-  return children;
+
+  try {
+    // Décodage du token
+    const payload = JSON.parse(atob(token.split('.')[1]));
+
+    if (!payload.emailConfirmed) {
+      return <Navigate to="/login" replace />;
+    }
+
+    return children;
+  } catch (error) {
+    console.error("Erreur lors du décodage du token:", error);
+    return <Navigate to="/login" replace />;
+  }
 };
 
 const RouteNotFound = () => {
@@ -59,9 +81,10 @@ function App() {
       <Routes>
         {/* Pages SANS Layout (pas de Navbar) */}
         <Route path="/login" element={<Login />} />
-        <Route path="/signup" element={<Signup />} />
+        <Route path="/signup" element={<ProtectedRoute><Signup /></ProtectedRoute>} />
         <Route path="/register" element={<Register />} />
         <Route path="/confirm-email" element={<ConfirmEmail />} />
+        <Route path="/confirm-email/:token" element={<ConfirmEmail />} />
         <Route path="*" element={<RouteNotFound />} />
 
         {/* Pages AVEC Layout */}

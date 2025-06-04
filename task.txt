@@ -9,12 +9,24 @@ reset-password :
 - envoi d'un mail de reset password
 
 
+
+
+
 photo :
 - gerer 5 photos par profil 
 
 
 geolocalisation :
 - les utilisateurs peuvent changer leur position dans la page de profil
+
+notification : 
+- persister les notif pour chaque utilisateur et lui proposer de pouvoir la suprimmer, tourner sur une anciennete de 10 notif a chaque fois
+
+profile :
+- gestion des gens bloquer
+- gerer les affinites entre les preferences de ce que je recherche les utilisateurs sur le site ( homme femme ou les 2 )
+
+
 
 autres :
 - responsive

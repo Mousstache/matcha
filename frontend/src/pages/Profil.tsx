@@ -998,9 +998,9 @@ const Profile = () => {
                           className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-transparent"
                         >
                           <option value="">Sélectionnez une préférence</option>
-                          <option value="Hommes">Hommes</option>
-                          <option value="Femmes">Femmes</option>
-                          <option value="Tous">Tous</option>
+                          <option value="Homme">Homme</option>
+                          <option value="Femme">Femme</option>
+                          <option value="les deux">les deux</option>
                         </select>
                       </div>
                       
@@ -1014,8 +1014,7 @@ const Profile = () => {
                           <option value="">Sélectionnez votre genre</option>
                           <option value="Homme">Homme</option>
                           <option value="Femme">Femme</option>
-                          <option value="Non-binaire">Non-binaire</option>
-                          <option value="Autre">Autre</option>
+                          <option value="Non binaire">Non-binaire</option>
                         </select>
                       </div>
                     </div>

@@ -46,18 +46,16 @@ const Navbar = () => {
             </Link>
           </li>
           <li className="hover">
-                <div className="relative">
+                      <Link to="/notification" className="flex items-center space-x-1">
                     <button className="flex items-center space-x-1">
                         {unreadCount > 0 && (
                             <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
                                 {unreadCount}
                             </span>
                         )}
-                    <Link to="/notification" className="flex items-center space-x-1">
                       <Mail /> <span>Mes notif</span>
-                    </Link>
                     </button>
-                </div>
+                    </Link>
           </li>
         </ul>
 

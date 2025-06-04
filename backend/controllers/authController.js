@@ -15,6 +15,14 @@ export async function registerUser(req,res){
           message: 'Un utilisateur avec cet email existe déjà' 
         });
       }
+
+      const existingUsername= await db.findOne('users', { userName });
+      if (existingUsername) {
+        return res.status(400).json({ 
+          message: 'Un utilisateur avec cet email existe déjà' 
+        });
+      }
+
       
       const hashedPassword = await bcrypt.hash(password, 10);
       
@@ -42,7 +50,8 @@ export async function registerUser(req,res){
       const token = jwt.sign(
         { 
           id: result.id, 
-          email: email 
+          email: email,
+          emailConfirmed: result.emailConfirmed
         },
         process.env.JWT_SECRET,
         { expiresIn: '24h' }
@@ -196,12 +205,21 @@ export async function confirmEmail (req, res){
     
     const sql = `
       SELECT * FROM users 
-      WHERE confirmationToken = ? 
-      AND confirmationTokenExpires > ?
+      WHERE confirmationToken = $1
+      AND confirmationTokenExpires > $2
     `;
     
     const now = new Date();
     const users = await db.query(sql, [token, now]);
+
+    console.log("users === ",users.length);
+    console.log("users >>> ",users);
+
+    // if (users.length !== 1 || users[0].emailconfirmed) {
+    //   return res.status(400).json({
+    //     message: 'Token invalide, expiré ou déjà utilisé.'
+    //   });
+    // }
     
     if (users.length === 0) {
       return res.status(400).json({
@@ -219,10 +237,27 @@ export async function confirmEmail (req, res){
       },
       { id: users[0].id }
     );
-    
-    res.status(200).json({
-      message: 'Email confirmé avec succès'
-    });
+
+    // console.log("users >>> apres ",users);
+
+
+    // const usersconf = await db.query(sql, [token, now]);
+
+    // console.log("userconf <<<< ", usersconf);
+    const checkSql = `SELECT emailConfirmed FROM users WHERE id = $1`;
+    const checkResult = await db.query(checkSql, [users[0].id]);
+
+    if (checkResult[0].emailconfirmed === true) {
+      console.log("ici");
+      res.status(200).json({
+        message: 'Email confirmé avec succès'
+      });
+    }
+
+    if (users.emailConfirmed) {
+      return res.status(200).json({ message: 'Email déjà confirmé' });
+}
+
   } catch (error) {
     console.error('Erreur lors de la confirmation de l\'email:', error);
     res.status(500).json({
@@ -264,11 +299,14 @@ export async function logUser (req, res){
       const token = jwt.sign(
         { 
           id: user.id, 
-          email: user.email 
+          email: user.email,
+          emailConfirmed :  user.emailconfirmed
         },
         process.env.JWT_SECRET,
         { expiresIn: '24h' }
       );
+
+      console.log("a la connexion", user.emailconfirmed);
       
       // Préparer la réponse utilisateur (sans le mot de passe)
       const userResponse = {
