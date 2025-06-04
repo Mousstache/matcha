@@ -1,5 +1,8 @@
 COMPOSE_FILE = docker-compose.yaml
 
+default:
+	@echo "Please specify a target: up, start, stop, clean, rebuild, or logs"
+
 up:
 	docker-compose -f $(COMPOSE_FILE) up --build
 
@@ -11,18 +14,17 @@ stop:
 
 clean:
 	docker-compose -f $(COMPOSE_FILE) down --volumes --remove-orphans
-	docker stop `docker ps -q`
-	docker rm `docker ps -aq`
-	docker rmi `docker image -aq`
-	docker volume rm `docker volume ls -q`
-	docker network rm `docker network ls -q`
+	-$$(docker ps -q | xargs -r docker stop)
+	-$$(docker ps -aq | xargs -r docker rm)
+	-$$(docker images -aq | xargs -r docker rmi)
+	-$$(docker volume ls -q | xargs -r docker volume rm)
+	-$$(docker network ls -q | xargs -r docker network rm)
 	docker system prune -af
-
-# clean-images:
-# 	docker rm -f $$(docker ps -aq)
-# 	docker rmi -f $$(docker images -q)
 
 rebuild:
 	docker-compose -f $(COMPOSE_FILE) up --build --force-recreate
 
-.PHONY: up start stop clean prune clean-volumes clean-containers clean-images logs rebuild
+logs:
+	docker-compose -f $(COMPOSE_FILE) logs
+
+.PHONY: default up start stop clean rebuild logs
