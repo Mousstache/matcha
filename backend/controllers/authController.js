@@ -447,21 +447,45 @@ export async function setProfilePicture(req, res) {
     const userId = decoded.id;
     const { position } = req.body;
 
+    console.log("Changement de photo principale - userId:", userId, "position:", position);
+
     // Récupérer l'image à la position demandée
-    const { rows } = await db.query(
+    const result = await db.query(
       'SELECT image_url FROM user_images WHERE user_id = $1 AND position = $2',
       [userId, position]
     );
-    if (!rows[0]) {
+    
+    if (!result || result.length === 0) {
       return res.status(404).json({ error: "Image non trouvée" });
     }
 
-    await db.query(
-      'UPDATE users SET profile_picture = $1 WHERE id = $2',
-      [rows[0].image_url, userId]
+    console.log("Image trouvée:", result[0].image_url);
+
+    // Mettre à jour la photo de profil
+    const updateResult = await db.query(
+      'UPDATE users SET profile_picture = $1 WHERE id = $2 RETURNING profile_picture',
+      [result[0].image_url, userId]
     );
 
-    res.status(200).json({ success: true, profilePicture: rows[0].image_url });
+    console.log("Résultat de la mise à jour:", updateResult);
+
+    if (!updateResult || updateResult.length === 0) {
+      return res.status(500).json({ error: "Erreur lors de la mise à jour de la photo de profil" });
+    }
+
+    // Vérifier que la mise à jour a bien été effectuée
+    const verifyUpdate = await db.query(
+      'SELECT profile_picture FROM users WHERE id = $1',
+      [userId]
+    );
+
+    console.log("Vérification après mise à jour:", verifyUpdate[0]);
+
+    res.status(200).json({ 
+      success: true, 
+      profilePicture: result[0].image_url,
+      verified: verifyUpdate[0]?.profile_picture === result[0].image_url
+    });
   } catch (error) {
     console.error("Erreur lors du changement de photo principale :", error);
     res.status(500).json({ error: "Erreur lors du changement de photo principale" });

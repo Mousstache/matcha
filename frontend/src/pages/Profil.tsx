@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from "@/context/auth";
 import { Heart, MapPin, Mail, User, Calendar, Edit3, Camera, X, Bell, Trash } from 'lucide-react';
 import { Button, Badge, Avatar, Input, Select, Textarea, Card } from "@heroui/react";
+import { addToast } from "@heroui/toast";
 
 interface User {
   id: number;
@@ -20,66 +21,66 @@ interface User {
 
 const Profile = () => {
   const [user, setUser] = useState<User | null>(null);
-  const { id, profile_picture } = useAuth();
+  const { id, profile_picture, setProfilePicture } = useAuth();
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [profilePictureIndex, setProfilePictureIndex] = useState(0);
-  const [images, setImages] = useState<File[]>([]);
-  const [uploadStatus, setUploadStatus] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   
   useEffect(() => {
     const fetchUserProfile = async () => {
       const token = localStorage.getItem('token');
-
+      if (!token) return;
       try {
         const response = await fetch('http://localhost:5001/api/user', {
           method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
         });
-        
         const data = await response.json();
-        
-        if (!response.ok) {
-          throw new Error(data.message || 'Erreur lors de la récupération du profil');
+        if (response.ok) {
+          setUser(data.user);
+        } else {
+          console.error('Erreur lors de la récupération du profil', data.message);
         }
-        
-        setUser(data.user);
-        console.log("user", data.profile_picture);
       } catch (err) {
-        console.error('Erreur:', err);
+        console.error('Erreur fetchUserProfile:', err);
       }
     };
 
-    const fetchimageUrls = async () => {
+    const fetchImageUrls = async () => {
       const token = localStorage.getItem('token');
+      if (!token) return;
       try {
         const response = await fetch('http://localhost:5001/api/user-images', {
           method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
         });
-        
         const data = await response.json();
-        
-        if (!response.ok) {
-          throw new Error(data.message || 'Erreur lors de la récupération des images');
-        }
-        
-        setImageUrls(data.images.map((img: any) => img.image_url));
+        if (response.ok && data.images) {
+          const imagesWithPosition = data.images as { image_url: string, position: number }[];
 
+          const sortedImages = [...imagesWithPosition].sort((a, b) => {
+            if (profile_picture && a.image_url === profile_picture) return -1;
+            if (profile_picture && b.image_url === profile_picture) return 1;
+            return a.position - b.position;
+          });
+
+          setImageUrls(sortedImages.map(img => img.image_url));
+
+          const currentProfileIndex = sortedImages.findIndex(img => profile_picture && img.image_url === profile_picture);
+          setProfilePictureIndex(currentProfileIndex !== -1 ? currentProfileIndex : 0);
+        } else {
+          console.error('Erreur lors de la récupération des images', data.error);
+          setImageUrls([]);
+        }
       } catch (err) {
-        console.error('Erreur:', err);
+        console.error('Erreur fetchImageUrls:', err);
+        setImageUrls([]);
       }
     };
 
-    fetchimageUrls();
+    fetchImageUrls();
     fetchUserProfile();
-  }, [id]);
+  }, [id, profile_picture]);
 
   if (!user) {
     return (
@@ -111,19 +112,96 @@ const Profile = () => {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(user),
+        body: JSON.stringify({
+          description: user.description,
+        }),
       });
 
+      const data = await response.json();
+
       if (response.ok) {
-        setUploadStatus('Profil mis à jour avec succès !');
-        setTimeout(() => setUploadStatus(null), 3000);
+        addToast({
+          title: 'Succès',
+          description: 'Profil mis à jour avec succès !',
+          color: 'success'
+        });
         setIsEditing(false);
+      } else {
+        console.error("Erreur API updateUser:", data.message);
+        addToast({
+          title: 'Erreur',
+          description: data.message || 'Erreur lors de la mise à jour du profil',
+          color: 'danger'
+        });
       }
     } catch (error) {
-      console.error(error);
-      setUploadStatus('Erreur lors de la mise à jour du profil');
-      setTimeout(() => setUploadStatus(null), 3000);
+      console.error("Erreur fetch updateUser:", error);
+      addToast({
+        title: 'Erreur',
+        description: 'Erreur lors de la mise à jour du profil',
+        color: 'danger'
+      });
     }
+  };
+
+  const handleUpload = async (filesToUpload: File[]) => {
+    if (filesToUpload.length === 0) {
+      addToast({
+         title: 'Information',
+         description: "Aucune image à uploader.",
+         color: 'default'
+      });
+      return;
+    }
+
+    const formData = new FormData();
+    filesToUpload.forEach((image) => formData.append("images", image));
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+        addToast({
+            title: 'Erreur',
+            description: 'Authentification requise pour uploader.',
+            color: 'danger'
+        });
+        return;
+    }
+
+    const currentProfileImgUrl = profile_picture;
+    const existingProfileIndexInCurrentUrls = imageUrls.findIndex(url => url === currentProfileImgUrl);
+    const profileIndexToSend = existingProfileIndexInCurrentUrls !== -1 ? existingProfileIndexInCurrentUrls : 0;
+    formData.append("profilePictureIndex", profileIndexToSend.toString());
+    console.log("Uploading avec profilePictureIndex:", profileIndexToSend);
+
+    const uploadPromise = fetch("http://localhost:5001/api/upload", {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      method: "POST",
+      body: formData,
+    }).then(response => response.json());
+
+    uploadPromise.then(data => {
+      if (data.success) {
+        if (data.images) {
+          const imagesWithPosition = data.images as { image_url: string, position: number }[];
+          setImageUrls(imagesWithPosition.map(img => img.image_url));
+        }
+         if (data.profilePicture !== undefined) {
+             setProfilePicture(data.profilePicture);
+             setUser(prev => prev ? ({ ...prev, profile_picture: data.profilePicture }) : null);
+         }
+         addToast({
+           title: 'Succès',
+           description: 'Photos ajoutées avec succès !',
+           color: 'success'
+         });
+      } else {
+        console.error("Erreur API upload:", data.error);
+      }
+    }).catch(error => {
+        console.error("Erreur fetch upload:", error);
+    });
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -133,136 +211,171 @@ const Profile = () => {
     const fileList = Array.from(files);
     
     if (imageUrls.length + fileList.length > 5) {
-      alert("Vous ne pouvez pas avoir plus de 5 images au total.");
+      addToast({
+         title: 'Erreur',
+         description: `Vous ne pouvez pas avoir plus de 5 images au total (actuellement ${imageUrls.length}).`,
+         color: 'danger'
+      });
       return;
     }
     
-    setImages(prev => [...prev, ...fileList]);
-    
-    const newImageUrls = fileList.map(file => URL.createObjectURL(file));
-    setImageUrls(prev => [...prev, ...newImageUrls]);
+    handleUpload(fileList);
   };
 
-  const handleRemoveImage = (index: number) => {
-    const newImageUrls = [...imageUrls];
-    newImageUrls.splice(index, 1);
-    setImageUrls(newImageUrls);
-    
-    if (profilePictureIndex >= newImageUrls.length) {
-      setProfilePictureIndex(newImageUrls.length > 0 ? 0 : -1);
-    } else if (profilePictureIndex === index && newImageUrls.length > 0) {
-      setProfilePictureIndex(0);
-    }
-    
-    const newImages = [...images];
-    if (index < newImages.length) {
-      newImages.splice(index, 1);
-      setImages(newImages);
-    }
+  const handleRemoveImage = async (index: number) => {
+     const token = localStorage.getItem("token");
+     if (!token) {
+         addToast({
+             title: 'Erreur',
+             description: 'Authentification requise pour supprimer.',
+             color: 'danger'
+         });
+         return;
+     }
+
+     try {
+        const imagesResponse = await fetch('http://localhost:5001/api/user-images', {
+           headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const imagesData = await imagesResponse.json();
+        if (!imagesResponse.ok || !imagesData.images) {
+           throw new Error(imagesData.error || 'Erreur lors de la récupération des images pour suppression');
+        }
+
+        const imageUrlToRemove = imageUrls[index];
+        const imageToDelete = imagesData.images.find((img: any) => img.image_url === imageUrlToRemove);
+
+        if (!imageToDelete) {
+           addToast({
+              title: 'Erreur',
+              description: "Image non trouvée.",
+              color: 'danger'
+           });
+           return;
+        }
+
+        const positionToDelete = imageToDelete.position;
+        console.log(`Suppression de l'image à la position DB: ${positionToDelete}`);
+
+        const deletePromise = fetch(`http://localhost:5001/api/delete-image/${positionToDelete}`, {
+          method: "DELETE",
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }).then(response => response.json());
+
+        deletePromise.then(data => {
+           if(data.success) {
+              if (data.images) {
+                 setImageUrls(data.images.map((img: any) => img.image_url));
+              }
+              if (data.profilePicture !== undefined) {
+                 setProfilePicture(data.profilePicture);
+                 setUser(prev => prev ? ({ ...prev, profile_picture: data.profilePicture }) : null);
+              }
+              addToast({
+                title: 'Succès',
+                description: 'Photo supprimée avec succès !',
+                color: 'success'
+              });
+           } else {
+              console.error("Erreur API delete-image:", data.error);
+           }
+        }).catch(error => {
+           console.error("Erreur fetch delete-image:", error);
+        });
+
+     } catch (error: any) {
+        console.error("Erreur lors de la suppression de l'image :", error);
+         addToast({
+            title: 'Erreur',
+            description: error.message || "Erreur lors de la suppression de l'image.",
+            color: 'danger'
+         });
+     }
   };
 
   const handleSetProfilePicture = async (index: number) => {
     const token = localStorage.getItem("token");
-    try {
-      const response = await fetch("http://localhost:5001/api/set-profile-picture", {
-        method: "PUT",
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ position: index + 1 })
-      });
-      const data = await response.json();
-      if (data.success) {
-        setProfilePictureIndex(index);
-        setUploadStatus("Photo principale mise à jour !");
-        setTimeout(() => setUploadStatus(null), 3000);
-      } else {
-        setUploadStatus("Erreur lors du changement de photo principale.");
-        setTimeout(() => setUploadStatus(null), 3000);
-      }
-    } catch (error) {
-      setUploadStatus("Erreur lors du changement de photo principale.");
-      setTimeout(() => setUploadStatus(null), 3000);
-    }
-  };
-
-  const handleUpload = async () => {
-    const formData = new FormData();
-    images.forEach((image) => formData.append("images", image));
-    formData.append("profilePictureIndex", profilePictureIndex.toString());
-
-    // LOG : ce que tu vas envoyer
-    console.log("Images à uploader :", images);
-    for (let pair of formData.entries()) {
-      console.log(pair[0]+ ', ' + pair[1]);
+    if (!token) {
+        addToast({
+            title: 'Erreur',
+            description: 'Authentification requise pour changer la photo principale.',
+            color: 'danger'
+        });
+        return;
     }
 
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:5001/api/upload", {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        method: "POST",
-        body: formData,
-      });
+       const imagesResponse = await fetch('http://localhost:5001/api/user-images', {
+          headers: { 'Authorization': `Bearer ${token}` }
+       });
+       const imagesData = await imagesResponse.json();
+       if (!imagesResponse.ok || !imagesData.images) {
+          throw new Error(imagesData.error || 'Erreur lors de la récupération des images pour définir la photo principale');
+       }
 
-      // LOG : la réponse brute
-      console.log("Réponse brute:", response);
+       const imageUrlToSet = imageUrls[index];
+       const imageToSetAsProfile = imagesData.images.find((img: any) => img.image_url === imageUrlToSet);
 
-      const data = await response.json();
-      // LOG : le contenu de la réponse
-      console.log("Données reçues:", data);
+       if (!imageToSetAsProfile) {
+          addToast({
+             title: 'Erreur',
+             description: "Image non trouvée pour définir comme principale.",
+             color: 'danger'
+          });
+          return;
+       }
 
-      if (data.success) {
-        setUploadStatus("Images uploadées avec succès !");
-        setTimeout(() => setUploadStatus(null), 3000);
-        if (data.images) {
-          setImageUrls(data.images.map((img: any) => img.image_url));
-        }
-        setImages([]);
-      } else {
-        setUploadStatus("Erreur lors de l'upload.");
-        setTimeout(() => setUploadStatus(null), 3000);
-      }
-    } catch (error) {
-      console.error("Erreur lors de l'upload:", error);
-      setUploadStatus("Erreur lors de l'upload.");
-      setTimeout(() => setUploadStatus(null), 3000);
-    }
-  };
+       const positionToSet = imageToSetAsProfile.position;
+       console.log(`Tente de définir la photo à la position DB ${positionToSet} comme principale`);
 
-  // Fonction pour supprimer une image côté backend
-  const handleDeleteImage = async (position: number) => {
-    const token = localStorage.getItem("token");
-    try {
-      const response = await fetch(`http://localhost:5001/api/delete-image/${position}`, {
-        method: "DELETE",
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      const data = await response.json();
-      if (data.success) {
-        setImageUrls(data.images.map((img: any) => img.image_url));
-        setUploadStatus("Image supprimée !");
-        setTimeout(() => setUploadStatus(null), 3000);
-      } else {
-        setUploadStatus("Erreur lors de la suppression.");
-        setTimeout(() => setUploadStatus(null), 3000);
-      }
-    } catch (error) {
-      setUploadStatus("Erreur lors de la suppression.");
-      setTimeout(() => setUploadStatus(null), 3000);
-    }
+       const setProfilePromise = fetch("http://localhost:5001/api/set-profile-picture", {
+         method: "PUT",
+         headers: {
+           'Authorization': `Bearer ${token}`,
+           'Content-Type': 'application/json'
+         },
+         body: JSON.stringify({ position: positionToSet })
+       }).then(response => response.json());
+
+       setProfilePromise.then(data => {
+          if (data.success) {
+            setProfilePicture(data.profilePicture);
+            setUser(prev => prev ? ({ ...prev, profile_picture: data.profilePicture }) : null);
+            addToast({
+              title: 'Succès',
+              description: 'Photo principale mise à jour avec succès !',
+              color: 'success'
+            });
+          } else {
+            console.error("Erreur API set-profile-picture:", data.error);
+          }
+       }).catch(error => {
+          console.error("Erreur fetch set-profile-picture:", error);
+       });
+
+     } catch (error: any) {
+       console.error("Erreur lors du changement de photo principale :", error);
+        addToast({
+           title: 'Erreur',
+           description: error.message || "Erreur lors du changement de photo principale.",
+           color: 'danger'
+        });
+     }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 via-fuchsia-50 to-purple-100 py-12 px-2">
       <Card className="max-w-3xl mx-auto overflow-hidden shadow-2xl rounded-3xl border-0">
         <div className="relative h-52 bg-gradient-to-r from-pink-400 via-pink-300 to-fuchsia-300">
-          {imageUrls.length > 0 && profilePictureIndex >= 0 ? (
+          {profile_picture ? (
+            <img 
+              src={profile_picture}
+              alt="Couverture de profil" 
+              className="w-full h-full object-cover opacity-40"
+            />
+          ) : imageUrls.length > 0 && profilePictureIndex >= 0 ? (
             <img 
               src={imageUrls[profilePictureIndex]} 
               alt="Couverture de profil" 
@@ -273,25 +386,14 @@ const Profile = () => {
               <Heart size={64} className="text-white opacity-30" />
             </div>
           )}
-          <div className="absolute right-6 top-6">
-            <Button
-              onClick={() => setIsEditing(!isEditing)}
-              variant="solid"
-              color="primary"
-              className="bg-white bg-opacity-80 hover:bg-pink-100 text-pink-600 p-3 rounded-full shadow-lg border border-pink-200"
-            >
-              <Edit3 size={22} />
-            </Button>
-          </div>
         </div>
         <div className="pt-4 px-8 pb-4">
           <div className="flex flex-col md:flex-row md:items-center md:gap-8 gap-4">
-            {/* Avatar à gauche */}
             <div className="flex-shrink-0 flex justify-center md:justify-start">
               <Avatar size="lg" className="w-28 h-28 border-4 border-white bg-gray-100 shadow-xl -mt-16 md:mt-0">
-                {imageUrls.length > 0 && profilePictureIndex >= 0 ? (
+                {profile_picture ? (
                   <img 
-                    src={profile_picture || imageUrls[profilePictureIndex]} 
+                    src={profile_picture}
                     alt="Photo de profil" 
                     className="w-full h-full object-cover"
                   />
@@ -300,7 +402,6 @@ const Profile = () => {
                 )}
               </Avatar>
             </div>
-            {/* Infos à droite */}
             <div className="flex-1 flex flex-col justify-center">
               <div className="flex items-center gap-3 flex-wrap">
                 <h1 className="text-3xl font-extrabold text-gray-800 tracking-tight">
@@ -334,18 +435,51 @@ const Profile = () => {
         <div className="px-8 py-8 border-t border-pink-100 bg-white bg-opacity-80 rounded-b-3xl">
           <div className="grid grid-cols-1 gap-8">
             <div>
-              <h2 className="text-xl font-bold mb-3 text-pink-700 flex items-center gap-2">
-                <User size={20} className="text-pink-500" />
-                À propos de moi
-              </h2>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-xl font-bold text-pink-700 flex items-center gap-2">
+                  <User size={20} className="text-pink-500" />
+                  À propos de moi
+                </h2>
+                <Button
+                  onClick={() => setIsEditing(!isEditing)}
+                  variant="solid"
+                  color="primary"
+                  size="sm"
+                  className="bg-white hover:bg-pink-100 text-pink-600 p-2 rounded-full shadow-md border border-pink-200"
+                >
+                  <Edit3 size={18} />
+                </Button>
+              </div>
               {isEditing ? (
-                <Textarea
-                  value={user.description || ''}
-                  onChange={(e) => setUser({ ...user, description: e.target.value })}
-                  className="w-full p-4 border border-pink-200 rounded-2xl focus:ring-2 focus:ring-pink-400 focus:border-transparent bg-white bg-opacity-90 shadow text-left"
-                  rows={4}
-                  placeholder="Parlez de vous, vos passions, ce que vous recherchez..."
-                />
+                <div className="space-y-4">
+                  <Textarea
+                    value={user.description || ''}
+                    onChange={(e) => setUser({ ...user, description: e.target.value })}
+                    className="w-full p-4 border border-pink-200 rounded-2xl focus:ring-2 focus:ring-pink-400 focus:border-transparent bg-white bg-opacity-90 shadow text-left"
+                    rows={4}
+                    placeholder="Parlez de vous, vos passions, ce que vous recherchez..."
+                  />
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      onClick={() => setIsEditing(false)}
+                      variant="bordered"
+                      color="primary"
+                      size="sm"
+                      className="text-pink-600"
+                    >
+                      Annuler
+                    </Button>
+                    <Button
+                      onClick={handleUpdate}
+                      variant="solid"
+                      color="primary"
+                      size="sm"
+                      className="bg-pink-500 text-white"
+                    >
+                      Enregistrer
+                    </Button>
+                  </div>
+                </div>
               ) : (
                 <p className="text-gray-700 whitespace-pre-wrap text-lg text-left">
                   {user.description || "Aucune description pour le moment."}
@@ -361,7 +495,7 @@ const Profile = () => {
                 {imageUrls.map((url, index) => (
                   <div
                     key={index}
-                    className={`relative rounded-2xl overflow-hidden h-36 shadow-lg border-2 border-pink-100 ${profilePictureIndex === index ? 'ring-4 ring-pink-400' : ''} group`}
+                    className={`relative rounded-2xl overflow-hidden h-36 shadow-lg border-2 border-pink-100 ${profile_picture === url ? 'ring-4 ring-pink-400' : ''} group`}
                   >
                     <img
                       src={url}
@@ -369,24 +503,24 @@ const Profile = () => {
                       className="w-full h-full object-cover"
                     />
                     <Button
-                      onClick={() => handleDeleteImage(index + 1)}
+                      onClick={() => handleRemoveImage(index)}
                       variant="solid"
                       color="primary"
                       className="absolute top-2 right-2 w-8 h-8 p-0 flex items-center justify-center rounded-full bg-white shadow-md hover:bg-pink-100 text-pink-600 border border-pink-200 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
                     >
                       <Trash size={18} />
                     </Button>
-                    {/* Bouton pour définir comme photo principale, sous la photo */}
                     <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-[90%] flex justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                       <Button
-                        onClick={() => handleSetProfilePicture(index)}
-                        variant={profilePictureIndex === index ? 'solid' : 'bordered'}
+                        onClick={() => profile_picture !== url && handleSetProfilePicture(index)}
+                        variant={profile_picture === url ? 'solid' : 'bordered'}
                         color="primary"
                         size="sm"
-                        className={`w-full text-xs font-semibold rounded-full shadow-sm py-1 px-2 bg-white/80 backdrop-blur border border-pink-200 ${profilePictureIndex === index ? 'bg-pink-500 text-white' : 'text-pink-600'} transition-all duration-200`}
+                        className={`w-full text-xs font-semibold rounded-full shadow-sm py-1 px-2 bg-white/80 backdrop-blur border border-pink-200 ${profile_picture === url ? 'bg-pink-500 text-white cursor-not-allowed' : 'text-pink-600'}`}
                         style={{ fontSize: '0.85rem' }}
+                        disabled={profile_picture === url}
                       >
-                        {profilePictureIndex === index ? 'Photo principale' : 'Définir comme principale'}
+                        {profile_picture === url ? 'Photo principale' : 'Définir comme principale'}
                       </Button>
                     </div>
                   </div>
@@ -409,15 +543,6 @@ const Profile = () => {
                   </label>
                 )}
               </div>
-              {images.length > 0 && (
-                <Button
-                  onClick={handleUpload}
-                  color="primary"
-                  className="bg-gradient-to-r from-pink-500 to-fuchsia-500 hover:from-pink-600 hover:to-fuchsia-600 text-white px-6 py-2 rounded-full shadow-lg font-bold"
-                >
-                  Uploader les nouvelles images
-                </Button>
-              )}
             </div>
           </div>
         </div>
