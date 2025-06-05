@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from "@/context/auth";
-import { Card, CardContent, CardTitle } from "../components/ui/card";
-import { XIcon, Camera, Heart, MapPin, Mail, User, Calendar, Edit3 } from 'lucide-react';
+import { Heart, MapPin, Mail, User, Calendar, Edit3, Camera, X, Bell, Trash } from 'lucide-react';
+import { Button, Badge, Avatar, Input, Select, Textarea, Card } from "@heroui/react";
 
 interface User {
   id: number;
@@ -259,324 +259,168 @@ const Profile = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-r from-pink-50 to-purple-100 py-8 px-4">
-      <Card className="max-w-4xl mx-auto overflow-hidden shadow-xl rounded-xl">
-        <div className="relative h-48 bg-gradient-to-r from-pink-500 to-purple-600">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-fuchsia-50 to-purple-100 py-12 px-2">
+      <Card className="max-w-3xl mx-auto overflow-hidden shadow-2xl rounded-3xl border-0">
+        <div className="relative h-52 bg-gradient-to-r from-pink-400 via-pink-300 to-fuchsia-300">
           {imageUrls.length > 0 && profilePictureIndex >= 0 ? (
             <img 
               src={imageUrls[profilePictureIndex]} 
               alt="Couverture de profil" 
-              className="w-full h-full object-cover opacity-50"
+              className="w-full h-full object-cover opacity-40"
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center">
-              <Heart size={64} className="text-white opacity-25" />
+              <Heart size={64} className="text-white opacity-30" />
             </div>
           )}
-          
-          <div className="absolute left-8 -bottom-14">
-            <div className="w-28 h-28 rounded-full border-4 border-white bg-gray-200 overflow-hidden shadow-lg">
-              {imageUrls.length > 0 && profilePictureIndex >= 0 ? (
-                <img 
-                  src={profile_picture} 
-                  alt="Photo de profil" 
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-pink-100">
-                  <User size={36} className="text-pink-500" />
-                </div>
-              )}
-            </div>
-          </div>
-          
-          <div className="absolute right-4 top-4">
-            <button 
+          <div className="absolute right-6 top-6">
+            <Button
               onClick={() => setIsEditing(!isEditing)}
-              className="bg-white bg-opacity-80 hover:bg-opacity-100 text-pink-600 p-2 rounded-full shadow transition-all duration-300"
+              variant="solid"
+              color="primary"
+              className="bg-white bg-opacity-80 hover:bg-pink-100 text-pink-600 p-3 rounded-full shadow-lg border border-pink-200"
             >
-              <Edit3 size={20} />
-            </button>
+              <Edit3 size={22} />
+            </Button>
           </div>
         </div>
-        
-        <div className="pt-16 px-8 pb-4">
-          <div className="flex justify-between items-start">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-800">
-                {user.firstname} {user.lastname}
-              </h1>
-              <p className="text-gray-500 flex items-center mt-1">
-                <User size={16} className="mr-1" /> @{user.username}
+        <div className="pt-4 px-8 pb-4">
+          <div className="flex flex-col md:flex-row md:items-center md:gap-8 gap-4">
+            {/* Avatar à gauche */}
+            <div className="flex-shrink-0 flex justify-center md:justify-start">
+              <Avatar size="lg" className="w-28 h-28 border-4 border-white bg-gray-100 shadow-xl -mt-16 md:mt-0">
+                {imageUrls.length > 0 && profilePictureIndex >= 0 ? (
+                  <img 
+                    src={profile_picture || imageUrls[profilePictureIndex]} 
+                    alt="Photo de profil" 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <User size={40} className="text-pink-400 mx-auto my-auto" />
+                )}
+              </Avatar>
+            </div>
+            {/* Infos à droite */}
+            <div className="flex-1 flex flex-col justify-center">
+              <div className="flex items-center gap-3 flex-wrap">
+                <h1 className="text-3xl font-extrabold text-gray-800 tracking-tight">
+                  {user.firstname} {user.lastname}
+                </h1>
+                <span className="inline-block bg-gradient-to-r from-pink-500 to-purple-500 text-white text-xs font-bold px-3 py-0.5 rounded-full shadow-md align-middle">
+                  {user.age} ans
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-4 mt-2 text-gray-600 text-sm font-medium">
+                <div className="flex items-center gap-1">
+                  <MapPin size={16} className="text-pink-500" />
+                  <span>{user.city || "Ville non définie"}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <User size={16} className="text-pink-500" />
+                  <span>{user.gender || "Non précisé"}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Heart size={16} className="text-pink-500" fill="currentColor" />
+                  <span>Intéressé(e) par : {user.preference || "Non précisé"}</span>
+                </div>
+              </div>
+              <p className="text-gray-400 flex items-center mt-1 text-xs">
+                <User size={14} className="mr-1" /> @{user.username}
               </p>
             </div>
-            
-            <div className="bg-pink-100 text-pink-800 px-4 py-2 rounded-full font-medium text-sm">
-              {user.age} ans
-            </div>
-          </div>
-          
-          <div className="flex items-center mt-3 text-gray-600">
-            <MapPin size={16} className="mr-1" /> 
-            <span>{user.city || "Ville non définie"}</span>
-            <span className="mx-2">•</span>
-            <Heart size={16} className="mr-1" /> 
-            <span>Intéressé(e) par: {user.preference || "Non précisé"}</span>
           </div>
         </div>
-
-        <CardContent className="px-8 py-6 border-t border-gray-100">
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
-            <div className="md:col-span-3">
-              <h2 className="text-xl font-semibold mb-4 text-gray-800 flex items-center">
-                <Camera size={20} className="mr-2 text-pink-600" /> 
+        <div className="border-t border-pink-100 mx-8" />
+        <div className="px-8 py-8 border-t border-pink-100 bg-white bg-opacity-80 rounded-b-3xl">
+          <div className="grid grid-cols-1 gap-8">
+            <div>
+              <h2 className="text-xl font-bold mb-3 text-pink-700 flex items-center gap-2">
+                <User size={20} className="text-pink-500" />
+                À propos de moi
+              </h2>
+              {isEditing ? (
+                <Textarea
+                  value={user.description || ''}
+                  onChange={(e) => setUser({ ...user, description: e.target.value })}
+                  className="w-full p-4 border border-pink-200 rounded-2xl focus:ring-2 focus:ring-pink-400 focus:border-transparent bg-white bg-opacity-90 shadow text-left"
+                  rows={4}
+                  placeholder="Parlez de vous, vos passions, ce que vous recherchez..."
+                />
+              ) : (
+                <p className="text-gray-700 whitespace-pre-wrap text-lg text-left">
+                  {user.description || "Aucune description pour le moment."}
+                </p>
+              )}
+            </div>
+            <div>
+              <h2 className="text-xl font-bold mb-4 text-pink-700 flex items-center">
+                <Camera size={20} className="mr-2 text-pink-500" />
                 Photos ({imageUrls.length}/5)
               </h2>
-              
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
                 {imageUrls.map((url, index) => (
-                  <div 
-                    key={index} 
-                    className={`relative rounded-lg overflow-hidden h-36 ${
-                      profilePictureIndex === index ? 'ring-2 ring-pink-500' : ''
-                    }`}
+                  <div
+                    key={index}
+                    className={`relative rounded-2xl overflow-hidden h-36 shadow-lg border-2 border-pink-100 ${profilePictureIndex === index ? 'ring-4 ring-pink-400' : ''} group`}
                   >
-                    <img 
-                      src={url} 
-                      alt={`Photo ${index + 1}`} 
-                      className="w-full h-full object-cover" 
+                    <img
+                      src={url}
+                      alt={`Photo ${index + 1}`}
+                      className="w-full h-full object-cover"
                     />
-                    <div className="absolute inset-0 bg-black bg-opacity-40 opacity-0 hover:opacity-100 transition-opacity flex flex-col justify-between p-2">
-                      <button 
-                        onClick={() => handleDeleteImage(index + 1)} 
-                        className="self-end bg-red-500 text-white p-1 rounded-full"
-                      >
-                        <XIcon size={16} />
-                      </button>
-                      <button 
+                    <Button
+                      onClick={() => handleDeleteImage(index + 1)}
+                      variant="solid"
+                      color="primary"
+                      className="absolute top-2 right-2 w-8 h-8 p-0 flex items-center justify-center rounded-full bg-white shadow-md hover:bg-pink-100 text-pink-600 border border-pink-200 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                    >
+                      <Trash size={18} />
+                    </Button>
+                    {/* Bouton pour définir comme photo principale, sous la photo */}
+                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-[90%] flex justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <Button
                         onClick={() => handleSetProfilePicture(index)}
-                        className={`mt-auto w-full py-1 text-xs font-medium rounded ${
-                          profilePictureIndex === index 
-                            ? 'bg-pink-600 text-white' 
-                            : 'bg-white text-pink-600'
-                        }`}
+                        variant={profilePictureIndex === index ? 'solid' : 'bordered'}
+                        color="primary"
+                        size="sm"
+                        className={`w-full text-xs font-semibold rounded-full shadow-sm py-1 px-2 bg-white/80 backdrop-blur border border-pink-200 ${profilePictureIndex === index ? 'bg-pink-500 text-white' : 'text-pink-600'} transition-all duration-200`}
+                        style={{ fontSize: '0.85rem' }}
                       >
                         {profilePictureIndex === index ? 'Photo principale' : 'Définir comme principale'}
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 ))}
-                
                 {imageUrls.length < 5 && (
-                  <label className="flex items-center justify-center h-36 border-2 border-dashed border-pink-200 rounded-lg cursor-pointer hover:bg-pink-50 transition-colors duration-300">
+                  <label className="flex items-center justify-center h-36 border-2 border-dashed border-pink-200 rounded-2xl cursor-pointer hover:bg-pink-50 transition-colors duration-300">
                     <div className="text-center">
                       <Camera size={24} className="mx-auto text-pink-400" />
                       <div className="mt-2 text-sm text-pink-600">
                         Ajouter une photo
                       </div>
-                      <input 
-                        type="file" 
-                        className="hidden" 
-                        accept="image/*" 
+                      <Input
+                        type="file"
+                        className="hidden"
+                        accept="image/*"
                         multiple
-                        onChange={handleFileChange} 
+                        onChange={handleFileChange}
                       />
                     </div>
                   </label>
                 )}
               </div>
-              
               {images.length > 0 && (
-                <button
+                <Button
                   onClick={handleUpload}
-                  className="bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded-lg shadow transition-colors duration-300"
+                  color="primary"
+                  className="bg-gradient-to-r from-pink-500 to-fuchsia-500 hover:from-pink-600 hover:to-fuchsia-600 text-white px-6 py-2 rounded-full shadow-lg font-bold"
                 >
                   Uploader les nouvelles images
-                </button>
+                </Button>
               )}
-              
-              <div className="mt-8">
-                <h2 className="text-xl font-semibold mb-3 text-gray-800">À propos de moi</h2>
-                {isEditing ? (
-                  <textarea
-                    value={user.description || ''}
-                    onChange={(e) => setUser({ ...user, description: e.target.value })}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                    rows={4}
-                    placeholder="Parlez de vous, vos passions, ce que vous recherchez..."
-                  />
-                ) : (
-                  <p className="text-gray-700 whitespace-pre-wrap">
-                    {user.description || "Aucune description pour le moment."}
-                  </p>
-                )}
-              </div>
-            </div>
-            
-            <div className="md:col-span-2">
-              <h2 className="text-xl font-semibold mb-4 text-gray-800">Informations personnelles</h2>
-              
-              <div className="space-y-4">
-                <div className="bg-white p-4 rounded-lg shadow-sm">
-                  {isEditing ? (
-                    <div className="space-y-3">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-600 mb-1">Pseudonyme</label>
-                        <input 
-                          value={user.username || ''} 
-                          onChange={(e) => setUser({ ...user, username: e.target.value })}
-                          className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                        />
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-600 mb-1">Prénom</label>
-                        <input 
-                          value={user.firstname || ''} 
-                          onChange={(e) => setUser({ ...user, firstname: e.target.value })}
-                          className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                        />
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-600 mb-1">Nom</label>
-                        <input 
-                          value={user.lastname || ''}  
-                          onChange={(e) => setUser({ ...user, lastname: e.target.value })}
-                          className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                        />
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-600 mb-1">Email</label>
-                        <input 
-                          value={user.email || ''}  
-                          onChange={(e) => setUser({ ...user, email: e.target.value })}
-                          className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                        />
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-600 mb-1">Ville</label>
-                        <input 
-                          value={user.city || ''}  
-                          onChange={(e) => setUser({ ...user, city: e.target.value })}
-                          className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                        />
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-600 mb-1">Âge</label>
-                        <input 
-                          type="number" 
-                          value={user.age}  
-                          onChange={(e) => setUser({ ...user, age: Number(e.target.value) })}
-                          className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                        />
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-600 mb-1">Préférence</label>
-                        <select
-                          value={user.preference || ''}  
-                          onChange={(e) => setUser({ ...user, preference: e.target.value })}
-                          className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                        >
-                          <option value="">Sélectionnez une préférence</option>
-                          <option value="Hommes">Hommes</option>
-                          <option value="Femmes">Femmes</option>
-                          <option value="Tous">Tous</option>
-                        </select>
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-600 mb-1">Genre</label>
-                        <select
-                          value={user.gender || ''}  
-                          onChange={(e) => setUser({ ...user, gender: e.target.value })}
-                          className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                        >
-                          <option value="">Sélectionnez votre genre</option>
-                          <option value="Homme">Homme</option>
-                          <option value="Femme">Femme</option>
-                          <option value="Non-binaire">Non-binaire</option>
-                          <option value="Autre">Autre</option>
-                        </select>
-                      </div>
-                    </div>
-                  ) : (
-                    <ul className="space-y-3">
-                      <li className="flex items-start">
-                        <Mail size={18} className="mr-2 text-pink-500 mt-1" />
-                        <div>
-                          <span className="text-sm text-gray-500">Email</span>
-                          <p className="text-gray-800">{user.email}</p>
-                        </div>
-                      </li>
-                      
-                      <li className="flex items-start">
-                        <MapPin size={18} className="mr-2 text-pink-500 mt-1" />
-                        <div>
-                          <span className="text-sm text-gray-500">Localisation</span>
-                          <p className="text-gray-800">{user.city || "Non précisée"}</p>
-                        </div>
-                      </li>
-                      
-                      <li className="flex items-start">
-                        <Calendar size={18} className="mr-2 text-pink-500 mt-1" />
-                        <div>
-                          <span className="text-sm text-gray-500">Âge</span>
-                          <p className="text-gray-800">{user.age} ans</p>
-                        </div>
-                      </li>
-                      
-                      <li className="flex items-start">
-                        <User size={18} className="mr-2 text-pink-500 mt-1" />
-                        <div>
-                          <span className="text-sm text-gray-500">Genre</span>
-                          <p className="text-gray-800">{user.gender || "Non précisé"}</p>
-                        </div>
-                      </li>
-                      
-                      <li className="flex items-start">
-                        <Heart size={18} className="mr-2 text-pink-500 mt-1" />
-                        <div>
-                          <span className="text-sm text-gray-500">Intéressé(e) par</span>
-                          <p className="text-gray-800">{user.preference || "Non précisé"}</p>
-                        </div>
-                      </li>
-                    </ul>
-                  )}
-                </div>
-              </div>
             </div>
           </div>
-          
-          {isEditing && (
-            <div className="mt-8 flex justify-end space-x-3">
-              <button 
-                onClick={() => setIsEditing(false)}
-                className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-2 rounded-lg transition-colors duration-300"
-              >
-                Annuler
-              </button>
-              <button 
-                onClick={handleUpdate}
-                className="bg-pink-600 hover:bg-pink-700 text-white px-6 py-2 rounded-lg shadow transition-colors duration-300"
-              >
-                Enregistrer
-              </button>
-            </div>
-          )}
-          
-          {uploadStatus && (
-            <div className={`mt-4 p-3 rounded-lg ${
-              uploadStatus.includes('succès') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-            }`}>
-              {uploadStatus}
-            </div>
-          )}
-        </CardContent>
+        </div>
       </Card>
     </div>
   );
