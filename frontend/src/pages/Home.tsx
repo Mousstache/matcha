@@ -55,7 +55,7 @@ const Home = () => {
         const res = await fetch('http://localhost:5001/api/getLikes', {
           method: "GET",
           headers:{
-            'Authorization': `bearer ${token}`,
+            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           }
         })
@@ -76,7 +76,7 @@ const Home = () => {
         const res = await fetch('http://localhost:5001/api/getOtherLikes', {
           method: "GET",
           headers:{
-            'Authorization': `bearer ${token}`,
+            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           }
         })
@@ -98,7 +98,7 @@ const Home = () => {
           const res = await fetch('http://localhost:5001/api/getMatches', {
             method: "GET",
             headers:{
-              'Authorization': `bearer ${token}`,
+              'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
             }
           })
@@ -120,7 +120,7 @@ const Home = () => {
       const res = await fetch('http://localhost:5001/api/getViewlist', {
         method: "GET",
         headers:{
-          'Authorization': `bearer ${token}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       })
@@ -152,7 +152,7 @@ const Home = () => {
         const res = await fetch('http://localhost:5001/api/signalUser', {
           method: "POST",
           headers:{
-            'Authorization': `bearer ${token}`,
+            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({match_id: match_id , reporter_id: id, reason: "fake account"})
@@ -178,7 +178,7 @@ const Home = () => {
         const res = await fetch('http://localhost:5001/api/blockUser', {
           method: "POST",
           headers:{
-            'Authorization': `bearer ${token}`,
+            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({match_id: match_id , blocker_id: id})
@@ -204,7 +204,7 @@ const Home = () => {
             const res = await fetch('http://localhost:5001/api/unlikeUser', {
               method: "DELETE",
               headers:{
-                'Authorization': `bearer ${token}`,
+                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
               },
               body: JSON.stringify({liker_id: id, liked_id, match_id})
@@ -238,7 +238,7 @@ const Home = () => {
             const res = await fetch('http://localhost:5001/api/likeUser', {
               method: "POST",
               headers:{
-                'Authorization': `bearer ${token}`,
+                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
               },
               body: JSON.stringify({liker_id: id, liked_id})
@@ -272,7 +272,7 @@ const Home = () => {
             const res = await fetch('http://localhost:5001/api/unblockUser', {
               method: "DELETE",
               headers:{
-                'Authorization': `bearer ${token}`,
+                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
               },
               body: JSON.stringify({block_id , id})
