@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
-import { sendConfirmationEmail } from '../utils/emailService.js';
+import { sendConfirmationEmail, sendPasswordResetEmail } from '../utils/emailService.js';
 import db from '../config/db.js';
 
 export async function registerUser(req,res){
@@ -19,9 +19,11 @@ export async function registerUser(req,res){
       const existingUsername= await db.findOne('users', { userName });
       if (existingUsername) {
         return res.status(400).json({ 
-          message: 'Un utilisateur avec cet email existe déjà' 
+          message: 'Un utilisateur avec ce username existe déjà' 
         });
       }
+
+
 
       
       const hashedPassword = await bcrypt.hash(password, 10);
@@ -274,7 +276,7 @@ export async function logUser (req, res){
       const user = await db.findOne('users', { email });
       if (!user) {
         return res.status(401).json({ 
-          message: 'Identifiants invalides' 
+          message: 'Identifiants invalides'
         });
       }
       
@@ -437,6 +439,67 @@ export async function imageUpload(req, res) {
 // }
 // };
 
+export async function forgotPassword(req, res){
+  try{
+    const { email } = req.body;
+      const user = await db.findOne('users', { email });
+      if (!user) {
+        return res.status(401).json({ 
+          message: 'Identifiants invalides' 
+        });
+      }
+
+    console.log("looool ",user.email);
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const tokenExpire = new Date(Date.now() + 3600_000); // 1h
+
+    await sendPasswordResetEmail(user.email, token);
+
+    await db.update('users', {
+    resetToken: token,
+    resetTokenExpires: tokenExpire
+  }, { id: user.id });
+
+    res.status(200).json({ message: 'Email de réinitialisation envoyé' });
+
+  }catch (error){
+      console.error("Erreur lors de l'envoi de reset password :", error);
+      res.status(500).json({ error: "Erreur serveur" });
+  }
+};
+
+
+export async function resetPassword(req, res) {
+  try{
+    const { token, newPassword } = req.body;
+    const now = new Date();
+  
+    const user = await db.query(`
+      SELECT * FROM users 
+      WHERE resetToken = $1 AND resetTokenExpires > $2
+    `, [token, now]);
+  
+    if (!user.length) {
+      return res.status(400).json({ message: 'Token invalide ou expiré' });
+    }
+  
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+  
+    await db.update('users', {
+      password: hashedPassword,
+      resetToken: null,
+      resetTokenExpires: null
+    }, { id: user[0].id });
+  
+    res.status(200).json({ message: 'Mot de passe réinitialisé avec succès' });
+  }
+  catch (error){
+    console.error("Erreur lors du changement de mdp :", error);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+};
+
 export async function getUserImages(req, res) {
   try {
     const userId = req.user.id;
@@ -458,4 +521,4 @@ export async function getUserImages(req, res) {
 }
   
 
-export default {getUserImages, registerUser, fillInfo, confirmEmail, updateUser, logUser, imageUpload };
+export default {getUserImages, registerUser, fillInfo, confirmEmail, updateUser, logUser, imageUpload, forgotPassword, resetPassword };

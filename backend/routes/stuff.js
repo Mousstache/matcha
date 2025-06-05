@@ -12,7 +12,6 @@ router.get("/test", function test(req, res) {
     res.status(200).json(
         { "pureedsdsdsfdsf": "SADASDA" }
     );
-
 })
 
 // AUTHENTICATION
@@ -54,8 +53,8 @@ router.post('/signalUser',authMiddleware,ensureEmailConfirmed, userCtrl.signalUs
 
 // router.put('/logout', authMiddleware,ensureEmailConfirmed,  userCtrl.logoutUser);
 
-// router.post('/forgot-password', userController.forgotPassword);
-// router.post('/reset-password', userController.resetPassword);
+router.post('/forgot-password', userCtrl.forgotPassword);
+router.post('/reset-password', userCtrl.resetPassword);
 
 
 

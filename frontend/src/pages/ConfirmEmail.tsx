@@ -10,8 +10,6 @@ const ConfirmEmail = () => {
   const navigate = useNavigate();
 
 
-  console.log("ICCCCCCCCCCCCCCCCCCCCCIIIIIIIIIIIIII", token);
-
   console.log('Tentative de confirmation avec token:', token);
   useEffect(() => {
     let called = false;
@@ -39,7 +37,7 @@ const ConfirmEmail = () => {
         
         if (response.ok) {
           console.log('Confirmation réussie:', data);
-          setStatus('success');
+          // setStatus('success');
           navigate("/signup");
         } else {
           console.error('Erreur de confirmation:', data);

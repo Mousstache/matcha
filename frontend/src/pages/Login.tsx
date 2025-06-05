@@ -45,6 +45,12 @@ const Login = () => {
         body: JSON.stringify({ email, password , online, lastConnection: new Date() }),
       });
       const data = await response.json();
+
+        if (!response.ok) {
+          console.error(data.message);
+          setError(data.message);
+        }
+
       if (!response.ok) {
         const data = await response.json();
         firstname;
@@ -144,7 +150,7 @@ const Login = () => {
           <div>
             <div className="flex items-center justify-between mb-1">
               <label className="block text-gray-700 font-medium">Mot de passe</label>
-              <a href="/reset-password" className="text-sm text-blue-600 hover:text-blue-800">
+              <a href="/forgot-password" className="text-sm text-blue-600 hover:text-blue-800">
                 Mot de passe oublié?
               </a>
             </div>
