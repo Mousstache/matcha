@@ -26,7 +26,7 @@ const BlockList = () => {
           const res = await fetch('http://localhost:5001/api/getBlockUser', {
             method: "GET",
             headers:{
-              'Authorization': `bearer ${token}`,
+              'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
             }
           })
@@ -50,7 +50,7 @@ const BlockList = () => {
             const res = await fetch('http://localhost:5001/api/unblockUser', {
               method: "DELETE",
               headers:{
-                'Authorization': `bearer ${token}`,
+                'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
               },
               body: JSON.stringify({block_id , id})
