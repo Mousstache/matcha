@@ -15,6 +15,18 @@ export default defineConfig({
     },
   },
   server: {
-    port: 3000
+    port: 3000,
+    host: true,
+    open: true,
+    cors: true
+  },
+  build: {
+    outDir: 'dist',
+    sourcemap: true,
+    minify: 'terser',
+    chunkSizeWarningLimit: 1600
+  },
+  optimizeDeps: {
+    include: ['react', 'react-dom']
   }
 })
