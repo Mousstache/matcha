@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, User, Bell, HeartIcon, Menu, X } from "lucide-react";
+import { LayoutDashboard, User, Bell, HeartIcon, Menu, X, LogOut } from "lucide-react";
 
 type LucideIcon = React.ComponentType<{ size?: number; className?: string }>;
 type CustomIcon = (props: { isActive: boolean }) => React.ReactElement;
@@ -41,6 +41,18 @@ const navItems: { name: string; to: string; icon: IconComponent }[] = [
 const Navbar: React.FC = () => {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Fonction de déconnexion
+  const handleLogout = async () => {
+    const token = localStorage.getItem("token");
+    await fetch("http://localhost:5001/api/logout", {
+      method: "PUT",
+      headers: { "Authorization": `Bearer ${token}` },
+      body: JSON.stringify({ online: false })
+    });
+    localStorage.removeItem("token");
+    window.location.href = "/login";
+  };
 
   const renderIcon = (Icon: IconComponent, isActive: boolean) => {
     if (isLucideIcon(Icon)) {
@@ -87,12 +99,24 @@ const Navbar: React.FC = () => {
 
           {/* Actions */}
           <div className="flex items-center space-x-4">
-            <Link to="/notification" className="relative group">
-              <Bell className="h-6 w-6 text-pink-500 group-hover:text-pink-600 transition duration-200" />
+            {/* Bouton Notification */}
+            <Link
+              to="/notification"
+              title="Notifications"
+              className="rounded-full hover:bg-gray-100 transition text-pink-500 border border-pink-100 shadow flex items-center justify-center w-8 h-8"
+            >
+              <Bell className="h-5 w-5" />
             </Link>
             <div className="w-8 h-8 rounded-full bg-gray-200 border border-gray-300 flex items-center justify-center font-bold text-pink-500 font-poppins shadow">
               M
             </div>
+            <button
+              onClick={handleLogout}
+              title="Se déconnecter"
+              className="rounded-full hover:bg-gray-100 transition text-pink-500 border border-pink-100 shadow"
+            >
+              <LogOut className="h-3.5 w-3.5" strokeWidth={2.5} />
+            </button>
             {/* Bouton Menu Mobile */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
