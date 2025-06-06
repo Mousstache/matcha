@@ -207,7 +207,7 @@ const Home = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 py-6 sm:py-10 px-2 sm:px-4">
+    <div className="min-h-screen bg-gradient-to-r from-pink-50 to-purple-100 py-6 sm:py-10 px-2 sm:px-4">
       <div className="max-w-3xl mx-auto">
         <h1 className="text-3xl font-bold tracking-tight text-left mb-4 sm:mb-6">
           <span className="text-[#ec4899]">

@@ -76,7 +76,7 @@ const Notification = () => {
 
   return (
     <div className="min-h-screen flex justify-center items-center w-full bg-gradient-to-br from-pink-50 via-fuchsia-50 to-purple-100">
-      <Card className="w-full max-w-md bg-white shadow-lg rounded-xl overflow-hidden border border-pink-100 pt-0 pb-0 mt-[-250px]">
+      <Card className="w-full max-w-md bg-white shadow-lg rounded-xl overflow-hidden border border-pink-100 pt-0 pb-0 mt-[-360px]">
         <div className="bg-[#ec4899] px-6 py-5 flex items-center justify-between w-full">
           <div className="flex items-center">
             <Bell size={22} className="mr-2 text-white" />
