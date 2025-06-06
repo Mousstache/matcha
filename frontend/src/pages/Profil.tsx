@@ -1,558 +1,8 @@
-// // import { useParams } from 'react-router-dom';
-// // import { useAuth } from '../context/auth';
-// import { useState } from 'react';
-// import { Card, CardContent, CardTitle } from "../components/ui/card"
-// import { useEffect } from 'react';
-// import { XIcon } from 'lucide-react';
-
-
-// interface User{
-//   id: number;
-//   email: string;
-//   username: string;
-//   firstname: string;
-//   lastname: string;
-//   description: string;
-//   gender: string;
-//   birthDate: number;
-//   city: string;
-//   age: number;
-//   preference: string;
-// }
-
-
-// interface Geolocation {
-//   latitude: number | null;
-//   longitude: number | null;
-//   error: string | null;
-// }
-
-// const Profile = () => {
-//   const [user, setUser] = useState<User | null>(null);
-//   // const [error, setError] = useState<string | null>(null);
-//   const [location, setLocation] = useState<Geolocation>({
-//     latitude: null,
-//     longitude: null,
-//     error: null,
-//   });
-
-//   const [imageUrls, setImageUrls] = useState<string[]>([]);
-//   const [profilePictureIndex, setProfilePictureIndex] = useState(0);
-  
-  
-//   const [images, setImages] = useState<File[]>([]);
-//   // const [preview, setPreview] = useState<string[]>([]);
-//   const [uploadStatus, setUploadStatus] = useState<string | null>(null);
-  
-//   useEffect(() => {
-//     const fetchUserProfile = async () => {
-
-//     const token = localStorage.getItem('token');
-
-//     try {
-//       const response = await fetch('http://localhost:5001/api/user', {
-//         method: 'GET',
-//         headers: {
-//           'Authorization': `Bearer ${token}`,
-//           'Content-Type': 'application/json'
-//         }
-//       });
-      
-//       const data = await response.json();
-      
-//       if (!response.ok) {
-//         throw new Error(data.message || 'Erreur lors de la récupération du profil');
-//       }
-      
-//       setUser(data.user);
-//     } catch (err) {
-//       console.error('Erreur:', err);
-
-//     }
-//   };
-//   const fetchLocation = async () => {
-//     if (!navigator.geolocation) {
-//       setLocation((prev) => ({ ...prev, error: "La géolocalisation n'est pas supportée" }));
-//       return;
-//     }
-    
-//     navigator.geolocation.getCurrentPosition(
-//       (position) => {
-//         setLocation({
-//           latitude: position.coords.latitude,
-//           longitude: position.coords.longitude,
-//           error: null,
-//         });
-//       },
-//       (error) => {
-//         setLocation((prev) => ({ ...prev, error: error.message }));
-//       }
-//     );
-//     console.log("locacation = ", location);
-//   };
-//   fetchLocation();
-//   fetchUserProfile();
-//   }, []);
-
-//     if (!user) {
-//       return <div>Aucune information utilisateur trouvée.</div>;
-//     }
-  
-//     const handleUpdate = async () => {
-
-//       if (!user) {
-//         return;
-//       }
-
-//       const token = localStorage.getItem('token');
-//       try{
-//         const response = await fetch('http://localhost:5001/api/updateUser', {
-//           method: 'PUT',
-//           headers: {
-//             'Authorization': `Bearer ${token}`,
-//             'Content-Type': 'application/json',
-//           },
-//           body: JSON.stringify(user),
-//       });
-
-//       const data = await response.json();
-
-//       if (response.ok) {
-//         alert('Profil mis à jour avec succès !');
-//       }
-//       if (!data)
-//         return ;
-
-//     } catch (error) {
-//       console.error(error);
-//     }
-//     if (!token) {
-//       window.location.href = '/login';
-//       return ;
-//     }
-//   }
-
-
-//     // const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-//     //   const files = e.target.files;
-//     //   if (!files) return;
-
-//     //   const fileList = Array.from(files);
-
-//     //   if (fileList.length > 5) {
-//     //     alert("Vous pouvez télécharger au maximum 5 images.");
-//     //     return;
-//     //   }
-  
-//     //   setImages(fileList);
-//     //   setPreview(fileList.map((file) => URL.createObjectURL(file)));
-//     // };
-
-//     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-//       const files = e.target.files;
-//       if (!files) return;
-      
-//       const fileList = Array.from(files);
-      
-//       // Vérifier si l'ajout des nouvelles images dépasse la limite de 5
-//       if (imageUrls.length + fileList.length > 5) {
-//         alert("Vous ne pouvez pas avoir plus de 5 images au total.");
-//         return;
-//       }
-      
-//       // Ajouter les nouvelles images à la liste existante
-//       setImages(prev => [...prev, ...fileList]);
-      
-//       // Créer des URL pour la prévisualisation
-//       const newImageUrls = fileList.map(file => URL.createObjectURL(file));
-//       setImageUrls(prev => [...prev, ...newImageUrls]);
-//     };
-  
-//     const handleRemoveImage = (index: number) => {
-//       // Supprimer l'image à l'index spécifié
-//       const newImageUrls = [...imageUrls];
-//       newImageUrls.splice(index, 1);
-//       setImageUrls(newImageUrls);
-      
-//       // Ajuster l'index de l'image de profil si nécessaire
-//       if (profilePictureIndex >= newImageUrls.length) {
-//         setProfilePictureIndex(newImageUrls.length > 0 ? 0 : -1);
-//       } else if (profilePictureIndex === index && newImageUrls.length > 0) {
-//         setProfilePictureIndex(0);
-//       }
-      
-//       // Supprimer également du tableau de fichiers si présent
-//       const newImages = [...images];
-//       if (index < newImages.length) {
-//         newImages.splice(index, 1);
-//         setImages(newImages);
-//       }
-//     };
-  
-//     const handleSetProfilePicture = (index: number) => {
-//       setProfilePictureIndex(index);
-//     };
-  
-//     // const handleUpload = async () => {
-//     //   const formData = new FormData();
-//     //   images.forEach((image) => formData.append("images", image));
-  
-//     //   try {
-//     //     const token = localStorage.getItem("token");
-//     //     const response = await fetch("http://localhost:5001/api/upload", {
-//     //       headers: {
-//     //         'Authorization': `Bearer ${token}`,
-//     //     },
-//     //       method: "POST",
-//     //       body: formData,
-//     //     });
-  
-
-//     //     console.log("Réponse brute:", response);
-//     //     const data = await response.json();
-//     //     console.log("Données reçues:", data);
-
-//     //     if (data.profil_pictures) {
-//     //       setUploadStatus("Images uploadées avec succès !");
-//     //       console.log("Images Cloudinary:", data.profile_pictures);
-//     //     } else {
-//     //       setUploadStatus("Erreur lors de l'upload.");
-//     //     }
-//     //   } catch (error) {
-//     //     console.error("Erreur lors de l'upload:", error);
-//     //     setUploadStatus("Erreur lors de l'upload.");
-//     //   }
-//     // };
-
-//     const handleUpload = async () => {
-//       const formData = new FormData();
-      
-//       // Ajouter toutes les images au FormData
-//       images.forEach((image) => formData.append("images", image));
-      
-//       // Ajouter l'index de l'image de profil
-//       formData.append("profilePictureIndex", profilePictureIndex.toString());
-      
-//       try {
-//         const token = localStorage.getItem("token");
-//         const response = await fetch("http://localhost:5001/api/upload", {
-//           headers: {
-//             'Authorization': `Bearer ${token}`
-//           },
-//           method: "POST",
-//           body: formData,
-//         });
-        
-//         console.log("Réponse brute:", response);
-//         const data = await response.json();
-//         console.log("Données reçues:", data);
-        
-//         if (data.success) {
-//           setUploadStatus("Images uploadées avec succès !");
-//           // Mettre à jour les URLs d'images si retournées par l'API
-//           if (data.imageUrls) {
-//             setImageUrls(data.imageUrls);
-//           }
-//         } else {
-//           setUploadStatus("Erreur lors de l'upload.");
-//         }
-//       } catch (error) {
-//         console.error("Erreur lors de l'upload:", error);
-//         setUploadStatus("Erreur lors de l'upload.");
-//       }
-//     };
-  
-
-//     return (
-//       <Card>
-//         <CardTitle><h1>Votre Profil</h1></CardTitle>
-//         <img></img>
-
-
-//           <span className="">Profil de {user.firstname} {user.lastname}</span>
-//          <CardContent className='flex flex-col space-y-4'>
-//           <h2>Description de {user.firstname}: </h2>
-//           <label>Description :</label>
-//           <input value={user.description || ''} onChange={(e) => setUser({ ...user, description: e.target.value })}/>
-//           <label>username :</label>
-//           <input value={user.username || ''} onChange={(e) => setUser({ ...user, firstname: e.target.value })}/>
-//           <label>FirstName :</label>
-//           <input value={user.firstname || ''} onChange={(e) => setUser({ ...user, firstname: e.target.value })}/>
-//           <label>LastName :</label>
-//           <input value={user.lastname || ''}  onChange={(e) => setUser({ ...user, lastname: e.target.value })} />
-//           <label>email :</label>
-//           <input value={user.email || ''}  onChange={(e) => setUser({ ...user, email: e.target.value })} />
-//           <label>city :</label>
-//           <input value={user.city || ''}  onChange={(e) => setUser({ ...user, city: e.target.value })} />
-//           <label>age :</label>
-//           <input type="number" value={user.age}  onChange={(e) => setUser({ ...user, age: Number(e.target.value) })} />
-//           <label>preference :</label>
-//           <input value={user.preference || ''}  onChange={(e) => setUser({ ...user, lastname: e.target.value })} />
-//           <label>gender :</label>
-//           <input value={user.gender || ''}  onChange={(e) => setUser({ ...user, lastname: e.target.value })} />
-
-//           {/* <p className='value'>{user.description}</p> */}
-          
-
-//           {/* <div className="p-4">
-//             <input type="file" multiple accept="image/*" onChange={handleFileChange} />
-//             <div className="flex space-x-2 mt-2">
-//               {preview.map((src, index) => (
-//                 <img key={index} src={src} alt="preview" className="w-20 h-20 rounded-lg" />
-//               ))}
-//             </div>
-//             <button 
-//               onClick={handleUpload} 
-//               className="mt-2 bg-blue-500 text-white px-4 py-2 rounded"
-//             >
-//               Uploader
-//             </button>
-//             {uploadStatus && <p className="mt-2 text-green-600">{uploadStatus}</p>}
-//           </div> */}
-
-//           <div className="mb-8">
-//         <h2 className="text-xl font-semibold mb-4">Photos ({imageUrls.length}/5)</h2>
-        
-//         <div className="grid grid-cols-3 gap-4 mb-4">
-//           {imageUrls.map((url, index) => (
-//             <div 
-//               key={index} 
-//               className={`relative rounded-lg overflow-hidden h-48 ${profilePictureIndex === index ? 'ring-4 ring-blue-500' : ''}`}
-//             >
-//               <img 
-//                 src={url} 
-//                 alt={`Photo ${index + 1}`} 
-//                 className="w-full h-full object-cover" 
-//               />
-//               <div className="absolute inset-0 bg-black bg-opacity-40 opacity-0 hover:opacity-100 transition-opacity flex flex-col justify-between p-2">
-//                 <button 
-//                   onClick={() => handleRemoveImage(index)} 
-//                   className="self-end bg-red-500 text-white p-1 rounded-full"
-//                 >
-//                   <XIcon size={16} />
-//                 </button>
-//                 <button 
-//                   onClick={() => handleSetProfilePicture(index)}
-//                   className={`mt-auto w-full py-1 text-sm font-medium rounded ${
-//                     profilePictureIndex === index 
-//                       ? 'bg-blue-600 text-white' 
-//                       : 'bg-white text-blue-600'
-//                   }`}
-//                 >
-//                   {profilePictureIndex === index ? 'Photo principale' : 'Définir comme principale'}
-//                 </button>
-//               </div>
-//             </div>
-//           ))}
-          
-//           {imageUrls.length < 5 && (
-//             <label className="flex items-center justify-center h-48 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
-//               <div className="text-center">
-//                 <div className="mt-2 text-sm text-gray-600">
-//                   Ajouter une photo
-//                 </div>
-//                 <input 
-//                   type="file" 
-//                   className="hidden" 
-//                   accept="image/*" 
-//                   onChange={handleFileChange} 
-//                 />
-//               </div>
-//             </label>
-//           )}
-//         </div>
-        
-//         {images.length > 0 && (
-//           <button
-//             onClick={handleUpload}
-//             className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg shadow"
-//           >
-//             Uploader les nouvelles images
-//           </button>
-//         )}
-        
-//         {uploadStatus && (
-//           <p className="mt-2 text-green-600">{uploadStatus}</p>
-//         )}
-//       </div>
-
-
-
-//           <button className='text-white' onClick={handleUpdate}>Mettre à jour</button>
-//         </CardContent>
-//       </Card>
-//     );
-//   };
-  
-// export default Profile;
-
-
-
-
-
-
-// // interface LocationInfo {
-// //   city: string | null;
-// //   country: string | null;
-// //   error: string | null;
-// // }
-
-// // const useReverseGeolocation = (latitude: number | null, longitude: number | null): LocationInfo => {
-// //   const [locationInfo, setLocationInfo] = useState<LocationInfo>({
-// //     city: null,
-// //     country: null,
-// //     error: null,
-// //   });
-
-// //   useEffect(() => {
-// //     if (!latitude || !longitude) return;
-
-// //     const fetchLocation = async () => {
-// //       try {
-// //         const res = await fetch(
-// //           `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}`
-// //         );
-// //         const data = await res.json();
-
-// //         if (data.address) {
-// //           setLocationInfo({
-// //             city: data.address.city || data.address.town || data.address.village || "Inconnu",
-// //             country: data.address.country || "Inconnu",
-// //             error: null,
-// //           });
-// //         } else {
-// //           setLocationInfo((prev) => ({ ...prev, error: "Impossible de récupérer l'emplacement" }));
-// //         }
-// //       } catch (error) {
-// //         setLocationInfo((prev) => ({ ...prev, error: "Erreur lors de la récupération des données" }));
-// //       }
-// //     };
-
-// //     fetchLocation();
-// //   }, [latitude, longitude]);
-
-// //   return locationInfo;
-// // };
-
-
-
-// // import { useState, useEffect } from 'react';
-// // import { Card, CardContent, CardTitle } from "./ui/card";
-
-// // interface User {
-// //   id: number;
-// //   email: string;
-// //   firstName: string;
-// //   lastName: string;
-// //   description: string;
-// //   gender: number;
-// //   preference: number;
-// // }
-
-// // const Profile = () => {
-// //   const [user, setUser] = useState<User | null>(null);
-// //   const [loading, setLoading] = useState(true);
-
-// //   useEffect(() => {
-// //     const fetchUserProfile = async () => {
-// //       const token = localStorage.getItem('token');
-// //       if (!token) {
-// //         window.location.href = '/login';
-// //         return;
-// //       }
-
-// //       try {
-// //         const response = await fetch('http://localhost:5001/api/user', {
-// //           method: 'GET',
-// //           headers: {
-// //             'Authorization': `Bearer ${token}`,
-// //             'Content-Type': 'application/json'
-// //           }
-// //         });
-
-// //         const data = await response.json();
-
-// //         if (!response.ok) {
-// //           throw new Error(data.message || 'Erreur lors de la récupération du profil');
-// //         }
-
-// //         setUser(data.user);
-// //       } catch (err) {
-// //         console.error('Erreur:', err);
-// //       } finally {
-// //         setLoading(false);
-// //       }
-// //     };
-
-// //     fetchUserProfile();
-// //   }, []);
-
-// //   const handleUpdate = async () => {
-// //     if (!user) return;
-
-// //     const token = localStorage.getItem('token');
-// //     try {
-// //       const response = await fetch('http://localhost:5001/api/updateUser', {
-// //         method: 'PUT',
-// //         headers: {
-// //           'Authorization': `Bearer ${token}`,
-// //           'Content-Type': 'application/json',
-// //         },
-// //         body: JSON.stringify(user),
-// //       });
-
-// //       const data = await response.json();
-// //       if (!response.ok) {
-// //         throw new Error(data.message || 'Erreur lors de la mise à jour');
-// //       }
-
-// //       alert('Profil mis à jour avec succès !');
-// //       window.location.href = "/profil"; // Redirection après update
-// //     } catch (error) {
-// //       console.error('Erreur lors de la mise à jour:', error);
-// //     }
-// //   };
-
-// //   if (loading) return <div>Chargement...</div>;
-// //   if (!user) return <div>Aucune information utilisateur trouvée.</div>;
-
-// //   return (
-// //     <Card>
-// //       <CardTitle><h1>Votre Profil</h1></CardTitle>
-// //       <CardContent>
-// //         <span>Profil de {user.firstName} {user.lastName}</span>
-
-// //         <label>Description :</label>
-// //         <input 
-// //           value={user.description || ''} 
-// //           onChange={(e) => setUser({ ...user, description: e.target.value })} 
-// //         />
-
-// //         <label>FirstName :</label>
-// //         <input 
-// //           value={user.firstName || ''} 
-// //           onChange={(e) => setUser({ ...user, firstName: e.target.value })} 
-// //         />
-
-// //         <label>LastName :</label>
-// //         <input 
-// //           value={user.lastName || ''} 
-// //           onChange={(e) => setUser({ ...user, lastName: e.target.value })} 
-// //         />
-
-// //         <button onClick={handleUpdate}>Mettre à jour</button>
-// //       </CardContent>
-// //     </Card>
-// //   );
-// // };
-
-// // export default Profile;
-
-
 import { useState, useEffect } from 'react';
 import { useAuth } from "@/context/auth";
-import { Card, CardContent, CardTitle } from "../components/ui/card";
-import { XIcon, Camera, Heart, MapPin, Mail, User, Calendar, Edit3 } from 'lucide-react';
+import { Heart, MapPin, User, Edit3, Camera, Trash } from 'lucide-react';
+import { Button, Avatar, Input, Textarea, Card } from "@heroui/react";
+import { addToast } from "@heroui/toast";
 
 interface User {
   id: number;
@@ -569,83 +19,68 @@ interface User {
   profile_picture: string | null;
 }
 
-// interface Geolocation {
-//   latitude: number | null;
-//   longitude: number | null;
-//   error: string | null;
-// }
-
 const Profile = () => {
   const [user, setUser] = useState<User | null>(null);
-  const { id, profile_picture } = useAuth();
-  // const [location, setLocation] = useState<Geolocation>({
-  //   latitude: null,
-  //   longitude: null,
-  //   error: null,
-  // });
-
+  const { id, profile_picture, setProfilePicture } = useAuth();
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [profilePictureIndex, setProfilePictureIndex] = useState(0);
-  const [images, setImages] = useState<File[]>([]);
-  const [uploadStatus, setUploadStatus] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  // const [imageUrls, setImageUrls] = useState<string[]>([]);
   
   useEffect(() => {
     const fetchUserProfile = async () => {
       const token = localStorage.getItem('token');
-
+      if (!token) return;
       try {
         const response = await fetch('http://localhost:5001/api/user', {
           method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
         });
-        
         const data = await response.json();
-        
-        if (!response.ok) {
-          throw new Error(data.message || 'Erreur lors de la récupération du profil');
+        if (response.ok) {
+          setUser(data.user);
+        } else {
+          console.error('Erreur lors de la récupération du profil', data.message);
         }
-        
-        setUser(data.user);
-        console.log("user", data.profile_picture);
       } catch (err) {
-        console.error('Erreur:', err);
+        console.error('Erreur fetchUserProfile:', err);
       }
     };
 
-    const fetchimageUrls = async () => {
+    const fetchImageUrls = async () => {
       const token = localStorage.getItem('token');
+      if (!token) return;
       try {
         const response = await fetch('http://localhost:5001/api/user-images', {
           method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
         });
-        
         const data = await response.json();
-        
-        if (!response.ok) {
-          throw new Error(data.message || 'Erreur lors de la récupération des images');
-        }
-        // console.log("imageUrls >>>", data.);
-        
-        // setImageUrls(data.profile_picture);
-        setImageUrls(data.images.map((img: any) => img.image_url));
+        if (response.ok && data.images) {
+          const imagesWithPosition = data.images as { image_url: string, position: number }[];
 
+          const sortedImages = [...imagesWithPosition].sort((a, b) => {
+            if (profile_picture && a.image_url === profile_picture) return -1;
+            if (profile_picture && b.image_url === profile_picture) return 1;
+            return a.position - b.position;
+          });
+
+          setImageUrls(sortedImages.map(img => img.image_url));
+
+          const currentProfileIndex = sortedImages.findIndex(img => profile_picture && img.image_url === profile_picture);
+          setProfilePictureIndex(currentProfileIndex !== -1 ? currentProfileIndex : 0);
+        } else {
+          console.error('Erreur lors de la récupération des images', data.error);
+          setImageUrls([]);
+        }
       } catch (err) {
-        console.error('Erreur:', err);
+        console.error('Erreur fetchImageUrls:', err);
+        setImageUrls([]);
       }
     };
 
-    fetchimageUrls();
+    fetchImageUrls();
     fetchUserProfile();
-  }, [id]);
+  }, [id, profile_picture]);
 
   if (!user) {
     return (
@@ -677,21 +112,96 @@ const Profile = () => {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(user),
+        body: JSON.stringify({
+          description: user.description,
+        }),
       });
 
-      // const data = await response.json();
+      const data = await response.json();
 
       if (response.ok) {
-        setUploadStatus('Profil mis à jour avec succès !');
-        setTimeout(() => setUploadStatus(null), 3000);
+        addToast({
+          title: 'Succès',
+          description: 'Profil mis à jour avec succès !',
+          color: 'success'
+        });
         setIsEditing(false);
+      } else {
+        console.error("Erreur API updateUser:", data.message);
+        addToast({
+          title: 'Erreur',
+          description: data.message || 'Erreur lors de la mise à jour du profil',
+          color: 'danger'
+        });
       }
     } catch (error) {
-      console.error(error);
-      setUploadStatus('Erreur lors de la mise à jour du profil');
-      setTimeout(() => setUploadStatus(null), 3000);
+      console.error("Erreur fetch updateUser:", error);
+      addToast({
+        title: 'Erreur',
+        description: 'Erreur lors de la mise à jour du profil',
+        color: 'danger'
+      });
     }
+  };
+
+  const handleUpload = async (filesToUpload: File[]) => {
+    if (filesToUpload.length === 0) {
+      addToast({
+         title: 'Information',
+         description: "Aucune image à uploader.",
+         color: 'default'
+      });
+      return;
+    }
+
+    const formData = new FormData();
+    filesToUpload.forEach((image) => formData.append("images", image));
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+        addToast({
+            title: 'Erreur',
+            description: 'Authentification requise pour uploader.',
+            color: 'danger'
+        });
+        return;
+    }
+
+    const currentProfileImgUrl = profile_picture;
+    const existingProfileIndexInCurrentUrls = imageUrls.findIndex(url => url === currentProfileImgUrl);
+    const profileIndexToSend = existingProfileIndexInCurrentUrls !== -1 ? existingProfileIndexInCurrentUrls : 0;
+    formData.append("profilePictureIndex", profileIndexToSend.toString());
+    console.log("Uploading avec profilePictureIndex:", profileIndexToSend);
+
+    const uploadPromise = fetch("http://localhost:5001/api/upload", {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      method: "POST",
+      body: formData,
+    }).then(response => response.json());
+
+    uploadPromise.then(data => {
+      if (data.success) {
+        if (data.images) {
+          const imagesWithPosition = data.images as { image_url: string, position: number }[];
+          setImageUrls(imagesWithPosition.map(img => img.image_url));
+        }
+         if (data.profilePicture !== undefined) {
+             setProfilePicture(data.profilePicture);
+             setUser(prev => prev ? ({ ...prev, profile_picture: data.profilePicture }) : null);
+         }
+         addToast({
+           title: 'Succès',
+           description: 'Photos ajoutées avec succès !',
+           color: 'success'
+         });
+      } else {
+        console.error("Erreur API upload:", data.error);
+      }
+    }).catch(error => {
+        console.error("Erreur fetch upload:", error);
+    });
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -701,205 +211,338 @@ const Profile = () => {
     const fileList = Array.from(files);
     
     if (imageUrls.length + fileList.length > 5) {
-      alert("Vous ne pouvez pas avoir plus de 5 images au total.");
+      addToast({
+         title: 'Erreur',
+         description: `Vous ne pouvez pas avoir plus de 5 images au total (actuellement ${imageUrls.length}).`,
+         color: 'danger'
+      });
       return;
     }
     
-    setImages(prev => [...prev, ...fileList]);
-    
-    const newImageUrls = fileList.map(file => URL.createObjectURL(file));
-    setImageUrls(prev => [...prev, ...newImageUrls]);
+    handleUpload(fileList);
   };
 
-  const handleRemoveImage = (index: number) => {
-    const newImageUrls = [...imageUrls];
-    newImageUrls.splice(index, 1);
-    setImageUrls(newImageUrls);
-    
-    if (profilePictureIndex >= newImageUrls.length) {
-      setProfilePictureIndex(newImageUrls.length > 0 ? 0 : -1);
-    } else if (profilePictureIndex === index && newImageUrls.length > 0) {
-      setProfilePictureIndex(0);
+  const handleRemoveImage = async (index: number) => {
+     const token = localStorage.getItem("token");
+     if (!token) {
+         addToast({
+             title: 'Erreur',
+             description: 'Authentification requise pour supprimer.',
+             color: 'danger'
+         });
+         return;
+     }
+
+     try {
+        const imagesResponse = await fetch('http://localhost:5001/api/user-images', {
+           headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const imagesData = await imagesResponse.json();
+        if (!imagesResponse.ok || !imagesData.images) {
+           throw new Error(imagesData.error || 'Erreur lors de la récupération des images pour suppression');
+        }
+
+        const imageUrlToRemove = imageUrls[index];
+        const imageToDelete = imagesData.images.find((img: any) => img.image_url === imageUrlToRemove);
+
+        if (!imageToDelete) {
+           addToast({
+              title: 'Erreur',
+              description: "Image non trouvée.",
+              color: 'danger'
+           });
+           return;
+        }
+
+        const positionToDelete = imageToDelete.position;
+        console.log(`Suppression de l'image à la position DB: ${positionToDelete}`);
+
+        const deletePromise = fetch(`http://localhost:5001/api/delete-image/${positionToDelete}`, {
+          method: "DELETE",
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        }).then(response => response.json());
+
+        deletePromise.then(data => {
+           if(data.success) {
+              if (data.images) {
+                 setImageUrls(data.images.map((img: any) => img.image_url));
+              }
+              if (data.profilePicture !== undefined) {
+                 setProfilePicture(data.profilePicture);
+                 setUser(prev => prev ? ({ ...prev, profile_picture: data.profilePicture }) : null);
+              }
+              addToast({
+                title: 'Succès',
+                description: 'Photo supprimée avec succès !',
+                color: 'success'
+              });
+           } else {
+              console.error("Erreur API delete-image:", data.error);
+           }
+        }).catch(error => {
+           console.error("Erreur fetch delete-image:", error);
+        });
+
+     } catch (error: any) {
+        console.error("Erreur lors de la suppression de l'image :", error);
+         addToast({
+            title: 'Erreur',
+            description: error.message || "Erreur lors de la suppression de l'image.",
+            color: 'danger'
+         });
+     }
+  };
+
+  const handleSetProfilePicture = async (index: number) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+        addToast({
+            title: 'Erreur',
+            description: 'Authentification requise pour changer la photo principale.',
+            color: 'danger'
+        });
+        return;
     }
-    
-    const newImages = [...images];
-    if (index < newImages.length) {
-      newImages.splice(index, 1);
-      setImages(newImages);
-    }
-  };
 
-  const handleSetProfilePicture = (index: number) => {
-    setProfilePictureIndex(index);
-  };
-
-  const handleUpload = async () => {
-    const formData = new FormData();
-    
-    images.forEach((image) => formData.append("images", image));
-    formData.append("profilePictureIndex", profilePictureIndex.toString());
-    
     try {
-      const token = localStorage.getItem("token");
-      const response = await fetch("http://localhost:5001/api/upload", {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        },
-        method: "POST",
-        body: formData,
-      });
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        setUploadStatus("Images uploadées avec succès !");
-        setTimeout(() => setUploadStatus(null), 3000);
-        
-      //   if (data.imageUrls) {
-      //     setImageUrls(data.imageUrls);
-      //   }
-      // } else {
-      //   setUploadStatus("Erreur lors de l'upload.");
-      //   setTimeout(() => setUploadStatus(null), 3000);
-      }
-    } catch (error) {
-      console.error("Erreur lors de l'upload:", error);
-      setUploadStatus("Erreur lors de l'upload.");
-      setTimeout(() => setUploadStatus(null), 3000);
-    }
-  };
+       const imagesResponse = await fetch('http://localhost:5001/api/user-images', {
+          headers: { 'Authorization': `Bearer ${token}` }
+       });
+       const imagesData = await imagesResponse.json();
+       if (!imagesResponse.ok || !imagesData.images) {
+          throw new Error(imagesData.error || 'Erreur lors de la récupération des images pour définir la photo principale');
+       }
 
-  
+       const imageUrlToSet = imageUrls[index];
+       const imageToSetAsProfile = imagesData.images.find((img: any) => img.image_url === imageUrlToSet);
+
+       if (!imageToSetAsProfile) {
+          addToast({
+             title: 'Erreur',
+             description: "Image non trouvée pour définir comme principale.",
+             color: 'danger'
+          });
+          return;
+       }
+
+       const positionToSet = imageToSetAsProfile.position;
+       console.log(`Tente de définir la photo à la position DB ${positionToSet} comme principale`);
+
+       const setProfilePromise = fetch("http://localhost:5001/api/set-profile-picture", {
+         method: "PUT",
+         headers: {
+           'Authorization': `Bearer ${token}`,
+           'Content-Type': 'application/json'
+         },
+         body: JSON.stringify({ position: positionToSet })
+       }).then(response => response.json());
+
+       setProfilePromise.then(data => {
+          if (data.success) {
+            setProfilePicture(data.profilePicture);
+            setUser(prev => prev ? ({ ...prev, profile_picture: data.profilePicture }) : null);
+            addToast({
+              title: 'Succès',
+              description: 'Photo principale mise à jour avec succès !',
+              color: 'success'
+            });
+          } else {
+            console.error("Erreur API set-profile-picture:", data.error);
+          }
+       }).catch(error => {
+          console.error("Erreur fetch set-profile-picture:", error);
+       });
+
+     } catch (error: any) {
+       console.error("Erreur lors du changement de photo principale :", error);
+        addToast({
+           title: 'Erreur',
+           description: error.message || "Erreur lors du changement de photo principale.",
+           color: 'danger'
+        });
+     }
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-r from-pink-50 to-purple-100 py-8 px-4">
-      <Card className="max-w-4xl mx-auto overflow-hidden shadow-xl rounded-xl">
-        {/* Header avec image de profil */}
-        {/* <img src={profile_picture}></img> */}
-        <div className="relative h-48 bg-gradient-to-r from-pink-500 to-purple-600">
-          {imageUrls.length > 0 && profilePictureIndex >= 0 ? (
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-fuchsia-50 to-purple-100 py-12 px-2">
+      <Card className="max-w-3xl mx-auto overflow-hidden shadow-2xl rounded-3xl border-0">
+        <div className="relative h-52 bg-gradient-to-r from-pink-400 via-pink-300 to-fuchsia-300">
+          {profile_picture ? (
+            <img 
+              src={profile_picture}
+              alt="Couverture de profil" 
+              className="w-full h-full object-cover opacity-40"
+            />
+          ) : imageUrls.length > 0 && profilePictureIndex >= 0 ? (
             <img 
               src={imageUrls[profilePictureIndex]} 
               alt="Couverture de profil" 
-              className="w-full h-full object-cover opacity-50"
+              className="w-full h-full object-cover opacity-40"
             />
           ) : (
             <div className="absolute inset-0 flex items-center justify-center">
-              <Heart size={64} className="text-white opacity-25" />
+              <Heart size={64} className="text-white opacity-30" />
             </div>
           )}
-          
-          <div className="absolute left-8 -bottom-14">
-            <div className="w-28 h-28 rounded-full border-4 border-white bg-gray-200 overflow-hidden shadow-lg">
-              {imageUrls.length > 0 && profilePictureIndex >= 0 ? (
-                <img 
-                  src={profile_picture} 
-                  alt="Photo de profil" 
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center bg-pink-100">
-                  <User size={36} className="text-pink-500" />
-                </div>
-              )}
-            </div>
-          </div>
-          
-          <div className="absolute right-4 top-4">
-            <button 
-              onClick={() => setIsEditing(!isEditing)}
-              className="bg-white bg-opacity-80 hover:bg-opacity-100 text-pink-600 p-2 rounded-full shadow transition-all duration-300"
-            >
-              <Edit3 size={20} />
-            </button>
-          </div>
         </div>
-        
-        {/* Section du nom et infos principales */}
-        <div className="pt-16 px-8 pb-4">
-          <div className="flex justify-between items-start">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-800">
-                {user.firstname} {user.lastname}
-              </h1>
-              <p className="text-gray-500 flex items-center mt-1">
-                <User size={16} className="mr-1" /> @{user.username}
+        <div className="pt-4 px-8 pb-4">
+          <div className="flex flex-col md:flex-row md:items-center md:gap-8 gap-4">
+            <div className="flex-shrink-0 flex justify-center md:justify-start">
+              <Avatar size="lg" className="w-28 h-28 border-4 border-white bg-gray-100 shadow-xl -mt-16 md:mt-0">
+                {profile_picture ? (
+                  <img 
+                    src={profile_picture}
+                    alt="Photo de profil" 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <User size={40} className="text-pink-400 mx-auto my-auto" />
+                )}
+              </Avatar>
+            </div>
+            <div className="flex-1 flex flex-col justify-center">
+              <div className="flex items-center gap-3 flex-wrap">
+                <h1 className="text-3xl font-extrabold text-gray-800 tracking-tight">
+                  {user.firstname} {user.lastname}
+                </h1>
+                <span className="inline-block bg-gradient-to-r from-pink-500 to-purple-500 text-white text-xs font-bold px-3 py-0.5 rounded-full shadow-md align-middle">
+                  {user.age} ans
+                </span>
+              </div>
+              <div className="flex flex-wrap gap-4 mt-2 text-gray-600 text-sm font-medium">
+                <div className="flex items-center gap-1">
+                  <MapPin size={16} className="text-pink-500" />
+                  <span>{user.city || "Ville non définie"}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <User size={16} className="text-pink-500" />
+                  <span>{user.gender || "Non précisé"}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Heart size={16} className="text-pink-500" fill="currentColor" />
+                  <span>Intéressé(e) par : {user.preference || "Non précisé"}</span>
+                </div>
+              </div>
+              <p className="text-gray-400 flex items-center mt-1 text-xs">
+                <User size={14} className="mr-1" /> @{user.username}
               </p>
             </div>
-            
-            <div className="bg-pink-100 text-pink-800 px-4 py-2 rounded-full font-medium text-sm">
-              {user.age} ans
-            </div>
-          </div>
-          
-          <div className="flex items-center mt-3 text-gray-600">
-            <MapPin size={16} className="mr-1" /> 
-            <span>{user.city || "Ville non définie"}</span>
-            <span className="mx-2">•</span>
-            <Heart size={16} className="mr-1" /> 
-            <span>Intéressé(e) par: {user.preference || "Non précisé"}</span>
           </div>
         </div>
-
-        <CardContent className="px-8 py-6 border-t border-gray-100">
-          {/* Section du profil */}
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
-            {/* Photos et informations */}
-            <div className="md:col-span-3">
-              <h2 className="text-xl font-semibold mb-4 text-gray-800 flex items-center">
-                <Camera size={20} className="mr-2 text-pink-600" /> Photos ({imageUrls.length}/5)
+        <div className="border-t border-pink-100 mx-8" />
+        <div className="px-8 py-8 border-t border-pink-100 bg-white bg-opacity-80 rounded-b-3xl">
+          <div className="grid grid-cols-1 gap-8">
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-xl font-bold text-pink-700 flex items-center gap-2">
+                  <User size={20} className="text-pink-500" />
+                  À propos de moi
+                </h2>
+                <Button
+                  onClick={() => setIsEditing(!isEditing)}
+                  variant="solid"
+                  color="primary"
+                  size="sm"
+                  className="bg-white hover:bg-pink-100 text-pink-600 p-2 rounded-full shadow-md border border-pink-200"
+                >
+                  <Edit3 size={18} />
+                </Button>
+              </div>
+              {isEditing ? (
+                <div className="space-y-4">
+                  <Textarea
+                    value={user.description || ''}
+                    onChange={(e) => setUser({ ...user, description: e.target.value })}
+                    className="w-full p-4 border border-pink-200 rounded-2xl focus:ring-2 focus:ring-pink-400 focus:border-transparent bg-white bg-opacity-90 shadow text-left"
+                    rows={4}
+                    placeholder="Parlez de vous, vos passions, ce que vous recherchez..."
+                  />
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      onClick={() => setIsEditing(false)}
+                      variant="bordered"
+                      color="primary"
+                      size="sm"
+                      className="text-pink-600"
+                    >
+                      Annuler
+                    </Button>
+                    <Button
+                      onClick={handleUpdate}
+                      variant="solid"
+                      color="primary"
+                      size="sm"
+                      className="bg-pink-500 text-white"
+                    >
+                      Enregistrer
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-gray-700 whitespace-pre-wrap text-lg text-left">
+                  {user.description || "Aucune description pour le moment."}
+                </p>
+              )}
+            </div>
+            <div>
+              <h2 className="text-xl font-bold mb-4 text-pink-700 flex items-center">
+                <Camera size={20} className="mr-2 text-pink-500" />
+                Photos ({imageUrls.length}/5)
               </h2>
-              
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
                 {imageUrls.map((url, index) => (
-                  <div 
-                    key={index} 
-                    className={`relative rounded-lg overflow-hidden h-36 ${profilePictureIndex === index ? 'ring-2 ring-pink-500' : ''}`}
+                  <div
+                    key={index}
+                    className={`relative rounded-2xl overflow-hidden h-36 shadow-lg border-2 border-pink-100 ${profile_picture === url ? 'ring-4 ring-pink-400' : ''} group`}
                   >
-                    <img 
-                      src={url} 
-                      alt={`Photo ${index + 1}`} 
-                      className="w-full h-full object-cover" 
+                    <img
+                      src={url}
+                      alt={`Photo ${index + 1}`}
+                      className="w-full h-full object-cover"
                     />
-                    <div className="absolute inset-0 bg-black bg-opacity-40 opacity-0 hover:opacity-100 transition-opacity flex flex-col justify-between p-2">
-                      <button 
-                        onClick={() => handleRemoveImage(index)} 
-                        className="self-end bg-red-500 text-white p-1 rounded-full"
+                    <Button
+                      onClick={() => handleRemoveImage(index)}
+                      variant="solid"
+                      color="primary"
+                      className="absolute top-2 right-2 w-8 h-8 p-0 flex items-center justify-center rounded-full bg-white shadow-md hover:bg-pink-100 text-pink-600 border border-pink-200 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                    >
+                      <Trash size={18} />
+                    </Button>
+                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-[90%] flex justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <Button
+                        onClick={() => profile_picture !== url && handleSetProfilePicture(index)}
+                        variant={profile_picture === url ? 'solid' : 'bordered'}
+                        color="primary"
+                        size="sm"
+                        className={`w-full text-xs font-semibold rounded-full shadow-sm py-1 px-2 bg-white/80 backdrop-blur border border-pink-200 ${profile_picture === url ? 'bg-pink-500 text-white cursor-not-allowed' : 'text-pink-600'}`}
+                        style={{ fontSize: '0.85rem' }}
+                        disabled={profile_picture === url}
                       >
-                        <XIcon size={16} />
-                      </button>
-                      <button 
-                        onClick={() => handleSetProfilePicture(index)}
-                        className={`mt-auto w-full py-1 text-xs font-medium rounded ${
-                          profilePictureIndex === index 
-                            ? 'bg-pink-600 text-white' 
-                            : 'bg-white text-pink-600'
-                        }`}
-                      >
-                        {profilePictureIndex === index ? 'Photo principale' : 'Définir comme principale'}
-                      </button>
+                        {profile_picture === url ? 'Photo principale' : 'Définir comme principale'}
+                      </Button>
                     </div>
                   </div>
                 ))}
-                
                 {imageUrls.length < 5 && (
-                  <label className="flex items-center justify-center h-36 border-2 border-dashed border-pink-200 rounded-lg cursor-pointer hover:bg-pink-50 transition-colors duration-300">
+                  <label className="flex items-center justify-center h-36 border-2 border-dashed border-pink-200 rounded-2xl cursor-pointer hover:bg-pink-50 transition-colors duration-300">
                     <div className="text-center">
                       <Camera size={24} className="mx-auto text-pink-400" />
                       <div className="mt-2 text-sm text-pink-600">
                         Ajouter une photo
                       </div>
-                      <input 
-                        type="file" 
-                        className="hidden" 
-                        accept="image/*" 
-                        onChange={handleFileChange} 
+                      <Input
+                        type="file"
+                        className="hidden"
+                        accept="image/*"
+                        multiple
+                        onChange={handleFileChange}
                       />
                     </div>
                   </label>
                 )}
               </div>
-              
               {images.length > 0 && (
                 <button
                   onClick={handleUpload}
@@ -1065,32 +708,7 @@ const Profile = () => {
               </div>
             </div>
           </div>
-          
-          {/* Bouton de mise à jour */}
-          {isEditing && (
-            <div className="mt-8 flex justify-end space-x-3">
-              <button 
-                onClick={() => setIsEditing(false)}
-                className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-2 rounded-lg transition-colors duration-300"
-              >
-                Annuler
-              </button>
-              <button 
-                onClick={handleUpdate}
-                className="bg-pink-600 hover:bg-pink-700 text-white px-6 py-2 rounded-lg shadow transition-colors duration-300"
-              >
-                Enregistrer
-              </button>
-            </div>
-          )}
-          
-          {/* Message de statut */}
-          {uploadStatus && (
-            <div className={`mt-4 p-3 rounded-lg ${uploadStatus.includes('succès') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-              {uploadStatus}
-            </div>
-          )}
-        </CardContent>
+        </div>
       </Card>
     </div>
   );

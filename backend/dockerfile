@@ -1,13 +1,18 @@
-FROM node:18
+FROM node:18-alpine
 
 WORKDIR /usr/src/app
 
+# Installation des dépendances système nécessaires
+RUN apk add --no-cache python3 make g++
+
 COPY package*.json ./
 
+# Installation des dépendances npm
 RUN npm install
 
 COPY . .
 
 EXPOSE 5001
 
+# Démarrage du serveur avec nodemon
 CMD ["npm", "run", "dev"]

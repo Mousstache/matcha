@@ -8,7 +8,6 @@ export const authMiddleware = (req, res, next) => {
     return res.status(401).json({ message: 'Accès non autorisé, token manquant' });
   }
 
-  
 
   try {
     const decoded = jwt.verify(token.replace('Bearer ', ''), process.env.JWT_SECRET);

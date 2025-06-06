@@ -56,8 +56,8 @@ router.post('/signalUser',authMiddleware,ensureEmailConfirmed, userCtrl.signalUs
 router.post('/forgot-password', userCtrl.forgotPassword);
 router.post('/reset-password', userCtrl.resetPassword);
 
+router.delete('/delete-image/:position', authMiddleware, userCtrl.deleteUserImage);
 
-
-
+router.put('/set-profile-picture', authMiddleware, userCtrl.setProfilePicture);
 
 export default router;

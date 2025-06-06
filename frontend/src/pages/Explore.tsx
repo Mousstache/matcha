@@ -947,7 +947,7 @@ const Explore = () => {
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-3xl font-bold text-gray-800 tracking-tight">
             <span className="bg-clip-text text-transparent bg-gradient-to-r from-pink-600 to-purple-600">
-              Explore
+              Explorer
             </span>
           </h1>
           <Sheet>

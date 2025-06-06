@@ -1,13 +1,7 @@
-// import { useState, useEffect } from 'react';
-// import { useNavigate, useSearchParams } from "react-router-dom";import './App.css'
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import './App.css';
 import { Navigate } from 'react-router-dom';
 import { Heart, ArrowLeft } from 'lucide-react';
-
-
-// import { ReactNode } from 'react';
-
 import Login from "./pages/Login";
 import Layout from "./components/Layout";
 import Home from "./pages/Home";

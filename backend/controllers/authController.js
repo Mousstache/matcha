@@ -338,7 +338,8 @@ export async function logUser (req, res){
 
 export async function imageUpload(req, res) {
   try {
-    if (!req.files || req.files.length === 0) {
+    const files = req.files || [];
+    if (!files || files.length === 0) {
       return res.status(400).json({ error: "Aucune image reçue" });
     }
 
@@ -348,96 +349,114 @@ export async function imageUpload(req, res) {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const userId = decoded.id;
 
-    // Supprimer les anciennes images
-    await db.query('DELETE FROM user_images WHERE user_id = $1', [userId]);
+    console.log("userId (type):", userId, typeof userId);
+    const result = await db.query(
+      'SELECT image_url, position FROM user_images WHERE user_id = $1 ORDER BY position',
+      [Number(userId)]
+    );
+    console.log("Résultat SQL brut :", result);
+    const existingImages = result || [];
+    console.log("existingImages =", existingImages);
 
-    const insertImageQuery = `
-      INSERT INTO user_images (user_id, image_url, position)
-      VALUES ($1, $2, $3)
-    `;
-
-    const images = req.files;
-
-    for (let i = 0; i < images.length && i < 5; i++) {
-      await db.query(insertImageQuery, [userId, images[i].path, i + 1]);
+    // Vérifier qu'on ne dépasse pas 5 images
+    const totalImages = existingImages.length + files.length;
+    if (totalImages > 5) {
+      return res.status(400).json({ error: "Vous ne pouvez pas avoir plus de 5 images." });
     }
 
-    // Définir la photo de profil dans la table `users`
-    const profilePicture = images[0]; // Première image comme profil
-    await db.query(
-      'UPDATE users SET profile_picture = $1 WHERE id = $2',
-      [profilePicture.path, userId]
+    // Trouver les positions déjà prises
+    const takenPositions = existingImages.map(img => img.position);
+    // Générer la liste des positions libres (1 à 5)
+    const freePositions = [];
+    for (let i = 1; i <= 5; i++) {
+      if (!takenPositions.includes(i)) freePositions.push(i);
+    }
+
+    // Insérer les nouvelles images sur les positions libres
+    for (let i = 0; i < files.length && i < freePositions.length; i++) {
+      await db.query(
+        'INSERT INTO user_images (user_id, image_url, position) VALUES ($1, $2, $3)',
+        [userId, files[i].path, freePositions[i]]
+      );
+    }
+
+    // Mettre à jour la photo principale si demandé
+    const profilePictureIndex = parseInt(req.body.profilePictureIndex) || 0;
+    const allImages = [...existingImages, ...files.map((img, idx) => ({
+      image_url: img.path,
+      position: freePositions[idx]
+    }))];
+    if (profilePictureIndex >= 0 && profilePictureIndex < allImages.length) {
+      const profilePicture = allImages[profilePictureIndex];
+      if (profilePicture) {
+        await db.query(
+          'UPDATE users SET profile_picture = $1 WHERE id = $2',
+          [profilePicture.image_url, userId]
+        );
+      }
+    }
+
+    // Retourner la liste à jour
+    const updatedImages = await db.query(
+      'SELECT image_url, position FROM user_images WHERE user_id = $1 ORDER BY position',
+      [userId]
     );
 
     res.status(200).json({
+      success: true,
       message: "Images uploadées avec succès",
-      images: images.map(img => img.path),
-      profilePicture: profilePicture.path,
-      otherPictures: images.slice(1).map(img => img.path),
+      images: updatedImages,
+      profilePicture: updatedImages[profilePictureIndex]?.image_url || null
     });
   } catch (error) {
     console.error("Erreur d'upload :", error);
     res.status(500).json({ error: "Erreur lors de l'upload des images" });
   }
 }
+export async function deleteUserImage(req, res) {
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) return res.status(401).json({ error: "Token manquant" });
 
-  
-  
-// export async function imageUpload (req, res){
-// try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.id;
+    const { position } = req.params;
 
-//   console.log("req.files", req.files);
-  
-//     if (!req.files || req.files.length === 0) {
-//     return res.status(400).json({ error: "Aucune image reçue" });
-//     }
+    // Supprimer l'image à la position donnée
+    await db.query(
+      'DELETE FROM user_images WHERE user_id = $1 AND position = $2',
+      [userId, position]
+    );
 
-//     const token = req.headers.authorization?.split(" ")[1];
-//     if (!token) return res.status(401).json({ error: "Token manquant" });
+    // Réordonner les positions restantes
+    const images = await db.query(
+      'SELECT id FROM user_images WHERE user_id = $1 ORDER BY position',
+      [userId]
+    );
+    for (let i = 0; i < images.length; i++) {
+      await db.query(
+        'UPDATE user_images SET position = $1 WHERE id = $2',
+        [i + 1, images[i].id]
+      );
+    }
 
-//     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-//     const userId = decoded.id;
+    // Si la photo principale a été supprimée, mettre à jour profile_picture
+    const userImages = await db.query(
+      'SELECT image_url FROM user_images WHERE user_id = $1 ORDER BY position',
+      [userId]
+    );
+    const newProfilePicture = userImages[0]?.image_url || null;
+    await db.query(
+      'UPDATE users SET profile_picture = $1 WHERE id = $2',
+      [newProfilePicture, userId]
+    );
 
-//     await db.query('DELETE FROM user_images WHERE user_id = $1', [userId]);
-
-
-//     const insertImageQuery = `
-//     INSERT INTO user_images (user_id, image_url, position)
-//     VALUES ($1, $2, $3)
-//     `;
-
-//     const images = req.files;
-
-//     for (let i = 0; i < images.length && i < 5; i++) {
-//       await db.query(insertImageQuery, [userId, images[i].path, i + 1]);
-//     }
-
-//     const profilePicture = images[0];
-//     const otherPictures = images.slice(1);
-
-//     if (!profilePicture.length > 4) {
-//       console.log("profilePicture.length", profilePicture.length);
-//     }
-
-//     console.log("profilePicture:", profilePicture);
-
-//     await db.update(
-//     'user_images',
-//     { image_url: profilePicture },
-//     { id: userId }
-//     );
-
-//     res.status(200).json({
-//     message: "Images uploadées avec succès",
-//     images: images.map(img => img.path),
-//     profilePicture,
-//     otherPictures,
-//     });
-// } catch (error) {
-//     console.error("Erreur d'upload :", error);
-//     res.status(500).json({ error: "Erreur lors de l'upload des images" });
-// }
-// };
+    res.status(200).json({ success: true, images: userImages, profilePicture: newProfilePicture });
+  } catch (error) {
+    console.error("Erreur lors de la suppression de l'image :", error);
+    res.status(500).json({ error: "Erreur lors de la suppression de l'image" });
+  }
+}
 
 export async function forgotPassword(req, res){
   try{
@@ -519,6 +538,59 @@ export async function getUserImages(req, res) {
     res.status(500).json({ error: "Erreur serveur" });
   }
 }
-  
+
+export async function setProfilePicture(req, res) {
+  try {
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) return res.status(401).json({ error: "Token manquant" });
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded.id;
+    const { position } = req.body;
+
+    console.log("Changement de photo principale - userId:", userId, "position:", position);
+
+    // Récupérer l'image à la position demandée
+    const result = await db.query(
+      'SELECT image_url FROM user_images WHERE user_id = $1 AND position = $2',
+      [userId, position]
+    );
+    
+    if (!result || result.length === 0) {
+      return res.status(404).json({ error: "Image non trouvée" });
+    }
+
+    console.log("Image trouvée:", result[0].image_url);
+
+    // Mettre à jour la photo de profil
+    const updateResult = await db.query(
+      'UPDATE users SET profile_picture = $1 WHERE id = $2 RETURNING profile_picture',
+      [result[0].image_url, userId]
+    );
+
+    console.log("Résultat de la mise à jour:", updateResult);
+
+    if (!updateResult || updateResult.length === 0) {
+      return res.status(500).json({ error: "Erreur lors de la mise à jour de la photo de profil" });
+    }
+
+    // Vérifier que la mise à jour a bien été effectuée
+    const verifyUpdate = await db.query(
+      'SELECT profile_picture FROM users WHERE id = $1',
+      [userId]
+    );
+
+    console.log("Vérification après mise à jour:", verifyUpdate[0]);
+
+    res.status(200).json({ 
+      success: true, 
+      profilePicture: result[0].image_url,
+      verified: verifyUpdate[0]?.profile_picture === result[0].image_url
+    });
+  } catch (error) {
+    console.error("Erreur lors du changement de photo principale :", error);
+    res.status(500).json({ error: "Erreur lors du changement de photo principale" });
+  }
+}
 
 export default {getUserImages, registerUser, fillInfo, confirmEmail, updateUser, logUser, imageUpload, forgotPassword, resetPassword };

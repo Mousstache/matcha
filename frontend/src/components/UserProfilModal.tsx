@@ -89,7 +89,9 @@ const getInitials = () => {
 
           <div className="flex items-center justify-between">
             <span className="text-gray-500">Âge</span>
-            <span className="font-medium">{user.age} ans</span>
+            <div className="bg-gradient-to-r from-pink-500 via-pink-400 to-purple-500 text-white font-semibold px-4 py-1.5 rounded-full shadow-md hover:shadow-lg transition-all duration-300">
+              {user.age} ans
+            </div>
           </div>
           
           <div className="flex items-center justify-between">

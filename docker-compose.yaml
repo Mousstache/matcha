@@ -2,32 +2,41 @@ version: '3.8'
 
 services:
   db:
-    image: postgres:15
+    build:
+      context: ./database
+      dockerfile: Dockerfile
     container_name: postgres-db
-    restart: always
+    restart: unless-stopped
     ports:
       - "5432:5432"
     environment:
       POSTGRES_USER: myuser
       POSTGRES_PASSWORD: mypassword
       POSTGRES_DB: appdb
+      POSTGRES_INITDB_ARGS: "--encoding=UTF-8"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./database/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U myuser -d appdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
     container_name: express-backend
-    restart: always
+    restart: unless-stopped
     ports:
       - "5001:5001"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
+      NODE_ENV: development
       PORT: 5001
       POSTGRES_USER: myuser
       POSTGRES_PASSWORD: mypassword
@@ -35,6 +44,7 @@ services:
       POSTGRES_HOST: db
     volumes:
       - ./backend:/usr/src/app
+      - /usr/src/app/node_modules
     networks:
       - app-network
 
@@ -43,7 +53,7 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     container_name: react-frontend
-    restart: always
+    restart: unless-stopped
     ports:
       - "3000:3000"
     depends_on:
@@ -53,21 +63,34 @@ services:
       - /usr/src/app/node_modules
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
    
   adminer:
-    image: adminer
+    image: adminer:latest
     container_name: adminer
-    restart: always
+    restart: unless-stopped
     ports:
       - "8080:8080"
+    depends_on:
+      - db
     networks:
       - app-network
+    environment:
+      ADMINER_DEFAULT_SERVER: db
 
 networks:
   app-network:
     driver: bridge
+    name: matcha_app-network
 
 volumes:
   postgres_data:
+    name: matcha_postgres_data
   backend_data:
+    name: matcha_backend_data
   frontend_data:
+    name: matcha_frontend_data
