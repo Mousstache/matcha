@@ -124,12 +124,13 @@ const Register = () => {
       
       const data = await response.json();
       
-      if (data.error) {
-        setError(data.error);
+      if (!response.ok) {
+        console.error(data.message);
+        setError(data.message);
         setLoading(false);
       } else {
         localStorage.setItem("token", data.token);
-        navigate("/signup");
+        // navigate("/confirm-email");
       }
     } catch (error) {
       console.error(error);

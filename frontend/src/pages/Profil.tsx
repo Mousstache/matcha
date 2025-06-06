@@ -543,6 +543,169 @@ const Profile = () => {
                   </label>
                 )}
               </div>
+              {images.length > 0 && (
+                <button
+                  onClick={handleUpload}
+                  className="bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded-lg shadow transition-colors duration-300"
+                >
+                  Uploader les nouvelles images
+                </button>
+              )}
+              
+              <div className="mt-8">
+                <h2 className="text-xl font-semibold mb-3 text-gray-800">À propos de moi</h2>
+                {isEditing ? (
+                  <textarea
+                    value={user.description || ''}
+                    onChange={(e) => setUser({ ...user, description: e.target.value })}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                    rows={4}
+                    placeholder="Parlez de vous, vos passions, ce que vous recherchez..."
+                  />
+                ) : (
+                  <p className="text-gray-700 whitespace-pre-wrap">
+                    {user.description || "Aucune description pour le moment."}
+                  </p>
+                )}
+              </div>
+            </div>
+            
+            {/* Informations personnelles */}
+            <div className="md:col-span-2">
+              <h2 className="text-xl font-semibold mb-4 text-gray-800">Informations personnelles</h2>
+              
+              <div className="space-y-4">
+                <div className="bg-white p-4 rounded-lg shadow-sm">
+                  {isEditing ? (
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-600 mb-1">Pseudonyme</label>
+                        <input 
+                          value={user.username || ''} 
+                          onChange={(e) => setUser({ ...user, username: e.target.value })}
+                          className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-600 mb-1">Prénom</label>
+                        <input 
+                          value={user.firstname || ''} 
+                          onChange={(e) => setUser({ ...user, firstname: e.target.value })}
+                          className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-600 mb-1">Nom</label>
+                        <input 
+                          value={user.lastname || ''}  
+                          onChange={(e) => setUser({ ...user, lastname: e.target.value })}
+                          className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-600 mb-1">Email</label>
+                        <input 
+                          value={user.email || ''}  
+                          onChange={(e) => setUser({ ...user, email: e.target.value })}
+                          className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-600 mb-1">Ville</label>
+                        <input 
+                          value={user.city || ''}  
+                          onChange={(e) => setUser({ ...user, city: e.target.value })}
+                          className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-600 mb-1">Âge</label>
+                        <input 
+                          type="number" 
+                          value={user.age}  
+                          onChange={(e) => setUser({ ...user, age: Number(e.target.value) })}
+                          className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-600 mb-1">Préférence</label>
+                        <select
+                          value={user.preference || ''}  
+                          onChange={(e) => setUser({ ...user, preference: e.target.value })}
+                          className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                        >
+                          <option value="">Sélectionnez une préférence</option>
+                          <option value="Homme">Homme</option>
+                          <option value="Femme">Femme</option>
+                          <option value="les deux">les deux</option>
+                        </select>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-600 mb-1">Genre</label>
+                        <select
+                          value={user.gender || ''}  
+                          onChange={(e) => setUser({ ...user, gender: e.target.value })}
+                          className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-transparent"
+                        >
+                          <option value="">Sélectionnez votre genre</option>
+                          <option value="Homme">Homme</option>
+                          <option value="Femme">Femme</option>
+                          <option value="Non binaire">Non-binaire</option>
+                        </select>
+                      </div>
+                    </div>
+                  ) : (
+                    <ul className="space-y-3">
+                      <li className="flex items-start">
+                        <Mail size={18} className="mr-2 text-pink-500 mt-1" />
+                        <div>
+                          <span className="text-sm text-gray-500">Email</span>
+                          <p className="text-gray-800">{user.email}</p>
+                        </div>
+                      </li>
+                      
+                      <li className="flex items-start">
+                        <MapPin size={18} className="mr-2 text-pink-500 mt-1" />
+                        <div>
+                          <span className="text-sm text-gray-500">Localisation</span>
+                          <p className="text-gray-800">{user.city || "Non précisée"}</p>
+                        </div>
+                      </li>
+                      
+                      <li className="flex items-start">
+                        <Calendar size={18} className="mr-2 text-pink-500 mt-1" />
+                        <div>
+                          <span className="text-sm text-gray-500">Âge</span>
+                          <p className="text-gray-800">{user.age} ans</p>
+                        </div>
+                      </li>
+                      
+                      <li className="flex items-start">
+                        <User size={18} className="mr-2 text-pink-500 mt-1" />
+                        <div>
+                          <span className="text-sm text-gray-500">Genre</span>
+                          <p className="text-gray-800">{user.gender || "Non précisé"}</p>
+                        </div>
+                      </li>
+                      
+                      <li className="flex items-start">
+                        <Heart size={18} className="mr-2 text-pink-500 mt-1" />
+                        <div>
+                          <span className="text-sm text-gray-500">Intéressé(e) par</span>
+                          <p className="text-gray-800">{user.preference || "Non précisé"}</p>
+                        </div>
+                      </li>
+                    </ul>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </div>

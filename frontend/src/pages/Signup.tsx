@@ -119,17 +119,17 @@ const Signup = () => {
                 body: JSON.stringify({ gender, description, preference, birthDate, age: userAge, interests, lastConnection : new Date(), city, country, latitude, longitude, online }),
             })
             .then(response => response.json())
-            .then(data => {
+           .then(data => {
                 // localStorage.setItem("token", data.token);
                 if (data.error) {
                     console.error(data.error)
                 } else {
+                    // navigate("/confirm-email");
                     navigate("/login", { state: { email: data.email, password: data.password || "" } });
                     console.log(data)
                 }
                 // navigate(`/confirm-email?token=${data.confirmationToken}`);
             })
-            // navigate("/confirm-email");
             // localStorage.setItem
             // window.location.href = "/login";
             // .then(response => {

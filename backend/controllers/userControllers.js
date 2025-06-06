@@ -1,4 +1,5 @@
-import { getUserImages, registerUser, fillInfo, updateUser, confirmEmail, logUser, imageUpload, deleteUserImage, setProfilePicture } from './authController.js';
+import { getUserImages, registerUser, fillInfo, updateUser, confirmEmail, logUser, imageUpload, deleteUserImage, setProfilePicture, forgotPassword, resetPassword } from './authController.js';
+
 import { recordProfileView, getAllUsers, getUser, blockUser, getBlockUser, unblockUser, signalUser } from './browseController.js';
 import { likeUser, unlikeUser, dislikeUser, getLikes, getOtherLikes, getMatches, ConsultProfile, getViewlist } from './matchController.js';
 import { getMessages, sendMessage, getNotifications, sendNotification } from './socketController.js';
@@ -6,8 +7,8 @@ import { getMessages, sendMessage, getNotifications, sendNotification } from './
 
 export {getUserImages, registerUser, fillInfo, confirmEmail, logUser, imageUpload, deleteUserImage, setProfilePicture, recordProfileView, likeUser,
     unlikeUser, getLikes, getAllUsers, getUser, updateUser, getOtherLikes, getMatches, getMessages,
-    sendMessage, getNotifications, dislikeUser, sendNotification, blockUser , unblockUser, getBlockUser, signalUser , ConsultProfile, getViewlist };
+    sendMessage, getNotifications, dislikeUser, sendNotification, blockUser , unblockUser, getBlockUser, signalUser , ConsultProfile, getViewlist , forgotPassword, resetPassword };
 
 export default {getUserImages, registerUser, fillInfo, confirmEmail, logUser, imageUpload, deleteUserImage, setProfilePicture, recordProfileView, likeUser,
     unlikeUser, getLikes, getAllUsers, getUser, updateUser, getOtherLikes, getMatches, getMessages, sendMessage,
-    getNotifications, dislikeUser, sendNotification, blockUser, unblockUser, getBlockUser, signalUser , ConsultProfile, getViewlist };
+    getNotifications, dislikeUser, sendNotification, blockUser, unblockUser, getBlockUser, signalUser , ConsultProfile, getViewlist, forgotPassword, resetPassword };

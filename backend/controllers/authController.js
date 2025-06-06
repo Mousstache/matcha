@@ -1,7 +1,7 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
-import { sendConfirmationEmail } from '../utils/emailService.js';
+import { sendConfirmationEmail, sendPasswordResetEmail } from '../utils/emailService.js';
 import db from '../config/db.js';
 
 export async function registerUser(req,res){
@@ -15,6 +15,16 @@ export async function registerUser(req,res){
           message: 'Un utilisateur avec cet email existe déjà' 
         });
       }
+
+      const existingUsername= await db.findOne('users', { userName });
+      if (existingUsername) {
+        return res.status(400).json({ 
+          message: 'Un utilisateur avec ce username existe déjà' 
+        });
+      }
+
+
+
       
       const hashedPassword = await bcrypt.hash(password, 10);
       
@@ -42,7 +52,8 @@ export async function registerUser(req,res){
       const token = jwt.sign(
         { 
           id: result.id, 
-          email: email 
+          email: email,
+          emailConfirmed: result.emailConfirmed
         },
         process.env.JWT_SECRET,
         { expiresIn: '24h' }
@@ -196,12 +207,21 @@ export async function confirmEmail (req, res){
     
     const sql = `
       SELECT * FROM users 
-      WHERE confirmationToken = ? 
-      AND confirmationTokenExpires > ?
+      WHERE confirmationToken = $1
+      AND confirmationTokenExpires > $2
     `;
     
     const now = new Date();
     const users = await db.query(sql, [token, now]);
+
+    console.log("users === ",users.length);
+    console.log("users >>> ",users);
+
+    // if (users.length !== 1 || users[0].emailconfirmed) {
+    //   return res.status(400).json({
+    //     message: 'Token invalide, expiré ou déjà utilisé.'
+    //   });
+    // }
     
     if (users.length === 0) {
       return res.status(400).json({
@@ -219,10 +239,27 @@ export async function confirmEmail (req, res){
       },
       { id: users[0].id }
     );
-    
-    res.status(200).json({
-      message: 'Email confirmé avec succès'
-    });
+
+    // console.log("users >>> apres ",users);
+
+
+    // const usersconf = await db.query(sql, [token, now]);
+
+    // console.log("userconf <<<< ", usersconf);
+    const checkSql = `SELECT emailConfirmed FROM users WHERE id = $1`;
+    const checkResult = await db.query(checkSql, [users[0].id]);
+
+    if (checkResult[0].emailconfirmed === true) {
+      console.log("ici");
+      res.status(200).json({
+        message: 'Email confirmé avec succès'
+      });
+    }
+
+    if (users.emailConfirmed) {
+      return res.status(200).json({ message: 'Email déjà confirmé' });
+}
+
   } catch (error) {
     console.error('Erreur lors de la confirmation de l\'email:', error);
     res.status(500).json({
@@ -239,7 +276,7 @@ export async function logUser (req, res){
       const user = await db.findOne('users', { email });
       if (!user) {
         return res.status(401).json({ 
-          message: 'Identifiants invalides' 
+          message: 'Identifiants invalides'
         });
       }
       
@@ -264,11 +301,14 @@ export async function logUser (req, res){
       const token = jwt.sign(
         { 
           id: user.id, 
-          email: user.email 
+          email: user.email,
+          emailConfirmed :  user.emailconfirmed
         },
         process.env.JWT_SECRET,
         { expiresIn: '24h' }
       );
+
+      console.log("a la connexion", user.emailconfirmed);
       
       // Préparer la réponse utilisateur (sans le mot de passe)
       const userResponse = {
@@ -418,6 +458,67 @@ export async function deleteUserImage(req, res) {
   }
 }
 
+export async function forgotPassword(req, res){
+  try{
+    const { email } = req.body;
+      const user = await db.findOne('users', { email });
+      if (!user) {
+        return res.status(401).json({ 
+          message: 'Identifiants invalides' 
+        });
+      }
+
+    console.log("looool ",user.email);
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const tokenExpire = new Date(Date.now() + 3600_000); // 1h
+
+    await sendPasswordResetEmail(user.email, token);
+
+    await db.update('users', {
+    resetToken: token,
+    resetTokenExpires: tokenExpire
+  }, { id: user.id });
+
+    res.status(200).json({ message: 'Email de réinitialisation envoyé' });
+
+  }catch (error){
+      console.error("Erreur lors de l'envoi de reset password :", error);
+      res.status(500).json({ error: "Erreur serveur" });
+  }
+};
+
+
+export async function resetPassword(req, res) {
+  try{
+    const { token, newPassword } = req.body;
+    const now = new Date();
+  
+    const user = await db.query(`
+      SELECT * FROM users 
+      WHERE resetToken = $1 AND resetTokenExpires > $2
+    `, [token, now]);
+  
+    if (!user.length) {
+      return res.status(400).json({ message: 'Token invalide ou expiré' });
+    }
+  
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+  
+    await db.update('users', {
+      password: hashedPassword,
+      resetToken: null,
+      resetTokenExpires: null
+    }, { id: user[0].id });
+  
+    res.status(200).json({ message: 'Mot de passe réinitialisé avec succès' });
+  }
+  catch (error){
+    console.error("Erreur lors du changement de mdp :", error);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+};
+
 export async function getUserImages(req, res) {
   try {
     const userId = req.user.id;
@@ -492,4 +593,4 @@ export async function setProfilePicture(req, res) {
   }
 }
 
-export default {getUserImages, registerUser, fillInfo, confirmEmail, updateUser, logUser, imageUpload, deleteUserImage };
+export default {getUserImages, registerUser, fillInfo, confirmEmail, updateUser, logUser, imageUpload, forgotPassword, resetPassword };

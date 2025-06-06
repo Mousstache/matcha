@@ -21,6 +21,8 @@ CREATE TABLE IF NOT EXISTS users (
   country VARCHAR(255),
   confirmationToken VARCHAR(255),
   confirmationTokenExpires TIMESTAMP,
+  resetToken VARCHAR(255),
+  resetTokenExpires TIMESTAMP,
   emailConfirmed BOOLEAN DEFAULT FALSE,
   createdAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updatedAt TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP

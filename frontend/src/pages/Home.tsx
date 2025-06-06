@@ -121,6 +121,7 @@ const Home = () => {
   const handleBlock = async (match_id: number) => {
     try {
       const token = localStorage.getItem("token");
+      
       await fetch('http://localhost:5001/api/blockUser', {
         method: "POST",
         headers: {
@@ -137,6 +138,7 @@ const Home = () => {
   const handleUnlike = async (match_id: number, liked_id: number) => {
     try {
       const token = localStorage.getItem("token");
+
       await fetch('http://localhost:5001/api/unlikeUser', {
         method: "DELETE",
         headers: {
@@ -163,6 +165,7 @@ const Home = () => {
   const handlelike = async (liked_id: number) => {
     try {
       const token = localStorage.getItem("token");
+      
       await fetch('http://localhost:5001/api/likeUser', {
         method: "POST",
         headers: {
@@ -189,6 +192,7 @@ const Home = () => {
   const handleUnBlock = async (block_id: number) => {
     try {
       const token = localStorage.getItem("token");
+      
       await fetch('http://localhost:5001/api/unblockUser', {
         method: "DELETE",
         headers: {
