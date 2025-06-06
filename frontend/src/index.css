@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Poppins:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Poppins:wght@400;500;700&display=swap');
 
 @plugin 'tailwindcss-animate';
 
@@ -55,21 +55,14 @@
   --sidebar-ring: oklch(0.87 0 0);
 }
 
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
-}
-
 body {
   margin: 0;
-  /* display: flex; */
-  place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+  width: 100%;
+  max-width: 100vw;
 }
 
 h1 {
@@ -98,24 +91,23 @@ button:focus-visible {
 
 
 button {
-  border-radius: 999px; /* Boutons ronds pour un look plus doux */
+  border-radius: 4px; /* Boutons rectangulaires avec léger arrondi */
   border: 1px solid transparent;
-  padding: 0.7em 1.5em;
-  font-size: 1em;
+  padding: 0.5em 1.2em;
+  font-size: 0.9em;
   font-weight: 600;
   font-family: inherit;
   background-color: #ec4899;
-  /* background: linear-gradient(to right, #ec4899, #8b5cf6); Dégradé rose-violet */
   color: white;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 6px rgba(236, 72, 153, 0.1);
+  box-shadow: 0 2px 4px rgba(236, 72, 153, 0.1);
 }
 
 /* Effet de survol */
 button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(236, 72, 153, 0.2);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(236, 72, 153, 0.2);
   border-color: transparent;
 }
 
@@ -123,7 +115,7 @@ button:hover {
 button:focus,
 button:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.4);
+  box-shadow: 0 0 0 2px rgba(236, 72, 153, 0.4);
 }
 
 /* Variante secondaire (pour les boutons moins importants) */
@@ -231,4 +223,15 @@ button.secondary:hover {
   body {
     @apply bg-background text-foreground;
   }
+}
+
+.font-poppins {
+  font-family: 'Poppins', Arial, Helvetica, sans-serif;
+}
+
+#root {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+  position: relative;
 }

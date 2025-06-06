@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from "@/context/auth";
-import { Heart, MapPin, Mail, User, Calendar, Edit3, Camera, X, Bell, Trash } from 'lucide-react';
-import { Button, Badge, Avatar, Input, Select, Textarea, Card } from "@heroui/react";
+import { Heart, MapPin, User, Edit3, Camera, Trash } from 'lucide-react';
+import { Button, Avatar, Input, Textarea, Card } from "@heroui/react";
 import { addToast } from "@heroui/toast";
 
 interface User {
