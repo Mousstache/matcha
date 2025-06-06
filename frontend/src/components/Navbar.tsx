@@ -29,12 +29,7 @@ const navItems: { name: string; to: string; icon: IconComponent }[] = [
         <span className="absolute inline-flex h-2/3 w-2/3 animate-ping rounded-full bg-pink-400 opacity-30" />
       </span>
     ) 
-  },
-  { 
-    name: "Mon Profil", 
-    to: "/profil", 
-    icon: User 
-  },
+  }
 ];
 
 // Composant Navbar
@@ -63,38 +58,38 @@ const Navbar: React.FC = () => {
 
   return (
     <nav className="w-full bg-white border-b border-gray-100 shadow-sm font-poppins">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
-          {/* Logo */}
-          <div className="flex-shrink-0 flex items-center">
-            <span className="text-2xl font-bold text-pink-500 tracking-wide font-poppins select-none">
+          {/* Logo + Nav */}
+          <div className="flex items-center w-full">
+            {/* Logo */}
+            <span className="text-3xl font-bold text-pink-500 tracking-wide font-poppins select-none">
               Matcha
             </span>
-          </div>
-
-          {/* Navigation Desktop */}
-          <div className="hidden md:flex space-x-4 -ml-8">
-            {navItems.map((item) => {
-              const isActive = location.pathname === item.to;
-              return (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  className={`
-                    flex items-center px-4 py-2 rounded-lg font-medium text-base shadow 
-                    transition-all duration-200 font-poppins focus:outline-none focus:ring-2 
-                    focus:ring-pink-300
-                    ${isActive 
-                      ? "bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg" 
-                      : "bg-white text-gray-600 hover:bg-gradient-to-r hover:from-pink-500 hover:to-purple-500 hover:text-white hover:shadow-lg"
-                    }
-                  `}
-                >
-                  {renderIcon(item.icon, isActive)}
-                  {item.name}
-                </Link>
-              );
-            })}
+            {/* Navigation Desktop centrée */}
+            <div className="hidden md:flex ml-10 justify-center space-x-4">
+              {navItems.map((item) => {
+                const isActive = location.pathname === item.to;
+                return (
+                  <Link
+                    key={item.to}
+                    to={item.to}
+                    className={`
+                      flex items-center px-4 py-2 rounded-lg font-medium text-base shadow 
+                      transition-all duration-200 font-poppins focus:outline-none focus:ring-2 
+                      focus:ring-pink-300 w-40 h-10 justify-center
+                      ${isActive 
+                        ? "bg-pink-500 text-white shadow-md" 
+                        : "bg-white text-gray-600 hover:bg-pink-50 hover:text-pink-600 hover:shadow-md active:bg-pink-100 active:scale-95"
+                      }
+                    `}
+                  >
+                    {renderIcon(item.icon, isActive)}
+                    {item.name}
+                  </Link>
+                );
+              })}
+            </div>
           </div>
 
           {/* Actions */}
@@ -107,9 +102,13 @@ const Navbar: React.FC = () => {
             >
               <Bell className="h-5 w-5" />
             </Link>
-            <div className="w-8 h-8 rounded-full bg-gray-200 border border-gray-300 flex items-center justify-center font-bold text-pink-500 font-poppins shadow">
-              M
-            </div>
+            <Link
+              to="/profil"
+              title="Mon Profil"
+              className="rounded-full hover:bg-gray-100 transition text-pink-500 border border-pink-100 shadow flex items-center justify-center w-8 h-8"
+            >
+              <User className="h-5 w-5" />
+            </Link>
             <button
               onClick={handleLogout}
               title="Se déconnecter"
@@ -146,8 +145,8 @@ const Navbar: React.FC = () => {
                       flex items-center px-4 py-3 rounded-lg font-medium text-base
                       transition-all duration-200 font-poppins
                       ${isActive 
-                        ? "bg-gradient-to-r from-pink-500 to-purple-500 text-white" 
-                        : "text-gray-600 hover:bg-gradient-to-r hover:from-pink-500 hover:to-purple-500 hover:text-white"
+                        ? "bg-pink-500 text-white" 
+                        : "text-gray-600 hover:bg-pink-50 hover:text-pink-600 active:bg-pink-100 active:scale-95"
                       }
                     `}
                   >

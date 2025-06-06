@@ -366,7 +366,7 @@ const Profile = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-fuchsia-50 to-purple-100 py-12 px-2">
+    <div className="bg-gradient-to-br from-pink-50 via-fuchsia-50 to-purple-100 py-9 px-2">
       <Card className="max-w-3xl mx-auto overflow-hidden shadow-2xl rounded-3xl border-0">
         <div className="relative h-52 bg-gradient-to-r from-pink-400 via-pink-300 to-fuchsia-300">
           {profile_picture ? (
@@ -445,7 +445,7 @@ const Profile = () => {
                   variant="solid"
                   color="primary"
                   size="sm"
-                  className="bg-white hover:bg-pink-100 text-pink-600 p-2 rounded-full shadow-md border border-pink-200"
+                  className="bg-white hover:bg-pink-50 text-pink-600 p-2 rounded-full shadow-md border border-pink-200 active:bg-pink-100 active:scale-95 transition-all duration-200"
                 >
                   <Edit3 size={18} />
                 </Button>
@@ -465,7 +465,7 @@ const Profile = () => {
                       variant="bordered"
                       color="primary"
                       size="sm"
-                      className="text-pink-600"
+                      className="text-pink-600 hover:bg-pink-50 active:bg-pink-100 active:scale-95 transition-all duration-200"
                     >
                       Annuler
                     </Button>
@@ -474,7 +474,7 @@ const Profile = () => {
                       variant="solid"
                       color="primary"
                       size="sm"
-                      className="bg-pink-500 text-white"
+                      className="bg-pink-500 text-white hover:bg-pink-600 active:bg-pink-700 active:scale-95 transition-all duration-200"
                     >
                       Enregistrer
                     </Button>
@@ -506,7 +506,7 @@ const Profile = () => {
                       onClick={() => handleRemoveImage(index)}
                       variant="solid"
                       color="primary"
-                      className="absolute top-2 right-2 w-8 h-8 p-0 flex items-center justify-center rounded-full bg-white shadow-md hover:bg-pink-100 text-pink-600 border border-pink-200 z-10 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                      className="absolute top-2 right-2 w-8 h-8 p-0 flex items-center justify-center rounded-full bg-white shadow-md hover:bg-pink-50 text-pink-600 border border-pink-200 z-10 opacity-0 group-hover:opacity-100 transition-all duration-200 active:bg-pink-100 active:scale-95"
                     >
                       <Trash size={18} />
                     </Button>
@@ -516,7 +516,10 @@ const Profile = () => {
                         variant={profile_picture === url ? 'solid' : 'bordered'}
                         color="primary"
                         size="sm"
-                        className={`w-full text-xs font-semibold rounded-full shadow-sm py-1 px-2 bg-white/80 backdrop-blur border border-pink-200 ${profile_picture === url ? 'bg-pink-500 text-white cursor-not-allowed' : 'text-pink-600'}`}
+                        className={`w-full text-xs font-semibold rounded-full shadow-sm py-1 px-2 bg-white/80 backdrop-blur border border-pink-200 transition-all duration-200
+                          ${profile_picture === url 
+                            ? 'bg-pink-500 text-white cursor-not-allowed' 
+                            : 'text-pink-600 hover:bg-pink-50 active:bg-pink-100 active:scale-95'}`}
                         style={{ fontSize: '0.85rem' }}
                         disabled={profile_picture === url}
                       >
@@ -542,169 +545,6 @@ const Profile = () => {
                     </div>
                   </label>
                 )}
-              </div>
-              {images.length > 0 && (
-                <button
-                  onClick={handleUpload}
-                  className="bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded-lg shadow transition-colors duration-300"
-                >
-                  Uploader les nouvelles images
-                </button>
-              )}
-              
-              <div className="mt-8">
-                <h2 className="text-xl font-semibold mb-3 text-gray-800">À propos de moi</h2>
-                {isEditing ? (
-                  <textarea
-                    value={user.description || ''}
-                    onChange={(e) => setUser({ ...user, description: e.target.value })}
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                    rows={4}
-                    placeholder="Parlez de vous, vos passions, ce que vous recherchez..."
-                  />
-                ) : (
-                  <p className="text-gray-700 whitespace-pre-wrap">
-                    {user.description || "Aucune description pour le moment."}
-                  </p>
-                )}
-              </div>
-            </div>
-            
-            {/* Informations personnelles */}
-            <div className="md:col-span-2">
-              <h2 className="text-xl font-semibold mb-4 text-gray-800">Informations personnelles</h2>
-              
-              <div className="space-y-4">
-                <div className="bg-white p-4 rounded-lg shadow-sm">
-                  {isEditing ? (
-                    <div className="space-y-3">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-600 mb-1">Pseudonyme</label>
-                        <input 
-                          value={user.username || ''} 
-                          onChange={(e) => setUser({ ...user, username: e.target.value })}
-                          className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                        />
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-600 mb-1">Prénom</label>
-                        <input 
-                          value={user.firstname || ''} 
-                          onChange={(e) => setUser({ ...user, firstname: e.target.value })}
-                          className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                        />
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-600 mb-1">Nom</label>
-                        <input 
-                          value={user.lastname || ''}  
-                          onChange={(e) => setUser({ ...user, lastname: e.target.value })}
-                          className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                        />
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-600 mb-1">Email</label>
-                        <input 
-                          value={user.email || ''}  
-                          onChange={(e) => setUser({ ...user, email: e.target.value })}
-                          className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                        />
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-600 mb-1">Ville</label>
-                        <input 
-                          value={user.city || ''}  
-                          onChange={(e) => setUser({ ...user, city: e.target.value })}
-                          className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                        />
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-600 mb-1">Âge</label>
-                        <input 
-                          type="number" 
-                          value={user.age}  
-                          onChange={(e) => setUser({ ...user, age: Number(e.target.value) })}
-                          className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                        />
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-600 mb-1">Préférence</label>
-                        <select
-                          value={user.preference || ''}  
-                          onChange={(e) => setUser({ ...user, preference: e.target.value })}
-                          className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                        >
-                          <option value="">Sélectionnez une préférence</option>
-                          <option value="Homme">Homme</option>
-                          <option value="Femme">Femme</option>
-                          <option value="les deux">les deux</option>
-                        </select>
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-gray-600 mb-1">Genre</label>
-                        <select
-                          value={user.gender || ''}  
-                          onChange={(e) => setUser({ ...user, gender: e.target.value })}
-                          className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-pink-500 focus:border-transparent"
-                        >
-                          <option value="">Sélectionnez votre genre</option>
-                          <option value="Homme">Homme</option>
-                          <option value="Femme">Femme</option>
-                          <option value="Non binaire">Non-binaire</option>
-                        </select>
-                      </div>
-                    </div>
-                  ) : (
-                    <ul className="space-y-3">
-                      <li className="flex items-start">
-                        <Mail size={18} className="mr-2 text-pink-500 mt-1" />
-                        <div>
-                          <span className="text-sm text-gray-500">Email</span>
-                          <p className="text-gray-800">{user.email}</p>
-                        </div>
-                      </li>
-                      
-                      <li className="flex items-start">
-                        <MapPin size={18} className="mr-2 text-pink-500 mt-1" />
-                        <div>
-                          <span className="text-sm text-gray-500">Localisation</span>
-                          <p className="text-gray-800">{user.city || "Non précisée"}</p>
-                        </div>
-                      </li>
-                      
-                      <li className="flex items-start">
-                        <Calendar size={18} className="mr-2 text-pink-500 mt-1" />
-                        <div>
-                          <span className="text-sm text-gray-500">Âge</span>
-                          <p className="text-gray-800">{user.age} ans</p>
-                        </div>
-                      </li>
-                      
-                      <li className="flex items-start">
-                        <User size={18} className="mr-2 text-pink-500 mt-1" />
-                        <div>
-                          <span className="text-sm text-gray-500">Genre</span>
-                          <p className="text-gray-800">{user.gender || "Non précisé"}</p>
-                        </div>
-                      </li>
-                      
-                      <li className="flex items-start">
-                        <Heart size={18} className="mr-2 text-pink-500 mt-1" />
-                        <div>
-                          <span className="text-sm text-gray-500">Intéressé(e) par</span>
-                          <p className="text-gray-800">{user.preference || "Non précisé"}</p>
-                        </div>
-                      </li>
-                    </ul>
-                  )}
-                </div>
               </div>
             </div>
           </div>

@@ -209,16 +209,20 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-pink-50 to-purple-50 py-6 sm:py-10 px-2 sm:px-4">
       <div className="max-w-3xl mx-auto">
-        <h1 className="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-center text-pink-600">Vos connexions</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-left mb-4 sm:mb-6">
+          <span className="text-[#ec4899]">
+            Vos connexions
+          </span>
+        </h1>
         
         <div className="bg-white rounded-xl shadow-lg overflow-hidden">
           <Tabs defaultValue="matches" className="w-full">
             <TabsList className="flex flex-wrap h-16 w-full justify-around bg-pink-500/90 rounded-none rounded-b-xl p-0">
               <TabsTrigger 
                 value="matches" 
-                className={`flex items-center gap-2 px-4 sm:px-6 py-4 sm:py-5 rounded-md font-medium text-base sm:text-lg shadow font-poppins transition-all duration-200 border-l-4 border-l-white/80 first:border-l-0
-                  data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg
-                  data-[state=inactive]:bg-pink-400/80 data-[state=inactive]:text-white hover:bg-gradient-to-r hover:from-pink-500 hover:to-purple-500 hover:text-white hover:shadow-lg`}
+                className={`flex items-center gap-2 px-4 sm:px-6 py-4 sm:py-5 rounded-md font-medium text-base sm:text-lg shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1)] font-poppins transition-all duration-100
+                  data-[state=active]:bg-pink-900 data-[state=active]:text-white data-[state=active]:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.2)] data-[state=active]:ring-2 data-[state=active]:ring-white data-[state=active]:ring-offset-2 data-[state=active]:ring-offset-pink-900
+                  data-[state=inactive]:bg-pink-400/80 data-[state=inactive]:text-white hover:bg-pink-100 hover:text-pink-600 hover:shadow-[0_4px_6px_-1px_rgba(0,0,0,0.2)] active:bg-pink-300 active:scale-90 active:translate-y-0.5`}
               >
                 <MessageSquare size={24} className="mr-2" />
                 <span>Matchs</span>
@@ -231,9 +235,9 @@ const Home = () => {
               
               <TabsTrigger 
                 value="likes" 
-                className={`flex items-center gap-2 px-4 sm:px-6 py-4 sm:py-5 rounded-md font-medium text-base sm:text-lg shadow font-poppins transition-all duration-200 border-l-4 border-l-white/80 first:border-l-0
-                  data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg
-                  data-[state=inactive]:bg-pink-400/80 data-[state=inactive]:text-white hover:bg-gradient-to-r hover:from-pink-500 hover:to-purple-500 hover:text-white hover:shadow-lg`}
+                className={`flex items-center gap-2 px-4 sm:px-6 py-4 sm:py-5 rounded-md font-medium text-base sm:text-lg shadow font-poppins transition-all duration-100
+                  data-[state=active]:bg-pink-500 data-[state=active]:text-white data-[state=active]:shadow-md
+                  data-[state=inactive]:bg-pink-400/80 data-[state=inactive]:text-white hover:bg-pink-100 hover:text-pink-600 hover:shadow-md active:bg-pink-300 active:scale-90 active:translate-y-0.5`}
               >
                 <Heart size={24} className="mr-2" />
                 <span>Vos Likes</span>
@@ -241,9 +245,9 @@ const Home = () => {
               
               <TabsTrigger 
                 value="received-likes" 
-                className={`flex items-center gap-2 px-4 sm:px-6 py-4 sm:py-5 rounded-md font-medium text-base sm:text-lg shadow font-poppins transition-all duration-200 border-l-4 border-l-white/80 first:border-l-0
-                  data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg
-                  data-[state=inactive]:bg-pink-400/80 data-[state=inactive]:text-white hover:bg-gradient-to-r hover:from-pink-500 hover:to-purple-500 hover:text-white hover:shadow-lg`}
+                className={`flex items-center gap-2 px-4 sm:px-6 py-4 sm:py-5 rounded-md font-medium text-base sm:text-lg shadow font-poppins transition-all duration-100
+                  data-[state=active]:bg-pink-500 data-[state=active]:text-white data-[state=active]:shadow-md
+                  data-[state=inactive]:bg-pink-400/80 data-[state=inactive]:text-white hover:bg-pink-100 hover:text-pink-600 hover:shadow-md active:bg-pink-300 active:scale-90 active:translate-y-0.5`}
               >
                 <ThumbsUp size={24} className="mr-2" />
                 <span>Likes reçus</span>
@@ -256,9 +260,9 @@ const Home = () => {
               
               <TabsTrigger 
                 value="blocked" 
-                className={`flex items-center gap-2 px-4 sm:px-6 py-4 sm:py-5 rounded-md font-medium text-base sm:text-lg shadow font-poppins transition-all duration-200 border-l-4 border-l-white/80 first:border-l-0
-                  data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg
-                  data-[state=inactive]:bg-pink-400/80 data-[state=inactive]:text-white hover:bg-gradient-to-r hover:from-pink-500 hover:to-purple-500 hover:text-white hover:shadow-lg`}
+                className={`flex items-center gap-2 px-4 sm:px-6 py-4 sm:py-5 rounded-md font-medium text-base sm:text-lg shadow font-poppins transition-all duration-100
+                  data-[state=active]:bg-pink-500 data-[state=active]:text-white data-[state=active]:shadow-md
+                  data-[state=inactive]:bg-pink-400/80 data-[state=inactive]:text-white hover:bg-pink-100 hover:text-pink-600 hover:shadow-md active:bg-pink-300 active:scale-90 active:translate-y-0.5`}
               >
                 <Ban size={24} className="mr-2" />
                 <span>Bloqués</span>
@@ -266,9 +270,9 @@ const Home = () => {
               
               <TabsTrigger 
                 value="views" 
-                className={`flex items-center gap-2 px-4 sm:px-6 py-4 sm:py-5 rounded-md font-medium text-base sm:text-lg shadow font-poppins transition-all duration-200 border-l-4 border-l-white/80 first:border-l-0
-                  data-[state=active]:bg-gradient-to-r data-[state=active]:from-pink-500 data-[state=active]:to-purple-500 data-[state=active]:text-white data-[state=active]:shadow-lg
-                  data-[state=inactive]:bg-pink-400/80 data-[state=inactive]:text-white hover:bg-gradient-to-r hover:from-pink-500 hover:to-purple-500 hover:text-white hover:shadow-lg`}
+                className={`flex items-center gap-2 px-4 sm:px-6 py-4 sm:py-5 rounded-md font-medium text-base sm:text-lg shadow font-poppins transition-all duration-100
+                  data-[state=active]:bg-pink-500 data-[state=active]:text-white data-[state=active]:shadow-md
+                  data-[state=inactive]:bg-pink-400/80 data-[state=inactive]:text-white hover:bg-pink-100 hover:text-pink-600 hover:shadow-md active:bg-pink-300 active:scale-90 active:translate-y-0.5`}
               >
                 <Eye size={24} className="mr-2" />
                 <span>Vues</span>
@@ -277,7 +281,6 @@ const Home = () => {
 
             {/* Contenu des onglets */}
             <TabsContent value="matches" className="p-3 sm:p-4 focus-visible:outline-none focus-visible:ring-0">
-              <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 text-pink-600">Vos matchs</h2>
               {matches && matches.length > 0 ? (
                 <ul className="space-y-3 sm:space-y-4">
                   {matches.map((user) => (
@@ -338,17 +341,18 @@ const Home = () => {
                   ))}
                 </ul>
               ) : (
-                <div className="flex flex-col items-center justify-center py-8 sm:py-10 text-gray-500">
-                  <MessageSquare size={48} className="text-gray-300 mb-3 sm:mb-4" />
+                <div className="flex flex-col items-center justify-center py-4 sm:py-6 text-gray-500">
+                  <MessageSquare size={56} className="mb-3 sm:mb-4 text-pink-200" />
                   <p className="text-sm sm:text-base">Vous n'avez pas encore de matchs</p>
-                  <p className="text-xs sm:text-sm mt-2">Commencez à liker des profils pour trouver des matchs</p>
+                  <p className="text-xs sm:text-sm mt-2">
+                    Commencez à liker des profils pour trouver des matchs
+                  </p>
                 </div>
               )}
             </TabsContent>
 
             {/* Contenu du tab Vos Likes */}
             <TabsContent value="likes" className="p-3 sm:p-4 focus-visible:outline-none focus-visible:ring-0">
-              <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 text-pink-600">Profils que vous aimez</h2>
               {likes && likes.length > 0 ? (
                 <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   {likes.map((user) => (
@@ -375,16 +379,18 @@ const Home = () => {
                   ))}
                 </ul>
               ) : (
-                <div className="flex flex-col items-center justify-center py-8 sm:py-10 text-gray-500">
-                  <Heart size={48} className="text-gray-300 mb-3 sm:mb-4" />
+                <div className="flex flex-col items-center justify-center py-4 sm:py-6 text-gray-500">
+                  <Heart size={56} className="mb-3 sm:mb-4 text-pink-200" />
                   <p className="text-sm sm:text-base">Vous n'avez liké aucun profil pour l'instant</p>
+                  <p className="text-xs sm:text-sm mt-2">
+                    Likez des profils pour les retrouver ici
+                  </p>
                 </div>
               )}
             </TabsContent>
 
             {/* Contenu du tab Likes reçus */}
             <TabsContent value="received-likes" className="p-3 sm:p-4 focus-visible:outline-none focus-visible:ring-0">
-              <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 text-pink-600">Ils vous ont liké</h2>
               {otherLikes && otherLikes.length > 0 ? (
                 <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   {otherLikes.map((user) => (
@@ -425,16 +431,18 @@ const Home = () => {
                   ))}
                 </ul>
               ) : (
-                <div className="flex flex-col items-center justify-center py-8 sm:py-10 text-gray-500">
-                  <ThumbsUp size={48} className="text-gray-300 mb-3 sm:mb-4" />
+                <div className="flex flex-col items-center justify-center py-4 sm:py-6 text-gray-500">
+                  <ThumbsUp size={56} className="mb-3 sm:mb-4 text-pink-200" />
                   <p className="text-sm sm:text-base">Personne ne vous a encore liké</p>
+                  <p className="text-xs sm:text-sm mt-2">
+                    Quand quelqu'un vous like, vous le verrez ici
+                  </p>
                 </div>
               )}
             </TabsContent>
 
             {/* Contenu du tab Bloqués */}
             <TabsContent value="blocked" className="p-3 sm:p-4 focus-visible:outline-none focus-visible:ring-0">
-              <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 text-pink-600">Utilisateurs bloqués</h2>
               {blockedUsers && blockedUsers.length > 0 ? (
                 <ul className="space-y-3 sm:space-y-4">
                   {blockedUsers.map((user: Block) => (
@@ -464,16 +472,18 @@ const Home = () => {
                   ))}
                 </ul>
               ) : (
-                <div className="flex flex-col items-center justify-center py-8 sm:py-10 text-gray-500">
-                  <Ban size={48} className="text-gray-300 mb-3 sm:mb-4" />
+                <div className="flex flex-col items-center justify-center py-4 sm:py-6 text-gray-500">
+                  <Ban size={56} className="mb-3 sm:mb-4 text-pink-200" />
                   <p className="text-sm sm:text-base">Vous n'avez bloqué aucun utilisateur</p>
+                  <p className="text-xs sm:text-sm mt-2">
+                    Les utilisateurs que vous bloquez apparaîtront ici
+                  </p>
                 </div>
               )}
             </TabsContent>
 
             {/* Contenu du tab Vues */}
             <TabsContent value="views" className="p-3 sm:p-4 focus-visible:outline-none focus-visible:ring-0">
-              <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4 text-pink-600">Ils ont visité votre profil</h2>
               {viewlist && viewlist.length > 0 ? (
                 <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
                   {viewlist.map((user) => (
@@ -499,9 +509,12 @@ const Home = () => {
                   ))}
                 </ul>
               ) : (
-                <div className="flex flex-col items-center justify-center py-8 sm:py-10 text-gray-500">
-                  <Eye size={48} className="text-gray-300 mb-3 sm:mb-4" />
+                <div className="flex flex-col items-center justify-center py-4 sm:py-6 text-gray-500">
+                  <Eye size={56} className="mb-3 sm:mb-4 text-pink-200" />
                   <p className="text-sm sm:text-base">Personne n'a encore consulté votre profil</p>
+                  <p className="text-xs sm:text-sm mt-2">
+                    Les personnes qui consultent votre profil seront listées ici
+                  </p>
                 </div>
               )}
             </TabsContent>

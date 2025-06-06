@@ -77,7 +77,7 @@ const Notification = () => {
   return (
     <div className="min-h-screen flex justify-center items-center w-full bg-gradient-to-br from-pink-50 via-fuchsia-50 to-purple-100">
       <Card className="w-full max-w-md bg-white shadow-lg rounded-xl overflow-hidden border border-pink-100 pt-0 pb-0 mt-[-250px]">
-        <div className="bg-gradient-to-r from-pink-500 to-purple-500 px-6 py-5 flex items-center justify-between w-full">
+        <div className="bg-[#ec4899] px-6 py-5 flex items-center justify-between w-full">
           <div className="flex items-center">
             <Bell size={22} className="mr-2 text-white" />
             <span className="text-white text-lg font-semibold">Notifications</span>
@@ -93,7 +93,7 @@ const Notification = () => {
             <div className="p-8 text-center text-gray-500">
               <Bell size={32} className="mx-auto mb-3 text-pink-200" />
               <p>Aucune notification pour le moment</p>
-              <p className="text-sm text-pink-300 mt-2">Continuez à explorer des profils!</p>
+              <p className="text-sm text-gray-500 mt-1">Continuez à explorer des profils!</p>
             </div>
           ) : (
             notifications.map((notif: NotificationType, i: number) => (
@@ -109,7 +109,7 @@ const Notification = () => {
         <CardFooter className="p-3 bg-gray-50 border-t border-pink-100">
           <Button
             onClick={markAllAsRead}
-            className="w-full bg-gradient-to-r from-pink-500 to-purple-500 text-white hover:shadow-md transition-shadow"
+            className="w-full bg-[#ec4899] text-white hover:shadow-md transition-shadow"
             disabled={notifications.length === 0 || notifications.every((n: NotificationType) => n.read)}
           >
             Tout marquer comme lu
