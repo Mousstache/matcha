@@ -8,7 +8,7 @@ import { ToastProvider, HeroUIProvider} from "@heroui/react";
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <HeroUIProvider>
+  //   <HeroUIProvider>
       <ToastProvider placement="top-right" toastOffset={60} />
         <AuthContextProvider>
           <NotificationProvider>

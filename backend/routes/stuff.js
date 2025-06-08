@@ -16,7 +16,7 @@ router.get("/test", function test(req, res) {
 
 // AUTHENTICATION
 router.post('/register', userCtrl.registerUser);
-router.put('/fillInfo',authMiddleware,ensureEmailConfirmed, userCtrl.fillInfo);
+router.put('/fillInfo',authMiddleware, userCtrl.fillInfo);
 router.get('/confirm-email/:token', userCtrl.confirmEmail);
 router.post('/login', userCtrl.logUser);
 router.post('/upload', authMiddleware, ensureEmailConfirmed ,upload.array("images", 5), userCtrl.imageUpload);
