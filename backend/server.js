@@ -7,8 +7,14 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import stuffRoutes from './routes/stuff.js';
 import userCtrl from "./controllers/userControllers.js";
+import { seedUsersIfEmpty } from './scripts/seedUsers.js';
 
 dotenv.config();
+
+(async () => {
+  await seedUsersIfEmpty();
+})();
+// await seedUsersIfEmpty(); 
 
 // Obtenir __dirname pour ES Modules
 const __filename = fileURLToPath(import.meta.url);

@@ -462,6 +462,153 @@ const Explore = () => {
           </div>
         ) : (
           <div className="relative">
+           <div className=" top-4 right-2">
+            <Sheet>
+                <SheetTrigger asChild>
+                  <button className="bg-white hover:bg-pink-50 text-pink-600 p-2 rounded-full shadow-md transition-all duration-300">
+                    <SlidersHorizontal className="h-5 w-5" />
+                  </button>
+                </SheetTrigger>
+                <SheetContent
+                  side="right"
+                  className="max-w-md w-full p-8 rounded-l-2xl shadow-2xl bg-white flex flex-col gap-6 border-l-4 border-[#ec4899]"
+                >
+                  <SheetHeader>
+                    <SheetTitle className="text-[#ec4899] text-2xl font-bold text-center mb-2">Filtres de recherche</SheetTitle>
+                    <SheetDescription className="text-gray-500 text-center mb-4">
+                      Configurez vos préférences pour trouver votre match idéal
+                    </SheetDescription>
+                  </SheetHeader>
+                  <Form {...form}>
+                    <form onSubmit={form.handleSubmit(applyFilters)} className="flex flex-col gap-6">
+                      <FormField
+                        control={form.control}
+                        name="ageRange"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-gray-700 font-semibold text-base">
+                              Âge : <span className="text-[#ec4899] font-bold">{minAge} - {maxAge}</span> ans
+                            </FormLabel>
+                            <FormControl>
+                              <Slider
+                                onValueChange={(values) => {
+                                  field.onChange(values);
+                                  handleAgeChange(values);
+                                }}
+                                value={field.value}
+                                max={100}
+                                min={18}
+                                step={1}
+                                className="mt-4"
+                                style={{
+                                  height: 6,
+                                  background: "#fce7f3",
+                                  borderRadius: 6,
+                                  boxShadow: "none",
+                                }}
+                              />
+                            </FormControl>
+                            <FormDescription>
+                              Définissez la tranche d'âge qui vous intéresse
+                            </FormDescription>
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="distance"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-gray-700 font-semibold text-base">
+                              Distance : <span className="text-[#ec4899] font-bold">{distance}</span> km
+                            </FormLabel>
+                            <FormControl>
+                              <Slider
+                                onValueChange={(values) => {
+                                  field.onChange(values);
+                                  handleDistanceChange(values);
+                                }}
+                                value={field.value}
+                                max={5000}
+                                min={1}
+                                step={10}
+                                className="mt-4"
+                                style={{
+                                  height: 6,
+                                  background: "#fce7f3",
+                                  borderRadius: 6,
+                                  boxShadow: "none",
+                                }}
+                              />
+                            </FormControl>
+                            <FormDescription>
+                              Rayon de recherche autour de votre position
+                            </FormDescription>
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="interests"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel className="text-gray-700 font-semibold text-base">Intérêts communs</FormLabel>
+                            <FormControl>
+                              <div
+                                className="max-h-40 overflow-y-auto border border-pink-200 rounded-md p-2 space-y-2 bg-white custom-scrollbar"
+                                style={{ scrollbarWidth: "thin" }}
+                              >
+                                {interestsList.map((interest) => (
+                                  <div key={interest.id} className="flex items-center">
+                                    <input
+                                      type="checkbox"
+                                      id={`interest-${interest.id}`}
+                                      value={interest.label}
+                                      checked={field.value?.includes(interest.label)}
+                                      onChange={(e) => {
+                                        const currentValues = field.value || [];
+                                        let newValues;
+                                        if (e.target.checked) {
+                                          newValues = [...currentValues, interest.id];
+                                        } else {
+                                          newValues = currentValues.filter(val => val !== interest.label);
+                                        }
+                                        field.onChange(newValues);
+                                        handleInterestChange(newValues);
+                                      }}
+                                      className="mr-2 w-4 h-4 rounded border-2 border-[#ec4899] checked:bg-[#ec4899] checked:border-[#ec4899] focus:ring-1 focus:ring-[#ec4899] transition-all duration-200"
+                                      style={{
+                                        accentColor: "#ec4899",
+                                      }}
+                                    />
+                                    <label htmlFor={`interest-${interest.id}`} className="cursor-pointer text-gray-700 hover:text-[#ec4899] select-none">
+                                      {interest.label}
+                                    </label>
+                                  </div>
+                                ))}
+                              </div>
+                            </FormControl>
+                            <FormDescription>
+                              Sélectionnez vos centres d'intérêt
+                            </FormDescription>
+                          </FormItem>
+                        )}
+                      />
+
+                      <Button
+                        type="submit"
+                        className="w-full bg-[#ec4899] hover:bg-pink-600 text-white font-semibold py-2 px-4 rounded-lg shadow transition-all duration-300 mt-2"
+                      >
+                        Appliquer les filtres
+                      </Button>
+                    </form>
+                  </Form>
+                </SheetContent>
+              </Sheet>
+            </div>
+
             <Card
               className={`transform transition-all duration-500 shadow-2xl rounded-xl overflow-hidden ${
                 direction === 'right' ? 'translate-x-full rotate-12 opacity-0' :
@@ -509,7 +656,7 @@ const Explore = () => {
                   className="rounded-full h-14 w-14 bg-white border-2 border-red-500 hover:bg-red-50 shadow-lg transition-all duration-300"
                   onClick={() => handleDislike(currentProfile.id)}
                 >
-                  <X className="h-6 w-6 text-red-500" />
+                  <X className="h-6 w-6 text-white-500" />
                 </Button>
                 
                 <Button
@@ -533,11 +680,11 @@ const Explore = () => {
                   className="rounded-full h-14 w-14 bg-white border-2 border-pink-500 hover:bg-pink-50 shadow-lg transition-all duration-300"
                   onClick={() => handleLike(currentProfile.id)}
                 >
-                  <Heart className="h-6 w-6 text-pink-500" />
+                  <Heart className="h-6 w-6 text-pink" />
                 </Button>
               </CardFooter>
             </Card>
-          </div>
+           </div>
         )}
       </div>
     </div>

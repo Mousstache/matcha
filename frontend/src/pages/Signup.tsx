@@ -5,6 +5,13 @@ import useGeolocation from "../hooks/useGeolocation";
 import useReverseGeolocation from "../hooks/useReverseGeolocation";
 import { useNavigate } from "react-router-dom";
 import { XIcon, Camera, Info, MapPin, Heart, Check, X, Upload } from 'lucide-react';
+import { addToast } from "@heroui/toast";
+import { useAuth } from "@/context/auth";
+import { Button, Input } from "@heroui/react";
+import { User, Trash } from 'lucide-react';
+
+
+
 
 
 
@@ -21,7 +28,20 @@ import { XIcon, Camera, Info, MapPin, Heart, Check, X, Upload } from 'lucide-rea
 //import { Alert, AlertDescription } from "@/components/ui/alert";
 // import { Link } from "react-router-dom";
 
-
+interface User {
+  id: number;
+  email: string;
+  username: string;
+  firstname: string;
+  lastname: string;
+  description: string;
+  gender: string;
+  birthDate: number;
+  city: string;
+  age: number;
+  preference: string;
+  profile_picture: string | null;
+}
 
 interface Interest {
     id: string;
@@ -59,6 +79,13 @@ const Signup = () => {
     const [errorr, setError] = useState("");
     // const [email, setEmail] = useState("");
     // const [password, setPassword] = useState("");
+
+    const [user, setUser] = useState<User | null>(null);
+    const { id, profile_picture, setProfilePicture } = useAuth();
+
+      // const { id, profile_picture, setProfilePicture } = useAuth();
+      // const [imageUrls, setImageUrls] = useState<string[]>([]);
+      // const [profilePictureIndex, setProfilePictureIndex] = useState(0);
 
     const interestsList: Interest[] = [
         { id: "sport", label: "Sport" },
@@ -140,84 +167,230 @@ const Signup = () => {
         } catch (error) {
             console.error(error)
         }
+      }
 
-
+        const handleUpload = async (filesToUpload: File[]) => {
+    if (filesToUpload.length === 0) {
+      addToast({
+         title: 'Information',
+         description: "Aucune image à uploader.",
+         color: 'default'
+      });
+      return;
     }
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const files = e.target.files;
-        if (!files) return;
-        
-        const fileList = Array.from(files);
-        
-        if (imageUrls.length + fileList.length > 5) {
-          alert("Vous ne pouvez pas avoir plus de 5 images au total.");
-          return;
+    const formData = new FormData();
+    filesToUpload.forEach((image) => formData.append("images", image));
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+        addToast({
+            title: 'Erreur',
+            description: 'Authentification requise pour uploader.',
+            color: 'danger'
+        });
+        return;
+    }
+
+    const currentProfileImgUrl = profile_picture;
+    const existingProfileIndexInCurrentUrls = imageUrls.findIndex(url => url === currentProfileImgUrl);
+    const profileIndexToSend = existingProfileIndexInCurrentUrls !== -1 ? existingProfileIndexInCurrentUrls : 0;
+    formData.append("profilePictureIndex", profileIndexToSend.toString());
+    console.log("Uploading avec profilePictureIndex:", profileIndexToSend);
+
+    const uploadPromise = fetch("http://localhost:5001/api/upload", {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      method: "POST",
+      body: formData,
+    }).then(response => response.json());
+
+    uploadPromise.then(data => {
+      if (data.success) {
+        if (data.images) {
+          const imagesWithPosition = data.images as { image_url: string, position: number }[];
+          setImageUrls(imagesWithPosition.map(img => img.image_url));
         }
-        
-        setImages(prev => [...prev, ...fileList]);
-        
-        const newImageUrls = fileList.map(file => URL.createObjectURL(file));
-        setImageUrls(prev => [...prev, ...newImageUrls]);
-      };
+         if (data.profilePicture !== undefined) {
+             setProfilePicture(data.profilePicture);
+             setUser(prev => prev ? ({ ...prev, profile_picture: data.profilePicture }) : null);
+         }
+         addToast({
+           title: 'Succès',
+           description: 'Photos ajoutées avec succès !',
+           color: 'success'
+         });
+      } else {
+        console.error("Erreur API upload:", data.error);
+      }
+    }).catch(error => {
+        console.error("Erreur fetch upload:", error);
+    });
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files) return;
     
-      const handleRemoveImage = (index: number) => {
-        const newImageUrls = [...imageUrls];
-        newImageUrls.splice(index, 1);
-        setImageUrls(newImageUrls);
-        
-        if (profilePictureIndex >= newImageUrls.length) {
-          setProfilePictureIndex(newImageUrls.length > 0 ? 0 : -1);
-        } else if (profilePictureIndex === index && newImageUrls.length > 0) {
-          setProfilePictureIndex(0);
+    const fileList = Array.from(files);
+    
+    if (imageUrls.length + fileList.length > 5) {
+      addToast({
+         title: 'Erreur',
+         description: `Vous ne pouvez pas avoir plus de 5 images au total (actuellement ${imageUrls.length}).`,
+         color: 'danger'
+      });
+      return;
+    }
+    
+    handleUpload(fileList);
+  };
+
+  const handleRemoveImage = async (index: number) => {
+     const token = localStorage.getItem("token");
+     if (!token) {
+         addToast({
+             title: 'Erreur',
+             description: 'Authentification requise pour supprimer.',
+             color: 'danger'
+         });
+         return;
+     }
+
+     try {
+        const imagesResponse = await fetch('http://localhost:5001/api/user-images', {
+           headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const imagesData = await imagesResponse.json();
+        if (!imagesResponse.ok || !imagesData.images) {
+           throw new Error(imagesData.error || 'Erreur lors de la récupération des images pour suppression');
         }
-        
-        const newImages = [...images];
-        if (index < newImages.length) {
-          newImages.splice(index, 1);
-          setImages(newImages);
+
+        const imageUrlToRemove = imageUrls[index];
+        const imageToDelete = imagesData.images.find((img: any) => img.image_url === imageUrlToRemove);
+
+        if (!imageToDelete) {
+           addToast({
+              title: 'Erreur',
+              description: "Image non trouvée.",
+              color: 'danger'
+           });
+           return;
         }
-      };
-    
-      const handleSetProfilePicture = (index: number) => {
-        setProfilePictureIndex(index);
-      };
-    
-      const handleUpload = async () => {
-        const formData = new FormData();
-        
-        images.forEach((image) => formData.append("images", image));
-        formData.append("profilePictureIndex", profilePictureIndex.toString());
-        
-        try {
-          const token = localStorage.getItem("token");
-          const response = await fetch("http://localhost:5001/api/upload", {
-            headers: {
-              'Authorization': `Bearer ${token}`
-            },
-            method: "POST",
-            body: formData,
-          });
-          
-          const data = await response.json();
-          
-          if (data.success) {
-            setUploadStatus("Images uploadées avec succès !");
-            setTimeout(() => setUploadStatus(null), 3000);
-            
-            if (data.imageUrls) {
-              setImageUrls(data.imageUrls);
-            }
-          } else {
-            setUploadStatus("Erreur lors de l'upload.");
-            setTimeout(() => setUploadStatus(null), 3000);
+
+        const positionToDelete = imageToDelete.position;
+        console.log(`Suppression de l'image à la position DB: ${positionToDelete}`);
+
+        const deletePromise = fetch(`http://localhost:5001/api/delete-image/${positionToDelete}`, {
+          method: "DELETE",
+          headers: {
+            'Authorization': `Bearer ${token}`
           }
-        } catch (error) {
-          console.error("Erreur lors de l'upload:", error);
-          setUploadStatus("Erreur lors de l'upload.");
-          setTimeout(() => setUploadStatus(null), 3000);
-        }
-      };
+        }).then(response => response.json());
+
+        deletePromise.then(data => {
+           if(data.success) {
+              if (data.images) {
+                 setImageUrls(data.images.map((img: any) => img.image_url));
+              }
+              if (data.profilePicture !== undefined) {
+                 setProfilePicture(data.profilePicture);
+                 setUser(prev => prev ? ({ ...prev, profile_picture: data.profilePicture }) : null);
+              }
+              addToast({
+                title: 'Succès',
+                description: 'Photo supprimée avec succès !',
+                color: 'success'
+              });
+           } else {
+              console.error("Erreur API delete-image:", data.error);
+           }
+        }).catch(error => {
+           console.error("Erreur fetch delete-image:", error);
+        });
+
+     } catch (error: any) {
+        console.error("Erreur lors de la suppression de l'image :", error);
+         addToast({
+            title: 'Erreur',
+            description: error.message || "Erreur lors de la suppression de l'image.",
+            color: 'danger'
+         });
+     }
+  };
+
+  const handleSetProfilePicture = async (index: number) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+        addToast({
+            title: 'Erreur',
+            description: 'Authentification requise pour changer la photo principale.',
+            color: 'danger'
+        });
+        return;
+    }
+
+    try {
+       const imagesResponse = await fetch('http://localhost:5001/api/user-images', {
+          headers: { 'Authorization': `Bearer ${token}` }
+       });
+       const imagesData = await imagesResponse.json();
+       if (!imagesResponse.ok || !imagesData.images) {
+          throw new Error(imagesData.error || 'Erreur lors de la récupération des images pour définir la photo principale');
+       }
+
+       const imageUrlToSet = imageUrls[index];
+       const imageToSetAsProfile = imagesData.images.find((img: any) => img.image_url === imageUrlToSet);
+
+       if (!imageToSetAsProfile) {
+          addToast({
+             title: 'Erreur',
+             description: "Image non trouvée pour définir comme principale.",
+             color: 'danger'
+          });
+          return;
+       }
+
+       const positionToSet = imageToSetAsProfile.position;
+       console.log(`Tente de définir la photo à la position DB ${positionToSet} comme principale`);
+
+       const setProfilePromise = fetch("http://localhost:5001/api/set-profile-picture", {
+         method: "PUT",
+         headers: {
+           'Authorization': `Bearer ${token}`,
+           'Content-Type': 'application/json'
+         },
+         body: JSON.stringify({ position: positionToSet })
+       }).then(response => response.json());
+
+       setProfilePromise.then(data => {
+          if (data.success) {
+            setProfilePicture(data.profilePicture);
+            setUser(prev => prev ? ({ ...prev, profile_picture: data.profilePicture }) : null);
+            addToast({
+              title: 'Succès',
+              description: 'Photo principale mise à jour avec succès !',
+              color: 'success'
+            });
+          } else {
+            console.error("Erreur API set-profile-picture:", data.error);
+          }
+       }).catch(error => {
+          console.error("Erreur fetch set-profile-picture:", error);
+       });
+
+     } catch (error: any) {
+       console.error("Erreur lors du changement de photo principale :", error);
+        addToast({
+           title: 'Erreur',
+           description: error.message || "Erreur lors du changement de photo principale.",
+           color: 'danger'
+        });
+     }
+  };
+
+
 
 
       const nextStep = () => {
@@ -581,7 +754,7 @@ return (
                   </span>
                 </div>
                 
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
+                {/* <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
                   {imageUrls.map((url, index) => (
                     <div 
                       key={index} 
@@ -633,7 +806,63 @@ return (
                       </div>
                     </label>
                   )}
-                </div>
+                </div> */}
+
+                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
+                {imageUrls.map((url, index) => (
+                  <div
+                    key={index}
+                    className={`relative rounded-2xl overflow-hidden h-36 shadow-lg border-2 border-pink-100 ${profile_picture === url ? 'ring-4 ring-pink-400' : ''} group`}
+                  >
+                    <img
+                      src={url}
+                      alt={`Photo ${index + 1}`}
+                      className="w-full h-full object-cover"
+                    />
+                    <Button
+                      onClick={() => handleRemoveImage(index)}
+                      variant="solid"
+                      color="primary"
+                      className="absolute top-2 right-2 w-8 h-8 p-0 flex items-center justify-center rounded-full bg-white shadow-md hover:bg-pink-50 text-pink-600 border border-pink-200 z-10 opacity-0 group-hover:opacity-100 transition-all duration-200 active:bg-pink-100 active:scale-95"
+                    >
+                      <Trash size={18} />
+                    </Button>
+                    <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-[90%] flex justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <Button
+                        onClick={() => profile_picture !== url && handleSetProfilePicture(index)}
+                        variant={profile_picture === url ? 'solid' : 'bordered'}
+                        color="primary"
+                        size="sm"
+                        className={`w-full text-xs font-semibold rounded-full shadow-sm py-1 px-2 bg-white/80 backdrop-blur border border-pink-200 transition-all duration-200
+                          ${profile_picture === url 
+                            ? 'bg-pink-500 text-white cursor-not-allowed' 
+                            : 'text-pink-600 hover:bg-pink-50 active:bg-pink-100 active:scale-95'}`}
+                        style={{ fontSize: '0.85rem' }}
+                        disabled={profile_picture === url}
+                      >
+                        {profile_picture === url ? 'Photo principale' : 'Définir comme principale'}
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+                {imageUrls.length < 5 && (
+                  <label className="flex items-center justify-center h-36 border-2 border-dashed border-pink-200 rounded-2xl cursor-pointer hover:bg-pink-50 transition-colors duration-300">
+                    <div className="text-center">
+                      <Camera size={24} className="mx-auto text-pink-400" />
+                      <div className="mt-2 text-sm text-pink-600">
+                        Ajouter une photo
+                      </div>
+                      <Input
+                        type="file"
+                        className="hidden"
+                        accept="image/*"
+                        multiple
+                        onChange={handleFileChange}
+                      />
+                    </div>
+                  </label>
+                )}
+              </div>
                 
                 {images.length > 0 && (
                   <button

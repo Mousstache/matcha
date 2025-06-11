@@ -3,6 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { Send, Ban, Flag, HeartCrack, Heart, User, Eye, MessageSquare, ThumbsUp } from 'lucide-react';
 import { useAuth } from "@/context/auth";
 import { Tabs, TabsList, TabsContent, TabsTrigger } from "@/components/ui/tabs";
+import UserProfilModal from "@/components/UserProfilModal";
+import { Button } from '@/components/ui/button';
+
 
 interface User {
   id: number;
@@ -45,6 +48,12 @@ const Home = () => {
   const { id, blockedUsers, firstname } = useAuth();
   const { socket } = useAuth();
 
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  // const [selectedUser, setSelectedUser] = useState(null);
+
+
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -56,28 +65,28 @@ const Home = () => {
           fetch('http://localhost:5001/api/getLikes', {
             method: "GET",
             headers: {
-              'Authorization': `bearer ${token}`,
+              'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
             }
           }),
           fetch('http://localhost:5001/api/getOtherLikes', {
             method: "GET",
             headers: {
-              'Authorization': `bearer ${token}`,
+              'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
             }
           }),
           fetch('http://localhost:5001/api/getMatches', {
             method: "GET",
             headers: {
-              'Authorization': `bearer ${token}`,
+              'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
             }
           }),
           fetch('http://localhost:5001/api/getViewlist', {
             method: "GET",
             headers: {
-              'Authorization': `bearer ${token}`,
+              'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
             }
           })
@@ -108,7 +117,7 @@ const Home = () => {
       await fetch('http://localhost:5001/api/signalUser', {
         method: "POST",
         headers: {
-          'Authorization': `bearer ${token}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ match_id, reporter_id: id, reason: "fake account" })
@@ -125,7 +134,7 @@ const Home = () => {
       await fetch('http://localhost:5001/api/blockUser', {
         method: "POST",
         headers: {
-          'Authorization': `bearer ${token}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ match_id, blocker_id: id })
@@ -142,7 +151,7 @@ const Home = () => {
       await fetch('http://localhost:5001/api/unlikeUser', {
         method: "DELETE",
         headers: {
-          'Authorization': `bearer ${token}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ liker_id: id, liked_id, match_id })
@@ -169,7 +178,7 @@ const Home = () => {
       await fetch('http://localhost:5001/api/likeUser', {
         method: "POST",
         headers: {
-          'Authorization': `bearer ${token}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ liker_id: id, liked_id })
@@ -196,13 +205,50 @@ const Home = () => {
       await fetch('http://localhost:5001/api/unblockUser', {
         method: "DELETE",
         headers: {
-          'Authorization': `bearer ${token}`,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({ block_id, id })
       });
     } catch (error) {
       console.error("Erreur lors du déblocage:", error);
+    }
+  };
+
+  const handleUserClick = (user:any) => {
+    console.log("User clicked:", user);
+    setSelectedUser(user);
+    setIsModalOpen(true);
+    handleConsult(user.id);
+  };
+
+  const handleConsult = async (viewed_id:string) => {
+    try{
+      const viewedId = viewed_id;
+      const viewerId = id;
+      console.log("l'id du mec que je regarde", viewedId);
+      const res = await fetch('http://localhost:5001/api/ConsultProfile',{
+        method: "POST",
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({viewedId, viewerId}),
+      });
+
+
+      const notif_seen = { 
+        userId: viewed_id,
+        type: "like",
+        message: `📩 ${firstname} a consulter votre profil`
+    };
+      if (socket){
+          socket.emit("SEND_NOTIFICATION",  notif_seen);
+      }
+      if (!res)
+        return ;
+    }catch (error){
+      console.error(error);
     }
   };
 
@@ -358,6 +404,7 @@ const Home = () => {
                   {likes.map((user) => (
                     <li 
                       key={user.id} 
+                      onClick={() => handleUserClick()}
                       className="p-3 sm:p-4 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow bg-white hover:bg-pink-50"
                     >
                       <div className="flex items-center">
@@ -374,6 +421,12 @@ const Home = () => {
                           <p className="font-semibold text-sm sm:text-base">{user.firstname}</p>
                           <p className="text-gray-500 text-xs sm:text-sm">{user.email}</p>
                         </div>
+                      <UserProfilModal
+                       isOpen={isModalOpen}
+                       onClose={() => setIsModalOpen(false)}
+                       user={selectedUser}
+                     />
+
                       </div>
                     </li>
                   ))}
@@ -425,6 +478,17 @@ const Home = () => {
                         <Heart size={16} />
                         <span>Liker en retour</span>
                       </button>
+                      <Button
+                          variant="outline"
+                          size="icon"
+                          className="rounded-full h-14 w-14 bg-white border-2 border-blue-500 hover:bg-blue-50 shadow-lg transition-all duration-300"
+                          onClick={() => handleUserClick(otherLikes)}
+                        ></Button>
+                      <UserProfilModal
+                        isOpen={isModalOpen}
+                        onClose={() => setIsModalOpen(false)}
+                        user={selectedUser}
+                      />
                       
                       <p className="text-xs text-center mt-2 text-gray-500">Cliquez sur le profil pour plus de détails</p>
                     </li>
