@@ -404,7 +404,7 @@ const Home = () => {
                   {likes.map((user) => (
                     <li 
                       key={user.id} 
-                      onClick={() => handleUserClick()}
+                      onClick={() => handleUserClick(user)}
                       className="p-3 sm:p-4 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow bg-white hover:bg-pink-50"
                     >
                       <div className="flex items-center">
