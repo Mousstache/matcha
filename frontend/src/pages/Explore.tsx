@@ -46,10 +46,11 @@ interface FilterSectionProps {
   minAge: number;
   maxAge: number;
   distance: number;
-  fame: number;
+  fame_rate: number;
   interestsList: Interest[];
   onAgeChange: (values: number[]) => void;
   onDistanceChange: (values: number[]) => void;
+  onFameChange: (values: number[]) => void;
   onInterestChange: (values: string[]) => void;
   onApplyFilters: (data: FilterFormValues) => void;
   className?: string;
@@ -61,10 +62,11 @@ const FilterSection: React.FC<FilterSectionProps> = ({
   minAge,
   maxAge,
   distance,
-  fame,
+  fame_rate,
   interestsList,
   onAgeChange,
   onDistanceChange,
+  onFameChange,
   onInterestChange,
   onApplyFilters,
   className = ""
@@ -194,6 +196,40 @@ const FilterSection: React.FC<FilterSectionProps> = ({
             )}
           />
 
+          <FormField
+            control={form.control}
+            name="fame_rate"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-gray-700 font-semibold text-base">
+                  Fame_rate Rate : <span className="text-[#ec4899] font-bold">{fame_rate}</span>
+                </FormLabel>
+                <FormControl>
+                  <Slider
+                    onValueChange={(values) => {
+                      field.onChange(values);
+                      onFameChange(values);
+                    }}
+                    value={field.value}
+                    max={5000}
+                    min={1}
+                    step={1}
+                    className="mt-4"
+                    style={{
+                      height: 6,
+                      background: "#fce7f3",
+                      borderRadius: 6,
+                      boxShadow: "none",
+                    }}
+                  />
+                </FormControl>
+                <FormDescription>
+                  Rayon de recherche autour de votre position
+                </FormDescription>
+              </FormItem>
+            )}
+          />
+
           <Button
             type="submit"
             className="w-full bg-[#ec4899] hover:bg-pink-600 text-white font-semibold py-2 px-4 rounded-lg shadow transition-all duration-300 mt-2"
@@ -217,8 +253,8 @@ const Explore = () => {
   // Default filter values
   const [minAge, setMinAge] = useState(18);
   const [maxAge, setMaxAge] = useState(40);
-  const [distance, setDistance] = useState(25);
-  const [fame] = useState(0);
+  const [distance, setDistance] = useState(50);
+  const [fame_rate, setFame] = useState(0);
   const [interests, setInterests] = useState<string[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
 
@@ -241,7 +277,7 @@ const Explore = () => {
     defaultValues: {
       ageRange: [minAge, maxAge],
       distance: [distance],
-      fame_rate: [fame],
+      fame_rate: [fame_rate],
       interests: [],
     },
   });
@@ -252,10 +288,10 @@ const Explore = () => {
     form.reset({
       ageRange: [minAge, maxAge],
       distance: [distance],
-      fame_rate: [fame],
+      fame_rate: [fame_rate],
       interests: [],
     });
-  }, [minAge, maxAge, distance, fame]);
+  }, [minAge, maxAge, distance, fame_rate]);
 
   const handleAgeChange = (values: number[]) => {
     setMinAge(values[0]);
@@ -264,6 +300,10 @@ const Explore = () => {
 
   const handleDistanceChange = (values: number[]) => {
     setDistance(values[0]);
+  };
+
+  const handleFameChange = (values: number[]) => {
+    setFame(values[0]);
   };
 
   const handleInterestChange = (values: string[]) => {
@@ -363,7 +403,7 @@ const Explore = () => {
           gender: sexualPreference,
           longitude,
           latitude,
-          fame_rate: fame,
+          fame_rate: fame_rate,
           interests,
           id
         }),
@@ -466,10 +506,11 @@ const Explore = () => {
                   minAge={minAge}
                   maxAge={maxAge}
                   distance={distance}
-                  fame={fame}
+                  fame_rate={fame_rate}
                   interestsList={interestsList}
                   onAgeChange={handleAgeChange}
                   onDistanceChange={handleDistanceChange}
+                  onFameChange={handleFameChange}
                   onInterestChange={handleInterestChange}
                   onApplyFilters={applyFilters}
                   className="border-0 shadow-none p-0"
@@ -487,10 +528,11 @@ const Explore = () => {
               minAge={minAge}
               maxAge={maxAge}
               distance={distance}
-              fame={fame}
+              fame_rate={fame_rate}
               interestsList={interestsList}
               onAgeChange={handleAgeChange}
               onDistanceChange={handleDistanceChange}
+              onFameChange={handleFameChange}
               onInterestChange={handleInterestChange}
               onApplyFilters={applyFilters}
               className="sticky top-4"
@@ -539,7 +581,7 @@ const Explore = () => {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
                   <div className="absolute bottom-0 left-0 right-0 p-6">
                     <h2 className="text-white text-3xl font-bold">
-                      {currentProfile.firstname}, {currentProfile.age}
+                      {currentProfile.firstname}, {currentProfile.age} ans
                     </h2>
                     <div className="flex items-center mt-2 text-white opacity-90">
                       <MapPin className="h-4 w-4 mr-1" />

@@ -21,7 +21,7 @@ const generateRandomInterests = () => {
   return shuffled.slice(0, Math.floor(Math.random() * 4) + 1);
 };
 
-export async function seedUsersIfEmpty(count = 50) {
+export async function seedUsersIfEmpty(count = 20) {
   const client = await pool.connect();
 
   try {

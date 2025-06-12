@@ -48,7 +48,8 @@ const Home = () => {
   const { id, blockedUsers, firstname } = useAuth();
   const { socket } = useAuth();
 
-  const [selectedUser, setSelectedUser] = useState(null);
+  // const [selectedUser, setSelectedUser] = useState(null);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   // const [selectedUser, setSelectedUser] = useState(null);
 
@@ -421,11 +422,6 @@ const Home = () => {
                           <p className="font-semibold text-sm sm:text-base">{user.firstname}</p>
                           <p className="text-gray-500 text-xs sm:text-sm">{user.email}</p>
                         </div>
-                      <UserProfilModal
-                       isOpen={isModalOpen}
-                       onClose={() => setIsModalOpen(false)}
-                       user={selectedUser}
-                     />
 
                       </div>
                     </li>
@@ -440,6 +436,11 @@ const Home = () => {
                   </p>
                 </div>
               )}
+              <UserProfilModal
+               isOpen={isModalOpen}
+               onClose={() => setIsModalOpen(false)}
+               user={selectedUser}
+             />
             </TabsContent>
 
             {/* Contenu du tab Likes reçus */}

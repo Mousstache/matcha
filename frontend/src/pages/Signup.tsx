@@ -1,6 +1,6 @@
 //import { Calendar } from "lucide-react";
 import { Card, CardContent, CardTitle, CardFooter } from "../components/ui/card"
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import useGeolocation from "../hooks/useGeolocation";
 import useReverseGeolocation from "../hooks/useReverseGeolocation";
 import { useNavigate } from "react-router-dom";
@@ -48,8 +48,8 @@ interface Interest {
     label: string;
   }
 
-const Signup = () => {
-
+  const Signup = () => {
+    
     const { latitude, longitude, error } = useGeolocation();
     const { city, country, error: locationError } = useReverseGeolocation(latitude, longitude);
 
@@ -59,13 +59,13 @@ const Signup = () => {
     // const [firstName, setFirstName] = useState('');
     // const [lastName, setLastName] = useState('');
     // const [password, setPassword] = useState('');
-
+    
     const [imageUrls, setImageUrls] = useState<string[]>([]);
     const [profilePictureIndex, setProfilePictureIndex] = useState(0);
     const [images, setImages] = useState<File[]>([]);
     const [uploadStatus, setUploadStatus] = useState<string | null>(null);
     const [isEditing, setIsEditing] = useState(false);
-
+    
     const [gender, setGender] = useState('Non binaire');
     const [description, setDescription] = useState('');
     const [birthDate, setBirthDate] = useState('');
@@ -79,45 +79,81 @@ const Signup = () => {
     const [errorr, setError] = useState("");
     // const [email, setEmail] = useState("");
     // const [password, setPassword] = useState("");
-
+    
     const [user, setUser] = useState<User | null>(null);
     const { id, profile_picture, setProfilePicture } = useAuth();
-
-      // const { id, profile_picture, setProfilePicture } = useAuth();
-      // const [imageUrls, setImageUrls] = useState<string[]>([]);
-      // const [profilePictureIndex, setProfilePictureIndex] = useState(0);
-
+    
+    // const { id, profile_picture, setProfilePicture } = useAuth();
+    // const [imageUrls, setImageUrls] = useState<string[]>([]);
+    // const [profilePictureIndex, setProfilePictureIndex] = useState(0);
+    
     const interestsList: Interest[] = [
-        { id: "sport", label: "Sport" },
-        { id: "music", label: "Musique" },
-        { id: "cinema", label: "Cinéma" },
-        { id: "technology", label: "Technologie" },
-        { id: "travel", label: "Voyages" },
-        { id: "cooking", label: "Cuisine" },
-        { id: "art", label: "Art" },
-        { id: "literature", label: "Littérature" }
+      { id: "sport", label: "Sport" },
+      { id: "music", label: "Musique" },
+      { id: "cinema", label: "Cinéma" },
+      { id: "technology", label: "Technologie" },
+      { id: "travel", label: "Voyages" },
+      { id: "cooking", label: "Cuisine" },
+      { id: "art", label: "Art" },
+      { id: "literature", label: "Littérature" }
     ];
 
-    const calculateAge = (birthDate: string) => {
-        const today = new Date();
-        const birth = new Date(birthDate);
-      
-        let age = today.getFullYear() - birth.getFullYear();
-        const monthDiff = today.getMonth() - birth.getMonth();
-      
-        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-          age--;
+    useEffect(() => {
+      const fetchImageUrls = async () => {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+        try {
+          const response = await fetch('http://localhost:5001/api/user-images', {
+            method: 'GET',
+            headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+          });
+          const data = await response.json();
+          if (response.ok && data.images) {
+            const imagesWithPosition = data.images as { image_url: string, position: number }[];
+  
+            const sortedImages = [...imagesWithPosition].sort((a, b) => {
+              if (profile_picture && a.image_url === profile_picture) return -1;
+              if (profile_picture && b.image_url === profile_picture) return 1;
+              return a.position - b.position;
+            });
+  
+            setImageUrls(sortedImages.map(img => img.image_url));
+  
+            const currentProfileIndex = sortedImages.findIndex(img => profile_picture && img.image_url === profile_picture);
+            setProfilePictureIndex(currentProfileIndex !== -1 ? currentProfileIndex : 0);
+          } else {
+            console.error('Erreur lors de la récupération des images', data.error);
+            setImageUrls([]);
+          }
+        } catch (err) {
+          console.error('Erreur fetchImageUrls:', err);
+          setImageUrls([]);
         }
-      console.log(age);
-        return age;
       };
-
+  
+      fetchImageUrls();
+    }, [id, profile_picture]);
+    
+    const calculateAge = (birthDate: string) => {
+      const today = new Date();
+      const birth = new Date(birthDate);
+      
+      let age = today.getFullYear() - birth.getFullYear();
+      const monthDiff = today.getMonth() - birth.getMonth();
+      
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+        age--;
+      }
+      console.log(age);
+      return age;
+    };
+    
     const handleInterestChange = (id: string): void => {
-        setInterestError('');
-        
-        if (interests.includes(id)) {
-            setInterests(interests.filter(item => item !== id));
-        } else {
+      setInterestError('');
+      
+      if (interests.includes(id)) {
+        setInterests(interests.filter(item => item !== id));
+      } else {
             if (interests.length < 3) {
                 setInterests([...interests, id]);
             } else {
@@ -169,7 +205,8 @@ const Signup = () => {
         }
       }
 
-        const handleUpload = async (filesToUpload: File[]) => {
+
+    const handleUpload = async (filesToUpload: File[]) => {
     if (filesToUpload.length === 0) {
       addToast({
          title: 'Information',

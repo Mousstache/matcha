@@ -13,16 +13,13 @@ profile :
 
 autres :
 - responsive
-- bonus belek 
-
-profil :
-- modif profil
+- bonus belek
+- front profil
 
 recherhe :
-- gay
-- fame rating
-- filtre
+- gay +
 - consult profile
+- multi photo
 
 home :
-- Modal
+- Modal -

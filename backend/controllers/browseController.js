@@ -150,12 +150,20 @@ export async function recordProfileView (req, res){
       
 
       if (sexualPreference) {
-        query += ` AND preference = $${params.length + 1}`;
+        if (sexualPreference === 'Les deux')
+          query += ` AND (preference = 'Homme' OR preference = 'Femme')`;
+        else 
+          query += ` AND preference = $${params.length + 1}`;
         params.push(sexualPreference);
       }
   
       if (gender) {
-        query += ` AND gender = $${params.length + 1}`;
+        // if (gender === 'Les deux')
+        // {
+        //   query += ` AND (gender = 'Homme' OR gender = 'Femme') $${params.length + 1}`;
+        // }
+        // else
+          query += ` AND gender = $${params.length + 1}`;
         params.push(gender);
       }
 

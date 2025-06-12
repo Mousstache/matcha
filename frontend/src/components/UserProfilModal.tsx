@@ -39,7 +39,7 @@ interface Props {
 
 
 const UserProfileModal: React.FC<Props> = ({ isOpen, onClose, user }) => {
-  if (!user) return null;
+  if (!isOpen || !user) return null;
 
 const getInitials = () => {
   return `${user.firstname.charAt(0)}${user.lastname.charAt(0)}`;

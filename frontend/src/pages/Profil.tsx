@@ -3,6 +3,8 @@ import { useAuth } from "@/context/auth";
 import { Heart, MapPin, User, Edit3, Camera, Trash } from 'lucide-react';
 import { Button, Avatar, Input, Textarea, Card } from "@heroui/react";
 import { addToast } from "@heroui/toast";
+import { Select, SelectItem } from "@heroui/select";
+// import { MultiSelect } from "@heroui/multiselect";
 
 interface User {
   id: number;
@@ -114,6 +116,13 @@ const Profile = () => {
         },
         body: JSON.stringify({
           description: user.description,
+          gender : user.gender,
+          age : user.age,
+          city: user.city,
+          preference: user.preference,
+          firstname: user.firstname,
+          lastname: user.lastname,
+          username: user.username,
         }),
       });
 
@@ -450,41 +459,95 @@ const Profile = () => {
                   <Edit3 size={18} />
                 </Button>
               </div>
-              {isEditing ? (
+                {isEditing && (
                 <div className="space-y-4">
+               
                   <Textarea
                     value={user.description || ''}
                     onChange={(e) => setUser({ ...user, description: e.target.value })}
-                    className="w-full p-4 border border-pink-200 rounded-2xl focus:ring-2 focus:ring-pink-400 focus:border-transparent bg-white bg-opacity-90 shadow text-left"
+                    className="w-full p-4 border border-pink-200 rounded-2xl"
                     rows={4}
-                    placeholder="Parlez de vous, vos passions, ce que vous recherchez..."
+                    placeholder="Parlez de vous..."
                   />
+
+                 
+                  <Input
+                    label="Prénom"
+                    value={user.firstname || ''}
+                    onChange={(e) => setUser({ ...user, firstname: e.target.value })}
+                  />
+
+                
+                  <Input
+                    label="Nom"
+                    value={user.lastname || ''}
+                    onChange={(e) => setUser({ ...user, lastname: e.target.value })}
+                  />
+
+                
+                  <Input
+                    label="Âge"
+                    type="number"
+                    value={user.age || ''}
+                    onChange={(e) => setUser({ ...user, age: e.target.value })}
+                  />
+
+              
+                  <Input
+                    label="Ville"
+                    value={user.city || ''}
+                    onChange={(e) => setUser({ ...user, city: e.target.value })}
+                  />
+
+             
+                  <Input
+                    label="Pseudo"
+                    value={user.username || ''}
+                    onChange={(e) => setUser({ ...user, username: e.target.value })}
+                  />
+
+                  <select 
+                    value={user.gender} 
+                    // onChange={(e) => setGender(e.target.value)} 
+                      onChange={(e) => setUser({ ...user, gender: e.target.value })}
+                    // onValueChange={(value) => setUser({ ...user, gender: value })}
+
+                    className="w-full px-4 py-3 border border-pink-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-pink-50/30"
+                  >
+                    <option value="" disabled selected>Sélectionnez votre genre</option>
+                    <option value="Homme">Homme</option>
+                    <option value="Femme">Femme</option>
+                    <option value="Non binaire">Non binaire</option>
+                  </select>
+
+                   <select 
+                    value={user.preference} 
+                    // onChange={(e) => setGender(e.target.value)} 
+                      onChange={(e) => setUser({ ...user, preference: e.target.value })}
+                    // onValueChange={(value) => setUser({ ...user, gender: value })}
+
+                    className="w-full px-4 py-3 border border-pink-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-pink-50/30"
+                  >
+                    <option value="" disabled selected>Sélectionnez votre genre</option>
+                    <option value="Homme">Homme</option>
+                    <option value="Femme">Femme</option>
+                    <option value="Les deux">Les deux</option>
+                  </select>
+
+                  {/* Boutons */}
                   <div className="flex justify-end gap-2">
-                    <Button
-                      onClick={() => setIsEditing(false)}
-                      variant="bordered"
-                      color="primary"
-                      size="sm"
-                      className="text-pink-600 hover:bg-pink-50 active:bg-pink-100 active:scale-95 transition-all duration-200"
-                    >
-                      Annuler
-                    </Button>
-                    <Button
-                      onClick={handleUpdate}
-                      variant="solid"
-                      color="primary"
-                      size="sm"
-                      className="bg-pink-500 text-white hover:bg-pink-600 active:bg-pink-700 active:scale-95 transition-all duration-200"
-                    >
-                      Enregistrer
-                    </Button>
+                    <Button onClick={() => setIsEditing(false)} variant="bordered">Annuler</Button>
+                    <Button onClick={handleUpdate} variant="solid" className="bg-pink-500 text-white">Enregistrer</Button>
                   </div>
                 </div>
-              ) : (
-                <p className="text-gray-700 whitespace-pre-wrap text-lg text-left">
-                  {user.description || "Aucune description pour le moment."}
-                </p>
-              )}
+
+                
+                )}
+                 {/* : (
+                 <p className="text-gray-700 whitespace-pre-wrap text-lg text-left">
+                   {user.description || "Aucune description pour le moment."}
+                 </p>
+                 ) */}
             </div>
             <div>
               <h2 className="text-xl font-bold mb-4 text-pink-700 flex items-center">
