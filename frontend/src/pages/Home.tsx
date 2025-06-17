@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom"; 
-import { Send, Ban, Flag, HeartCrack, Heart, User, Eye, MessageSquare, ThumbsUp } from 'lucide-react';
+import { Send, Ban, Flag, HeartCrack, Heart, UserRound, Eye, MessageSquare, ThumbsUp, History } from 'lucide-react';
 import { useAuth } from "@/context/auth";
 import { Tabs, TabsList, TabsContent, TabsTrigger } from "@/components/ui/tabs";
 import UserProfilModal from "@/components/UserProfilModal";
@@ -45,6 +45,7 @@ const Home = () => {
   const [otherLikes, setOtherLikes] = useState<User[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
   const [viewlist, setViewlist] = useState<User[]>([]);
+  const [history, setHistory] = useState<User[]>([]);
   const { id, blockedUsers, firstname } = useAuth();
   const { socket } = useAuth();
 
@@ -62,7 +63,7 @@ const Home = () => {
       const token = localStorage.getItem("token");
       
       try {
-        const [likesRes, otherLikesRes, matchesRes, viewlistRes] = await Promise.all([
+        const [likesRes, otherLikesRes, matchesRes, viewlistRes, historyRes] = await Promise.all([
           fetch('http://localhost:5001/api/getLikes', {
             method: "GET",
             headers: {
@@ -90,20 +91,29 @@ const Home = () => {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
             }
+          }),
+          fetch('http://localhost:5001/api/getHistory', {
+            method: "GET",
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
           })
         ]);
 
-        const [likesData, otherLikesData, matchesData, viewlistData] = await Promise.all([
+        const [likesData, otherLikesData, matchesData, viewlistData, historyData] = await Promise.all([
           likesRes.json(),
           otherLikesRes.json(),
           matchesRes.json(),
-          viewlistRes.json()
+          viewlistRes.json(),
+          historyRes.json()
         ]);
 
         setLikes(likesData.likes);
         setOtherLikes(otherLikesData.Otherlikes);
         setMatches(matchesData.matches);
         setViewlist(viewlistData.viewlist);
+        setHistory(historyData.history);
       } catch (error) {
         console.error("Erreur lors du chargement des données:", error);
       }
@@ -324,6 +334,16 @@ const Home = () => {
                 <Eye size={24} className="mr-2" />
                 <span>Vues</span>
               </TabsTrigger>
+
+              <TabsTrigger 
+                value="history" 
+                className={`flex items-center gap-2 px-4 sm:px-6 py-4 sm:py-5 rounded-md font-medium text-base sm:text-lg shadow font-poppins transition-all duration-100
+                  data-[state=active]:bg-pink-500 data-[state=active]:text-white data-[state=active]:shadow-md
+                  data-[state=inactive]:bg-pink-400/80 data-[state=inactive]:text-white hover:bg-pink-100 hover:text-pink-600 hover:shadow-md active:bg-pink-300 active:scale-90 active:translate-y-0.5`}
+              >
+                <History size={24} className="mr-2" />
+                <span>History</span>
+              </TabsTrigger>
             </TabsList>
 
             {/* Contenu des onglets */}
@@ -341,7 +361,7 @@ const Home = () => {
                             <img src={user.profile_picture} alt={user.firstname} className="w-full h-full object-cover" />
                           ) : (
                             <div className="flex items-center justify-center h-full bg-pink-200">
-                              <User size={24} className="text-pink-600" />
+                              <UserRound size={24} className="text-pink-600" />
                             </div>
                           )}
                         </div>
@@ -414,7 +434,7 @@ const Home = () => {
                             <img src={user.profile_picture} alt={user.firstname} className="w-full h-full object-cover" />
                           ) : (
                             <div className="flex items-center justify-center h-full bg-pink-200">
-                              <User size={24} className="text-pink-600" />
+                              <UserRound size={24} className="text-pink-600" />
                             </div>
                           )}
                         </div>
@@ -459,7 +479,7 @@ const Home = () => {
                             <img src={user.profile_picture} alt={user.firstname} className="w-full h-full object-cover" />
                           ) : (
                             <div className="flex items-center justify-center h-full bg-pink-200">
-                              <User size={24} className="text-pink-600" />
+                              <UserRound size={24} className="text-pink-600" />
                             </div>
                           )}
                         </div>
@@ -483,7 +503,7 @@ const Home = () => {
                           variant="outline"
                           size="icon"
                           className="rounded-full h-14 w-14 bg-white border-2 border-blue-500 hover:bg-blue-50 shadow-lg transition-all duration-300"
-                          onClick={() => handleUserClick(otherLikes)}
+                          onClick={() => handleUserClick(user)}
                         ></Button>
                       <UserProfilModal
                         isOpen={isModalOpen}
@@ -518,7 +538,7 @@ const Home = () => {
                       <div className="flex items-center">
                         <div className="w-8 sm:w-10 h-8 sm:h-10 rounded-full bg-gray-300 mr-3 overflow-hidden">
                           <div className="flex items-center justify-center h-full">
-                            <User size={20} className="text-gray-500" />
+                            <UserRound size={20} className="text-gray-500" />
                           </div>
                         </div>
                         <div>
@@ -547,7 +567,7 @@ const Home = () => {
               )}
             </TabsContent>
 
-            {/* Contenu du tab Vues */}
+            {/* Contenu du tab vues */}
             <TabsContent value="views" className="p-3 sm:p-4 focus-visible:outline-none focus-visible:ring-0">
               {viewlist && viewlist.length > 0 ? (
                 <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
@@ -562,7 +582,7 @@ const Home = () => {
                             <img src={user.profile_picture} alt={user.firstname} className="w-full h-full object-cover" />
                           ) : (
                             <div className="flex items-center justify-center h-full bg-pink-100">
-                              <User size={32} className="text-pink-500" />
+                              <UserRound size={32} className="text-pink-500" />
                             </div>
                           )}
                         </div>
@@ -579,6 +599,43 @@ const Home = () => {
                   <p className="text-sm sm:text-base">Personne n'a encore consulté votre profil</p>
                   <p className="text-xs sm:text-sm mt-2">
                     Les personnes qui consultent votre profil seront listées ici
+                  </p>
+                </div>
+              )}
+            </TabsContent>
+
+
+             <TabsContent value="history" className="p-3 sm:p-4 focus-visible:outline-none focus-visible:ring-0">
+              {history && history.length > 0 ? (
+                <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+                  {history.map((user) => (
+                    <li 
+                      key={user.id} 
+                      className="p-3 sm:p-4 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow bg-white"
+                    >
+                      <div className="flex flex-col items-center text-center">
+                        <div className="w-12 sm:w-16 h-12 sm:h-16 rounded-full bg-gray-200 mb-2 overflow-hidden">
+                          {user.profile_picture ? (
+                            <img src={user.profile_picture} alt={user.firstname} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="flex items-center justify-center h-full bg-pink-100">
+                              <UserRound size={32} className="text-pink-500" />
+                            </div>
+                          )}
+                        </div>
+                        <p className="font-semibold text-sm sm:text-base">{user.firstname}</p>
+                        <p className="text-gray-500 text-xs sm:text-sm">{user.email}</p>
+                        <p className="text-xs text-gray-400 mt-1">A visité le {new Date().toLocaleDateString()}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-4 sm:py-6 text-gray-500">
+                  <History size={56} className="mb-3 sm:mb-4 text-pink-200" />
+                  <p className="text-sm sm:text-base">Vous n'avez encore consulté aucun profil</p>
+                  <p className="text-xs sm:text-sm mt-2">
+                    Les personnes que vous consulterez seront listées ici
                   </p>
                 </div>
               )}

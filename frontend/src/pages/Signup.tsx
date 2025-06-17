@@ -162,127 +162,213 @@ interface Interest {
         }
     };
     
-    const sendForm = async (e:any) => {
-        e.preventDefault();
+    // const sendForm = async (e:any) => {
+    //     e.preventDefault();
         
-        try{
-            online;
-            lastConnection;
-            setOnline(false);
-            setLastConnection(new Date().toISOString());
-            const userAge = calculateAge(birthDate);
-            const token = localStorage.getItem("token");
-            console.log("dans le front", token);
-            fetch('http://localhost:5001/api/fillInfo', {
-                method: 'PUT',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ gender, description, preference, birthDate, age: userAge, interests, lastConnection : new Date(), city, country, latitude, longitude, online }),
-            })
-            .then(response => response.json())
-           .then(data => {
-                // localStorage.setItem("token", data.token);
-                if (data.error) {
-                    console.error(data.error)
-                } else {
-                    // navigate("/confirm-email");
-                    navigate("/login", { state: { email: data.email, password: data.password || "" } });
-                    console.log(data)
-                }
-                // navigate(`/confirm-email?token=${data.confirmationToken}`);
-            })
-            // localStorage.setItem
-            // window.location.href = "/login";
-            // .then(response => {
-            //     if (response.redirected) {
-            //             window.location.href = response.url;
-            //         }
-            //     })
-        } catch (error) {
-            console.error(error)
-        }
-      }
+    //     try{
+    //         online;
+    //         lastConnection;
+    //         setOnline(false);
+    //         setLastConnection(new Date().toISOString());
+    //         const userAge = calculateAge(birthDate);
+    //         const token = localStorage.getItem("token");
+    //         console.log("dans le front", token);
+    //         fetch('http://localhost:5001/api/fillInfo', {
+    //             method: 'PUT',
+    //             headers: {
+    //                 'Authorization': `Bearer ${token}`,
+    //                 'Content-Type': 'application/json'
+    //             },
+    //             body: JSON.stringify({ gender, description, preference, birthDate, age: userAge, interests, lastConnection : new Date(), city, country, latitude, longitude, online }),
+    //         })
+    //         .then(response => response.json())
+    //        .then(data => {
+    //             // localStorage.setItem("token", data.token);
+    //             if (data.error) {
+    //                 console.error(data.error)
+    //             } else {
+    //                 navigate("/login", { state: { email: data.email, password: data.password || "" } });
+    //                 console.log(data)
+    //             }
+    //         })
+    //     } catch (error) {
+    //         console.error(error)
+    //     }
+    //   }
 
+const sendForm = async (e: any) => {
+  e.preventDefault();
+  setError(""); // Réinitialise l'erreur à chaque tentative
 
-    const handleUpload = async (filesToUpload: File[]) => {
-    if (filesToUpload.length === 0) {
-      addToast({
-         title: 'Information',
-         description: "Aucune image à uploader.",
-         color: 'default'
-      });
+  try {
+    setOnline(false);
+    setLastConnection(new Date().toISOString());
+    const userAge = calculateAge(birthDate);
+    const token = localStorage.getItem("token");
+
+    const response = await fetch('http://localhost:5001/api/fillInfo', {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        gender,
+        description,
+        preference,
+        birthDate,
+        age: userAge,
+        interests,
+        lastConnection: new Date(),
+        city,
+        country,
+        latitude,
+        longitude,
+        online
+      }),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok || data.error) {
+      // Affiche le message d'erreur du backend
+      setError(data.error || data.message || "Erreur inconnue.");
       return;
     }
 
-    const formData = new FormData();
-    filesToUpload.forEach((image) => formData.append("images", image));
+    // Succès : redirection
+    // localStorage.setItem("token", data.token); // décommente si besoin
+    navigate("/login", { state: { email: data.email, password: data.password || "" } });
+    console.log(data);
 
-    const token = localStorage.getItem("token");
-    if (!token) {
-        addToast({
-            title: 'Erreur',
-            description: 'Authentification requise pour uploader.',
-            color: 'danger'
-        });
-        return;
-    }
+  } catch (error: any) {
+    setError(error.message || "Erreur réseau.");
+    console.error(error);
+  }
+};
 
-    const currentProfileImgUrl = profile_picture;
-    const existingProfileIndexInCurrentUrls = imageUrls.findIndex(url => url === currentProfileImgUrl);
-    const profileIndexToSend = existingProfileIndexInCurrentUrls !== -1 ? existingProfileIndexInCurrentUrls : 0;
-    formData.append("profilePictureIndex", profileIndexToSend.toString());
-    console.log("Uploading avec profilePictureIndex:", profileIndexToSend);
+  const handleUpload = async (filesToUpload: File[]) => {
+  if (filesToUpload.length === 0) {
+    addToast({
+       title: 'Information',
+       description: "Aucune image à uploader.",
+       color: 'default'
+    });
+    return;
+  }
 
-    const uploadPromise = fetch("http://localhost:5001/api/upload", {
+  const formData = new FormData();
+  if (!Array.isArray(filesToUpload)) {
+    filesToUpload = [filesToUpload].filter(Boolean); // force en tableau si besoin
+  }
+  filesToUpload.forEach((image) => formData.append("images", image));
+
+  const token = localStorage.getItem("token");
+  if (!token) {
+      addToast({
+          title: 'Erreur',
+          description: 'Authentification requise pour uploader.',
+          color: 'danger'
+      });
+      return;
+  }
+
+  const currentProfileImgUrl = profile_picture;
+  const existingProfileIndexInCurrentUrls = imageUrls.findIndex(url => url === currentProfileImgUrl);
+  const profileIndexToSend = existingProfileIndexInCurrentUrls !== -1 ? existingProfileIndexInCurrentUrls : 0;
+  formData.append("profilePictureIndex", profileIndexToSend.toString());
+  console.log("Uploading avec profilePictureIndex:", profileIndexToSend);
+
+  // Définir le loading state pendant l'upload
+  setLoading(true);
+
+  try {
+    const response = await fetch("http://localhost:5001/api/upload", {
       headers: {
         'Authorization': `Bearer ${token}`
       },
       method: "POST",
       body: formData,
-    }).then(response => response.json());
-
-    uploadPromise.then(data => {
-      if (data.success) {
-        if (data.images) {
-          const imagesWithPosition = data.images as { image_url: string, position: number }[];
-          setImageUrls(imagesWithPosition.map(img => img.image_url));
-        }
-         if (data.profilePicture !== undefined) {
-             setProfilePicture(data.profilePicture);
-             setUser(prev => prev ? ({ ...prev, profile_picture: data.profilePicture }) : null);
-         }
-         addToast({
-           title: 'Succès',
-           description: 'Photos ajoutées avec succès !',
-           color: 'success'
-         });
-      } else {
-        console.error("Erreur API upload:", data.error);
-      }
-    }).catch(error => {
-        console.error("Erreur fetch upload:", error);
     });
-  };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files) return;
-    
-    const fileList = Array.from(files);
-    
-    if (imageUrls.length + fileList.length > 5) {
+    const data = await response.json();
+
+    if (data.success) {
+      // Mettre à jour immédiatement les URLs des images
+      if (data.images) {
+        const imagesWithPosition = data.images as { image_url: string, position: number }[];
+        
+        // Trier les images par position et mettre la photo de profil en premier
+        const sortedImages = [...imagesWithPosition].sort((a, b) => {
+          if (profile_picture && a.image_url === profile_picture) return -1;
+          if (profile_picture && b.image_url === profile_picture) return 1;
+          return a.position - b.position;
+        });
+
+        setImageUrls(sortedImages.map(img => img.image_url));
+      }
+      
+      if (data.profilePicture !== undefined) {
+         setProfilePicture(data.profilePicture);
+         setUser(prev => prev ? ({ ...prev, profile_picture: data.profilePicture }) : null);
+      }
+
+      // Vider le state des images en cours d'upload
+      setImages([]);
+      
       addToast({
-         title: 'Erreur',
-         description: `Vous ne pouvez pas avoir plus de 5 images au total (actuellement ${imageUrls.length}).`,
-         color: 'danger'
+        title: 'Succès',
+        description: 'Photos ajoutées avec succès !',
+        color: 'success'
       });
-      return;
+    } else {
+      console.error("Erreur API upload:", data.error);
+      addToast({
+        title: 'Erreur',
+        description: data.error || 'Erreur lors de l\'upload des images.',
+        color: 'danger'
+      });
     }
-    
-    handleUpload(fileList);
-  };
+  } catch (error) {
+    console.error("Erreur fetch upload:", error);
+    addToast({
+      title: 'Erreur',
+      description: 'Erreur de connexion lors de l\'upload.',
+      color: 'danger'
+    });
+  } finally {
+    setLoading(false);
+  }
+};
+
+// Modification de handleFileChange pour afficher un aperçu immédiat
+const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const files = e.target.files;
+  if (!files) return;
+  
+  const fileList = Array.from(files);
+  
+  if (imageUrls.length + fileList.length > 5) {
+    addToast({
+       title: 'Erreur',
+       description: `Vous ne pouvez pas avoir plus de 5 images au total (actuellement ${imageUrls.length}).`,
+       color: 'danger'
+    });
+    return;
+  }
+  
+  // Créer des URLs temporaires pour l'aperçu immédiat
+  const newPreviewUrls = fileList.map(file => URL.createObjectURL(file));
+  
+  // Ajouter les aperçus temporairement à l'affichage
+  setImageUrls(prev => [...prev, ...newPreviewUrls]);
+  
+  // Stocker les fichiers pour l'upload
+  setImages(fileList);
+  
+  // Uploader automatiquement
+  // handleUpload(fileList);
+};
 
   const handleRemoveImage = async (index: number) => {
      const token = localStorage.getItem("token");
@@ -474,162 +560,6 @@ interface Interest {
           </div>
         </div>
       );
-    
-//     return(
-//         <Card>
-//             <CardTitle> <h1>Inscription</h1> </CardTitle>
-//             <CardContent>
-//                 <form onSubmit={sendForm} className="flex flex-col space-y-4">
-//                     <label>Gender :</label>
-//                     <select value={gender} onChange={(e) => setGender(e.target.value)} className="text-black w-full px-4 py-2 border rounded-lg">
-//                         <option value="Homme">Homme</option>
-//                         <option value="Femme">Femme</option>
-//                         <option value="Non binaire">Non binaire</option>
-//                     </select>
-
-//                     <label>Birth date :</label>
-//                     <input 
-//                         type='date' 
-//                         value={birthDate} 
-//                         onChange={(e) => setBirthDate(e.target.value)}
-//                         name='birthDate'
-//                         className="text-black w-full px-4 py-2 border rounded-lg"
-//                     />
-                    
-//                     <label>description :</label>
-//                     <input type="description" value={description} onChange={(e) => setDescription(e.target.value)} className="text-black w-full px-4 py-2 border rounded-lg"></input>
-                    
-//                     <label>préférence :</label>
-//                     <select value={preference} onChange={(e) => setPreference(e.target.value)} className="text-black w-full px-4 py-2 border rounded-lg">
-//                         <option value="Homme">Homme</option>
-//                         <option value="Femme">Femme</option>
-//                         <option value="Les deux">Les deux</option>
-//                     </select>
-                    
-//                     <label>Intérêts (maximum 3) :</label>
-//                     {interestError && (
-//                         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-2 rounded">
-//                             {interestError}
-//                         </div>
-//                     )}
-                    
-//                     <div className="grid grid-cols-2 gap-2">
-//                         {interestsList.map((interest) => (
-//                             <div key={interest.id} className="flex items-center space-x-2">
-//                                 <input
-//                                     type="checkbox"
-//                                     id={interest.id}
-//                                     checked={interests.includes(interest.id)}
-//                                     onChange={() => handleInterestChange(interest.id)}
-//                                     className="rounded"
-//                                 />
-//                                 <label
-//                                     htmlFor={interest.id}
-//                                     className="text-sm cursor-pointer"
-//                                 >
-//                                     {interest.label}
-//                                 </label>
-//                             </div>
-//                         ))}
-//                     </div>
-//                     <div className="text-sm text-gray-500">
-//                         {interests.length}/3 intérêts sélectionnés
-//                     </div>
-
-//                     {/* <div className="md:col-span-3"> */}
-//               <h2 className="text-xl font-semibold mb-4 text-gray-800 flex items-center">
-//                 <Camera size={20} className="mr-2 text-pink-600" /> Photos ({imageUrls.length}/5)
-//               </h2>
-              
-//               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
-//                 {imageUrls.map((url, index) => (
-//                   <div 
-//                     key={index} 
-//                     className={`relative rounded-lg overflow-hidden h-36 ${profilePictureIndex === index ? 'ring-2 ring-pink-500' : ''}`}
-//                   >
-//                     <img 
-//                       src={url} 
-//                       alt={`Photo ${index + 1}`} 
-//                       className="w-full h-full object-cover" 
-//                     />
-//                     <div className="absolute inset-0 bg-black bg-opacity-40 opacity-0 hover:opacity-100 transition-opacity flex flex-col justify-between p-2">
-//                       <button 
-//                         onClick={() => handleRemoveImage(index)} 
-//                         className="self-end bg-red-500 text-white p-1 rounded-full"
-//                       >
-//                         <XIcon size={16} />
-//                       </button>
-//                       <button 
-//                         onClick={() => handleSetProfilePicture(index)}
-//                         className={`mt-auto w-full py-1 text-xs font-medium rounded ${
-//                           profilePictureIndex === index 
-//                             ? 'bg-pink-600 text-white' 
-//                             : 'bg-white text-pink-600'
-//                         }`}
-//                       >
-//                         {profilePictureIndex === index ? 'Photo principale' : 'Définir comme principale'}
-//                       </button>
-//                     </div>
-//                   </div>
-//                 ))}
-                
-//                 {imageUrls.length < 5 && (
-//                   <label className="flex items-center justify-center h-36 border-2 border-dashed border-pink-200 rounded-lg cursor-pointer hover:bg-pink-50 transition-colors duration-300">
-//                     <div className="text-center">
-//                       <Camera size={24} className="mx-auto text-pink-400" />
-//                       <div className="mt-2 text-sm text-pink-600">
-//                         Ajouter une photo
-//                       </div>
-//                       <input 
-//                         type="file" 
-//                         className="hidden" 
-//                         accept="image/*" 
-//                         onChange={handleFileChange} 
-//                       />
-//                     </div>
-//                   </label>
-//                 )}
-//               </div>
-              
-//               {images.length > 0 && (
-//                 <button
-//                   onClick={handleUpload}
-//                   className="bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded-lg shadow transition-colors duration-300"
-//                 >
-//                   Uploader les nouvelles images
-//                 </button>
-//               )}
-
-//                     {/* <div className="p-4 text-center">
-//                     <h1 className="text-2xl font-bold">🌍 Ma Localisation</h1>
-
-//                     {error ? (
-//                         <p className="text-red-500">❌ {error}</p>
-//                     ) : (
-//                         <>
-//                         <p>📍 Latitude: {latitude}</p>
-//                         <p>📍 Longitude: {longitude}</p>
-//                         </>
-//                     )}
-
-//                     {locationError ? (
-//                         <p className="text-red-500">❌ {locationError}</p>
-//                     ) : (
-//                         city && country && (
-//                         <p className="mt-2 text-lg font-semibold">
-//                             🏙️ {city}, {country}
-//                         </p>
-//                         )
-//                     )}
-//                     </div> */}
-                    
-
-//                     <button type="submit" className="text-white">S'inscrire</button>
-//                 </form>
-//             </CardContent>
-//         </Card>
-//     )
-// }
 
 return (
   <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-100 to-purple-100 p-4">
@@ -904,7 +834,7 @@ return (
                 {images.length > 0 && (
                   <button
                     type="button"
-                    onClick={handleUpload}
+                    onClick={() => handleUpload(images)}
                     disabled={loading}
                     className="flex items-center justify-center gap-2 bg-pink-600 hover:bg-pink-700 text-white px-4 py-2 rounded-lg shadow transition-colors duration-300 w-full"
                   >

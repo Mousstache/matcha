@@ -4,23 +4,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 // import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-
-interface User {
-  id: number;
-  firstname: string;
-  lastname: string;
-  age: number;
-  gender: string;
-  description: string;
-  latitude?: number;
-  longitude?: number;
-  fame_rate: number;
-  city: string;
-  interests: string[];
-  lastconnection: string;
-  isonline: boolean;
-  // ajoute d'autres props si besoin
-}
+import { User } from "@/types/User";
 
 
 
@@ -79,10 +63,10 @@ const getInitials = () => {
           <div className="flex items-center justify-between">
             <span className="text-gray-500">Dernière connexion</span>
             <span className="font-medium">
-              {new Date(user.lastconnection).toLocaleString("fr-FR", {
+              {user.lastconnection ? new Date(user.lastconnection).toLocaleString("fr-FR", {
                 dateStyle: "medium",
                 timeStyle: "short",
-              })}
+              }) : "Inconnue"}
               {/* {user.lastconnection} */}
             </span>
           </div>
@@ -90,19 +74,21 @@ const getInitials = () => {
           <div className="flex items-center justify-between">
             <span className="text-gray-500">Âge</span>
             <div className="bg-gradient-to-r from-pink-500 via-pink-400 to-purple-500 text-white font-semibold px-4 py-1.5 rounded-full shadow-md hover:shadow-lg transition-all duration-300">
-              {user.age} ans
+              {user.age || "N/A"} {user.age ? "ans" : ""}
             </div>
           </div>
           
           <div className="flex items-center justify-between">
             <span className="text-gray-500">City</span>
-            <span className="font-medium">{user.city}</span>
+            <span className="font-medium">{user.city || "Non spécifié"}</span>
           </div>
 
           <div className="flex items-center justify-between">
             <span className="text-gray-500">Genre</span>
             <Badge variant="outline" className="font-normal">
-              {user.gender}
+              {typeof user.gender === 'number' 
+                ? user.gender === 1 ? 'Homme' : user.gender === 2 ? 'Femme' : 'Autre' 
+                : user.gender || "Non spécifié"}
             </Badge>
           </div>
 
@@ -115,10 +101,18 @@ const getInitials = () => {
 
 
           <div className="flex items-center justify-between">
-            <span className="text-gray-500">Interests</span>
-            <Badge variant="outline" className="font-normal">
-              {user.interests}
-            </Badge>
+            <span className="text-gray-500">Centres d'intérêt</span>
+            <div className="flex flex-wrap gap-2">
+              {user.interests && (
+                <Badge variant="outline" className="font-normal">
+                  {typeof user.interests === "string" 
+                    ? user.interests 
+                    : Array.isArray(user.interests)
+                      ? user.interests.join(", ")
+                      : "Aucun intérêt"}
+                </Badge>
+              )}
+            </div>
           </div>
 
 {/* {interestsArray.length > 0 && (

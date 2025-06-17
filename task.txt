@@ -1,6 +1,3 @@
-Terminer l'authentificaion signup :
-- parser les informations de l'utilisateur (exemple interdit au moins de 18 , la politique de mot de passe)
-
 geolocalisation :
 - les utilisateurs peuvent changer leur position dans la page de profil
 
@@ -9,7 +6,6 @@ notification :
 
 profile :
 - gestion des gens bloquer
-- gerer les affinites entre les preferences de ce que je recherche les utilisateurs sur le site ( homme femme ou les 2 )
 
 autres :
 - responsive
@@ -17,9 +13,6 @@ autres :
 - front profil
 
 recherhe :
-- gay +
-- consult profile
-- multi photo
-
-home :
-- Modal -
+- gay -
+- consult profile - fin de liste de recherche 
+- multi photo (Modal - card explore) 

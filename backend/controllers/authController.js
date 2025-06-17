@@ -4,10 +4,26 @@ import crypto from 'crypto';
 import { sendConfirmationEmail, sendPasswordResetEmail } from '../utils/emailService.js';
 import db from '../config/db.js';
 
+// Politique de mot de passe :
+// - Au moins 8 caractères
+// - Au moins une majuscule
+// - Au moins une minuscule
+// - Au moins un chiffre
+// - Au moins un caractère spécial
+function isPasswordStrong(password) {
+  const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
+  return regex.test(password);
+}
+
 export async function registerUser(req,res){
     try {
       const { email, userName, firstName, lastName, password } = req.body;
-      
+
+      if (!isPasswordStrong(password)) {
+        return res.status(400).json({
+          message: 'Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.'
+        });
+      }
 
       const existingUser = await db.findOne('users', { email });
       if (existingUser) {
@@ -112,6 +128,26 @@ export async function registerUser(req,res){
       const {description, gender, birthDate, preference, interests, city, country, latitude, longitude,age } = req.body;
 
       const conditions = { id: user.id};
+
+      // Vérification de l'âge (>= 18 ans)
+      // const { birthDate } = req.body;
+      if (!birthDate) {
+        return res.status(400).json({
+          message: 'La date de naissance est requise.'
+        });
+      }
+      const birth = new Date(birthDate);
+      const today = new Date();
+      let age2 = today.getFullYear() - birth.getFullYear();
+      const m = today.getMonth() - birth.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
+        age2--;
+      }
+      if (age2 < 18) {
+        return res.status(400).json({
+          message: 'Vous devez avoir au moins 18 ans pour vous inscrire.'
+        });
+      }
 
       const updateData = {};
       if (description !== undefined) updateData.description = description;
@@ -347,7 +383,20 @@ export async function imageUpload(req, res) {
     if (!token) return res.status(401).json({ error: "Token manquant" });
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const userId = decoded.id;
+
+
+
+    const user = await db.findOne('users', { email: decoded.email });
+
+    console.log("user", user);
+    console.log("userId", user.id);
+    console.log(decoded.email);
+
+    const userId = user.id;
+
+    if (!userId || isNaN(userId)) {
+      return res.status(400).json({ error: "Utilisateur non authentifié" });
+    }
 
     console.log("userId (type):", userId, typeof userId);
     const result = await db.query(
@@ -413,6 +462,7 @@ export async function imageUpload(req, res) {
     res.status(500).json({ error: "Erreur lors de l'upload des images" });
   }
 }
+
 export async function deleteUserImage(req, res) {
   try {
     const token = req.headers.authorization?.split(" ")[1];

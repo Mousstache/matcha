@@ -13,7 +13,7 @@ const pool = new Pool({
 
 
 const GENDERS = ['Homme', 'Femme', 'Non binaire'];
-const PREFERENCES = ['Homme', 'Femme', 'Non binare', 'Les deux'];
+const PREFERENCES = ['Homme', 'Femme', 'Les deux'];
 const INTERESTS = ['music', 'sport', 'travel', 'literature', 'technology', 'art', 'cooking', 'cinema'];
 
 const generateRandomInterests = () => {

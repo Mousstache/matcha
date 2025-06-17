@@ -147,25 +147,93 @@ export async function recordProfileView (req, res){
         query += ` AND age <= $${params.length + 1}`;
         params.push(parseInt(maxAge));
       }
-      
 
-      if (sexualPreference) {
-        if (sexualPreference === 'Les deux')
-          query += ` AND (preference = 'Homme' OR preference = 'Femme')`;
-        else 
-          query += ` AND preference = $${params.length + 1}`;
-        params.push(sexualPreference);
-      }
-  
-      if (gender) {
-        // if (gender === 'Les deux')
-        // {
-        //   query += ` AND (gender = 'Homme' OR gender = 'Femme') $${params.length + 1}`;
-        // }
-        // else
-          query += ` AND gender = $${params.length + 1}`;
-        params.push(gender);
-      }
+    // if (gender) {
+    //   if (gender === 'Les deux') {
+    //     // Cas spécial : on veut les utilisateurs du même genre ET du genre opposé,
+    //     // mais qui sont attirés par le genre de l'utilisateur courant
+    //     if (sexualPreference === 'Homme') {
+    //       query += ` AND (
+    //         (gender = 'Homme' AND preference = 'Homme')
+    //         OR
+    //         (gender = 'Femme' AND preference = 'Homme')
+    //         OR
+    //         (gender = 'Femme' AND preference = 'Les deux')
+    //          OR
+    //         (gender = 'Homme' AND preference = 'Les deux')
+    //       )`;
+    //     } else if (sexualPreference === 'Femme') {
+    //       query += ` AND (
+    //         (gender = 'Femme' AND preference = 'Femme')
+    //         OR
+    //         (gender = 'Homme' AND preference = 'Femme')
+    //         OR
+    //         (gender = 'Femme' AND preference = 'Les deux')
+    //          OR
+    //         (gender = 'Homme' AND preference = 'Les deux')
+    //       )`;
+    //     } else if (sexualPreference === 'Non binaire') {
+        
+    //       query += ` AND (
+    //         (gender = 'Non binaire' AND preference = 'Les deux')
+    //         OR
+    //         (gender = 'Homme' AND preference = 'Les deux')
+    //         OR
+    //         (gender = 'Femme' AND preference = 'Les deux')
+    //       )`;
+    //     }
+    //   } else {
+    //     if (sexualPreference === 'Homme') {
+    //       query += ` AND (
+    //         (gender = 'Femme' AND preference = 'Homme')
+    //       )`;
+    //     } else if (sexualPreference === 'Femme') {
+    //       query += ` AND (
+    //         (gender = 'Homme' AND preference = 'Femme')
+    //       )`;
+    //     }
+    //     query += ` AND gender = $${params.length + 1}`;
+    //     params.push(gender);
+    //   }
+    // }
+
+if (gender && sexualPreference) {
+  // Homme qui aime Femme
+  if (gender === 'Femme' && sexualPreference === 'Homme') {
+    query += ` AND gender = 'Femme' AND (preference = 'Homme' OR preference = 'Les deux')`;
+  }
+  // Femme qui aime Homme
+  else if (gender === 'Homme' && sexualPreference === 'Femme') {
+    query += ` AND gender = 'Homme' AND (preference = 'Femme' OR preference = 'Les deux')`;
+  }
+  // Homme qui aime Homme
+  else if (gender === 'Homme' && sexualPreference === 'Homme') {
+    query += ` AND gender = 'Homme' AND (preference = 'Homme' OR preference = 'Les deux')`;
+  }
+  // Femme qui aime Femme
+  else if (gender === 'Femme' && sexualPreference === 'Femme') {
+    query += ` AND gender = 'Femme' AND (preference = 'Femme' OR preference = 'Les deux')`;
+  }
+  // Non binaire
+  else if (gender === 'Non binaire' && sexualPreference === 'Non binaire') {
+    query += ` AND gender = 'Non binaire' AND preference = 'Non binaire'`;
+  }
+  // Cas "Les deux" ou autres, à adapter selon ta logique métier
+  else if (gender === 'Les deux' && sexualPreference === 'Homme') {
+    query += ` AND (
+      (gender = 'Homme' AND (preference = 'Homme' OR preference = 'Les deux'))
+      OR
+      (gender = 'Femme' AND (preference = 'Homme' OR preference = 'Les deux'))
+    )`;
+  }
+    else if (gender === 'Les deux' && sexualPreference === 'Femme') {
+    query += ` AND (
+      (gender = 'Femme' AND (preference = 'Femme' OR preference = 'Les deux'))
+      OR
+      (gender = 'Homme' AND (preference = 'Femme' OR preference = 'Les deux'))
+    )`;
+  }
+}
 
       if (fame_rate) {
         query += ` AND fame_rate <= $${params.length + 1}`;

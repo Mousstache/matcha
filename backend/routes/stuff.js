@@ -19,8 +19,8 @@ router.post('/register', userCtrl.registerUser);
 router.put('/fillInfo',authMiddleware, userCtrl.fillInfo);
 router.get('/confirm-email/:token', userCtrl.confirmEmail);
 router.post('/login', userCtrl.logUser);
-router.post('/upload', authMiddleware, ensureEmailConfirmed ,upload.array("images", 5), userCtrl.imageUpload);
-router.get('/user-images', authMiddleware,ensureEmailConfirmed,  userCtrl.getUserImages);
+router.post('/upload', authMiddleware ,upload.array("images", 5), userCtrl.imageUpload);
+router.get('/user-images', authMiddleware,  userCtrl.getUserImages);
 
 router.get('/user', authMiddleware,ensureEmailConfirmed,  userCtrl.getUser);
 router.post('/allUsers', authMiddleware,ensureEmailConfirmed,  userCtrl.getAllUsers);
@@ -35,6 +35,7 @@ router.get('/getOtherLikes',authMiddleware,ensureEmailConfirmed, userCtrl.getOth
 router.get('/getMatches',authMiddleware,ensureEmailConfirmed, userCtrl.getMatches);
 router.post('/ConsultProfile',authMiddleware,ensureEmailConfirmed, userCtrl.ConsultProfile);
 router.get('/getViewlist',authMiddleware,ensureEmailConfirmed, userCtrl.getViewlist);
+router.get('/getHistory',authMiddleware,ensureEmailConfirmed, userCtrl.getConsultedUsers);
 
 
 // SOCKET 

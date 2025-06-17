@@ -158,7 +158,8 @@ export async function likeUser (req, res){
       const user = await db.findOne('users',  { email: decoded.email });
   
       const sql = `
-      SELECT u.id, u.email, u.userName, u.firstName, u.lastName 
+      SELECT u.id, id, email, firstname, lastname, description, interests, age, city, 
+          profile_picture, gender, preference, fame_rate, lastConnection, isonline 
       FROM likes l
       JOIN users u ON l.liked_id = u.id
       WHERE l.liker_id = $1
@@ -306,4 +307,37 @@ export async function getViewlist (req, res){
   }
 };
 
-export default { ConsultProfile, likeUser, unlikeUser, getLikes, getOtherLikes, getMatches, dislikeUser , getViewlist};
+export async function getConsultedUsers(req, res) {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await db.findOne('users', { email: decoded.email });
+
+    const sql = `
+      SELECT u.id, u.email, u.userName, u.firstName, u.lastName
+      FROM consult_profile l
+      JOIN users u ON l.viewed_id = u.id
+      WHERE l.viewer_id = $1
+      AND u.id NOT IN (
+        SELECT blocked_id FROM blocks WHERE blocker_id = $1
+        UNION
+        SELECT blocker_id FROM blocks WHERE blocked_id = $1
+      );
+    `;
+
+    const consulted = await db.query(sql, [user.id]);
+
+    return res.status(200).json({
+      message: "liste des profils consultés",
+      consulted: consulted.rows || consulted,
+    });
+  } catch (error) {
+    console.log('Error lors de la récupération des profils consultés', error);
+    return res.status(500).json({
+      message: "Erreur lors de la récupération des profils consultés",
+      error: error.message
+    });
+  }
+}
+
+export default { ConsultProfile, likeUser, unlikeUser, getLikes, getOtherLikes, getMatches, dislikeUser , getViewlist, getConsultedUsers};
