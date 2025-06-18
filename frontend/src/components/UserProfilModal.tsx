@@ -6,6 +6,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { User } from "@/types/User";
 
+import { Swiper, SwiperSlide } from "swiper/react";
+import "swiper/css";
+import "swiper/css/navigation";
+import { Navigation } from "swiper/modules";
+
 
 
 interface Props {
@@ -114,6 +119,33 @@ const getInitials = () => {
               )}
             </div>
           </div>
+              {/* Carrousel des photos utilisateur */}
+              <div className="space-y-2">
+                <span className="text-gray-500">Photos</span>
+                {user.images && user.images.length > 0 ? (
+                  <Swiper
+                    modules={[Navigation]}
+                    navigation
+                    spaceBetween={10}
+                    slidesPerView={1}
+                    className="rounded-lg"
+                    style={{ maxWidth: 350, maxHeight: 350 }}
+                  >
+                    {user.images.map((img, idx) => (
+                      <SwiperSlide key={idx}>
+                        <img
+                          src={img}
+                          alt={`Photo ${idx + 1}`}
+                          className="object-cover w-full h-64 rounded-lg border"
+                          style={{ maxHeight: 300, margin: "0 auto" }}
+                        />
+                      </SwiperSlide>
+                    ))}
+                  </Swiper>
+                ) : (
+                  <div className="text-gray-400 italic">Aucune photo disponible.</div>
+                )}
+              </div>
 
 {/* {interestsArray.length > 0 && (
   <div className="space-y-1">

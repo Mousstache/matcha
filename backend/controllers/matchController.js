@@ -152,34 +152,42 @@ export async function likeUser (req, res){
   
   export async function getLikes (req, res){
     try{
-  
-      const token = req.headers.authorization?.split(' ')[1];
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const user = await db.findOne('users',  { email: decoded.email });
-  
-      const sql = `
-      SELECT u.id, id, email, firstname, lastname, description, interests, age, city, 
-          profile_picture, gender, preference, fame_rate, lastConnection, isonline 
+    const token = req.headers.authorization?.split(' ')[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await db.findOne('users',  { email: decoded.email });
+
+    const sql = `
+      SELECT 
+        u.id, u.email, u.firstname, u.lastname, u.description, u.interests, u.age, u.city, 
+        u.profile_picture, u.gender, u.preference, u.fame_rate, u.lastConnection, u.isonline,
+        COALESCE(
+          ARRAY_AGG(ui.image_url) FILTER (WHERE ui.image_url IS NOT NULL),
+          ARRAY[]::text[]
+        ) AS images
       FROM likes l
       JOIN users u ON l.liked_id = u.id
+      LEFT JOIN user_images ui ON ui.user_id = u.id
       WHERE l.liker_id = $1
       AND u.id NOT IN (
         SELECT blocked_id FROM blocks WHERE blocker_id = $1
         UNION
         SELECT blocker_id FROM blocks WHERE blocked_id = $1
-      );
+      )
+      GROUP BY u.id, u.email, u.firstname, u.lastname, u.description, u.interests, u.age, u.city, 
+               u.profile_picture, u.gender, u.preference, u.fame_rate, u.lastConnection, u.isonline
     `;
-  
-      const likes = await db.query(sql, [user.id]);
-  
-      return res.status(200).json({
-        message: "liste des likes",
-        likes: likes,
-      })
-    }catch(error){
-      console.error('Error lors de la recup des likes');
-    }
-  };
+
+    const likes = await db.query(sql, [user.id]);
+
+    return res.status(200).json({
+      message: "liste des likes",
+      likes: likes.rows || likes,
+    });
+  }catch(error){
+    console.error('Error lors de la recup des likes', error);
+    return res.status(500).json({ message: "Erreur lors de la récupération des likes" });
+  }
+};
 
 
 

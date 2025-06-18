@@ -17,4 +17,5 @@ export interface User {
   birthDate?: number;
   preference?: number;
   profile_picture?: string;
+  images?: string[];
 }

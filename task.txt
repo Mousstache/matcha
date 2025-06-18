@@ -7,12 +7,12 @@ notification :
 profile :
 - gestion des gens bloquer
 
+recherhe :
+- consult profile - fin de liste de recherche - multi photo card  
+
+
 autres :
 - responsive
 - bonus belek
 - front profil
 
-recherhe :
-- gay -
-- consult profile - fin de liste de recherche 
-- multi photo (Modal - card explore) 
