@@ -216,15 +216,23 @@ export async function likeUser (req, res){
       const user = await db.findOne('users',  { email: decoded.email });
   
       const sql = `
-      SELECT u.id, u.email, u.userName, u.firstName, u.lastName 
+      SELECT u.id, u.email, u.firstname, u.lastname, u.description, u.interests, u.age, u.city, 
+        u.profile_picture, u.gender, u.preference, u.fame_rate, u.lastConnection, u.isonline,
+        COALESCE(
+          ARRAY_AGG(ui.image_url) FILTER (WHERE ui.image_url IS NOT NULL),
+          ARRAY[]::text[]
+        ) AS images
       FROM likes l
       JOIN users u ON l.liker_id = u.id
+      LEFT JOIN user_images ui ON ui.user_id = u.id
       WHERE l.liked_id = $1
       AND u.id NOT IN (
         SELECT blocked_id FROM blocks WHERE blocker_id = $1
         UNION
         SELECT blocker_id FROM blocks WHERE blocked_id = $1
-      );
+      )
+      GROUP BY u.id, u.email, u.firstname, u.lastname, u.description, u.interests, u.age, u.city, 
+       u.profile_picture, u.gender, u.preference, u.fame_rate, u.lastConnection, u.isonline
       `;
   
       const Otherlikes = await db.query(sql, [user.id]);
@@ -292,15 +300,23 @@ export async function getViewlist (req, res){
     const user = await db.findOne('users',  { email: decoded.email });
 
     const sql = `
-    SELECT u.id, u.email, u.userName, u.firstName, u.lastName 
+    SELECT  u.id, u.email, u.firstname, u.lastname, u.description, u.interests, u.age, u.city, 
+        u.profile_picture, u.gender, u.preference, u.fame_rate, u.lastConnection, u.isonline,
+        COALESCE(
+          ARRAY_AGG(ui.image_url) FILTER (WHERE ui.image_url IS NOT NULL),
+          ARRAY[]::text[]
+        ) AS images
     FROM consult_profile l
     JOIN users u ON l.viewer_id = u.id
+    LEFT JOIN user_images ui ON ui.user_id = u.id
     WHERE l.viewed_id = $1
     AND u.id NOT IN (
       SELECT blocked_id FROM blocks WHERE blocker_id = $1
       UNION
       SELECT blocker_id FROM blocks WHERE blocked_id = $1
-    );
+    )
+    GROUP BY u.id, u.email, u.firstname, u.lastname, u.description, u.interests, u.age, u.city, 
+          u.profile_picture, u.gender, u.preference, u.fame_rate, u.lastConnection, u.isonline
     `;
 
     const viewlist = await db.query(sql, [user.id]);
@@ -322,15 +338,23 @@ export async function getConsultedUsers(req, res) {
     const user = await db.findOne('users', { email: decoded.email });
 
     const sql = `
-      SELECT u.id, u.email, u.userName, u.firstName, u.lastName
-      FROM consult_profile l
+      SELECT  u.id, u.email, u.firstname, u.lastname, u.description, u.interests, u.age, u.city, 
+        u.profile_picture, u.gender, u.preference, u.fame_rate, u.lastConnection, u.isonline,
+        COALESCE(
+          ARRAY_AGG(ui.image_url) FILTER (WHERE ui.image_url IS NOT NULL),
+          ARRAY[]::text[]
+        ) AS images
+      FROM profile_views l
       JOIN users u ON l.viewed_id = u.id
+      LEFT JOIN user_images ui ON ui.user_id = u.id
       WHERE l.viewer_id = $1
       AND u.id NOT IN (
         SELECT blocked_id FROM blocks WHERE blocker_id = $1
         UNION
         SELECT blocker_id FROM blocks WHERE blocked_id = $1
-      );
+        )
+      GROUP BY u.id, u.email, u.firstname, u.lastname, u.description, u.interests, u.age, u.city, 
+            u.profile_picture, u.gender, u.preference, u.fame_rate, u.lastConnection, u.isonline
     `;
 
     const consulted = await db.query(sql, [user.id]);

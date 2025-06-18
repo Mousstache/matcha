@@ -113,7 +113,7 @@ const Home = () => {
         setOtherLikes(otherLikesData.Otherlikes);
         setMatches(matchesData.matches);
         setViewlist(viewlistData.viewlist);
-        setHistory(historyData.history);
+        setHistory(historyData.consulted);
       } catch (error) {
         console.error("Erreur lors du chargement des données:", error);
       }
@@ -470,9 +470,9 @@ const Home = () => {
                   {otherLikes.map((user) => (
                     <li 
                       key={user.id} 
+                      onClick={() => handleUserClick(user)}
                       className="p-3 sm:p-4 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow bg-white hover:bg-pink-50 cursor-pointer"
-                      onClick={() => navigate(`/profile/:${user.id}`)}
-                    >
+                      >
                       <div className="flex items-center mb-3">
                         <div className="w-10 sm:w-12 h-10 sm:h-12 rounded-full bg-gray-200 mr-3 overflow-hidden">
                           {user.profile_picture ? (
@@ -499,18 +499,6 @@ const Home = () => {
                         <Heart size={16} />
                         <span>Liker en retour</span>
                       </button>
-                      <Button
-                          variant="outline"
-                          size="icon"
-                          className="rounded-full h-14 w-14 bg-white border-2 border-blue-500 hover:bg-blue-50 shadow-lg transition-all duration-300"
-                          onClick={() => handleUserClick(user)}
-                        ></Button>
-                      <UserProfilModal
-                        isOpen={isModalOpen}
-                        onClose={() => setIsModalOpen(false)}
-                        user={selectedUser}
-                      />
-                      
                       <p className="text-xs text-center mt-2 text-gray-500">Cliquez sur le profil pour plus de détails</p>
                     </li>
                   ))}
@@ -524,6 +512,11 @@ const Home = () => {
                   </p>
                 </div>
               )}
+              <UserProfilModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                user={selectedUser}
+              />
             </TabsContent>
 
             {/* Contenu du tab Bloqués */}
@@ -574,6 +567,7 @@ const Home = () => {
                   {viewlist.map((user) => (
                     <li 
                       key={user.id} 
+                      onClick={() => handleUserClick(user)}
                       className="p-3 sm:p-4 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow bg-white"
                     >
                       <div className="flex flex-col items-center text-center">
@@ -602,6 +596,11 @@ const Home = () => {
                   </p>
                 </div>
               )}
+              <UserProfilModal
+               isOpen={isModalOpen}
+               onClose={() => setIsModalOpen(false)}
+               user={selectedUser}
+             />
             </TabsContent>
 
 
@@ -611,7 +610,8 @@ const Home = () => {
                   {history.map((user) => (
                     <li 
                       key={user.id} 
-                      className="p-3 sm:p-4 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow bg-white"
+                      className="p-3 sm:p-4 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow bg-white cursor-pointer"
+                      onClick={() => handleUserClick(user)}
                     >
                       <div className="flex flex-col items-center text-center">
                         <div className="w-12 sm:w-16 h-12 sm:h-16 rounded-full bg-gray-200 mb-2 overflow-hidden">
@@ -639,6 +639,11 @@ const Home = () => {
                   </p>
                 </div>
               )}
+              <UserProfilModal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                user={selectedUser}
+              />
             </TabsContent>
           </Tabs>
         </div>

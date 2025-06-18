@@ -258,6 +258,9 @@ const Explore = () => {
   const [interests, setInterests] = useState<string[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
 
+  const [finished, setFinished] = useState(false);
+  
+
   const interestsList: Interest[] = [
     { id: "sport", label: "sport" },
     { id: "music", label: "music" },
@@ -356,9 +359,13 @@ const Explore = () => {
     } catch (error) {
       console.error(error);
     }
-    setDirection('right');
-    setTimeout(() => {
-      setCurrentProfileIndex((prev) => (prev + 1) % profiles.length);
+      setDirection('right');
+      setTimeout(() => {
+      if (currentProfileIndex + 1 >= profiles.length) {
+        setFinished(true);
+      } else {
+        setCurrentProfileIndex((prev) => prev + 1);
+      }
       setDirection('');
     }, 300);
   };
@@ -382,7 +389,11 @@ const Explore = () => {
     }
     setDirection('left');
     setTimeout(() => {
-      setCurrentProfileIndex((prev) => (prev + 1) % profiles.length);
+      if (currentProfileIndex + 1 >= profiles.length) {
+        setFinished(true);
+      } else {
+        setCurrentProfileIndex((prev) => prev + 1);
+      }
       setDirection('');
     }, 300);
   };
@@ -565,7 +576,19 @@ const Explore = () => {
                   </p>
                 </div>
               </div>
-            ) : (
+            ) : finished ? (
+          <div className="text-center p-12 bg-white shadow-lg rounded-xl border border-pink-100">
+            <div className="mb-6">
+              <Heart className="mx-auto h-16 w-16 text-pink-200" />
+              <p className="mt-4 text-gray-500 text-lg">
+                Vous avez parcouru tous les profils disponibles !
+              </p>
+              <p className="text-gray-400 text-sm mt-2">
+                Revenez plus tard ou ajustez vos filtres pour découvrir de nouveaux profils.
+              </p>
+            </div>
+          </div>
+        ) : (
               <Card
                 className={`transform transition-all duration-500 shadow-2xl rounded-xl overflow-hidden ${
                   direction === 'right' ? 'translate-x-full rotate-12 opacity-0' :

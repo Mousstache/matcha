@@ -1,18 +1,22 @@
 geolocalisation :
 - les utilisateurs peuvent changer leur position dans la page de profil
 
-notification : 
+notification :
+- redirection vers le home
 - persister les notif pour chaque utilisateur et lui proposer de pouvoir la suprimmer, tourner sur une anciennete de 10 notif a chaque fois
 
 profile :
 - gestion des gens bloquer
 
-recherhe :
-- consult profile - fin de liste de recherche - multi photo card  
-
 
 autres :
 - responsive
 - bonus belek
-- front profil
+
+
+front :
+- Modal
+- profil informations
+- home (history en plus c'est degeu)
+- chat
 

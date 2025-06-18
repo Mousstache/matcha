@@ -110,8 +110,12 @@ export async function recordProfileView (req, res){
       let query = `
       SELECT * FROM (
         SELECT 
-          id, email, firstname, lastname, description, interests, age, city, 
-          profile_picture, gender, preference, fame_rate, lastConnection, isonline`;
+          u.id, u.email, u.firstname, u.lastname, u.description, u.interests, u.age, u.city, 
+          u.profile_picture, u.gender, u.preference, u.fame_rate, u.lastConnection, u.isonline,
+          COALESCE(
+            ARRAY_AGG(ui.image_url) FILTER (WHERE ui.image_url IS NOT NULL),
+            ARRAY[]::text[]
+          ) AS images`;
       
       const params = [];
       
@@ -129,6 +133,7 @@ export async function recordProfileView (req, res){
       }
       
       query += ` FROM users u
+        LEFT JOIN user_images ui ON ui.user_id = u.id
         WHERE u.id != $${params.length + 1}
         AND u.id NOT IN (
           SELECT blocked_id FROM blocks WHERE blocker_id = $${params.length + 1}
@@ -148,147 +153,48 @@ export async function recordProfileView (req, res){
         params.push(parseInt(maxAge));
       }
 
-    // if (gender) {
-    //   if (gender === 'Les deux') {
-    //     // Cas spécial : on veut les utilisateurs du même genre ET du genre opposé,
-    //     // mais qui sont attirés par le genre de l'utilisateur courant
-    //     if (sexualPreference === 'Homme') {
-    //       query += ` AND (
-    //         (gender = 'Homme' AND preference = 'Homme')
-    //         OR
-    //         (gender = 'Femme' AND preference = 'Homme')
-    //         OR
-    //         (gender = 'Femme' AND preference = 'Les deux')
-    //          OR
-    //         (gender = 'Homme' AND preference = 'Les deux')
-    //       )`;
-    //     } else if (sexualPreference === 'Femme') {
-    //       query += ` AND (
-    //         (gender = 'Femme' AND preference = 'Femme')
-    //         OR
-    //         (gender = 'Homme' AND preference = 'Femme')
-    //         OR
-    //         (gender = 'Femme' AND preference = 'Les deux')
-    //          OR
-    //         (gender = 'Homme' AND preference = 'Les deux')
-    //       )`;
-    //     } else if (sexualPreference === 'Non binaire') {
-        
-    //       query += ` AND (
-    //         (gender = 'Non binaire' AND preference = 'Les deux')
-    //         OR
-    //         (gender = 'Homme' AND preference = 'Les deux')
-    //         OR
-    //         (gender = 'Femme' AND preference = 'Les deux')
-    //       )`;
-    //     }
-    //   } else {
-    //     if (sexualPreference === 'Homme') {
-    //       query += ` AND (
-    //         (gender = 'Femme' AND preference = 'Homme')
-    //       )`;
-    //     } else if (sexualPreference === 'Femme') {
-    //       query += ` AND (
-    //         (gender = 'Homme' AND preference = 'Femme')
-    //       )`;
-    //     }
-    //     query += ` AND gender = $${params.length + 1}`;
-    //     params.push(gender);
-    //   }
-    // }
-
-if (gender && sexualPreference) {
-  // Homme qui aime Femme
-  if (gender === 'Femme' && sexualPreference === 'Homme') {
-    query += ` AND gender = 'Femme' AND (preference = 'Homme' OR preference = 'Les deux')`;
-  }
-  // Femme qui aime Homme
-  else if (gender === 'Homme' && sexualPreference === 'Femme') {
-    query += ` AND gender = 'Homme' AND (preference = 'Femme' OR preference = 'Les deux')`;
-  }
-  // Homme qui aime Homme
-  else if (gender === 'Homme' && sexualPreference === 'Homme') {
-    query += ` AND gender = 'Homme' AND (preference = 'Homme' OR preference = 'Les deux')`;
-  }
-  // Femme qui aime Femme
-  else if (gender === 'Femme' && sexualPreference === 'Femme') {
-    query += ` AND gender = 'Femme' AND (preference = 'Femme' OR preference = 'Les deux')`;
-  }
-  // Non binaire
-  else if (gender === 'Non binaire' && sexualPreference === 'Non binaire') {
-    query += ` AND gender = 'Non binaire' AND preference = 'Non binaire'`;
-  }
-  // Cas "Les deux" ou autres, à adapter selon ta logique métier
-  else if (gender === 'Les deux' && sexualPreference === 'Homme') {
-    query += ` AND (
-      (gender = 'Homme' AND (preference = 'Homme' OR preference = 'Les deux'))
-      OR
-      (gender = 'Femme' AND (preference = 'Homme' OR preference = 'Les deux'))
-    )`;
-  }
-    else if (gender === 'Les deux' && sexualPreference === 'Femme') {
-    query += ` AND (
-      (gender = 'Femme' AND (preference = 'Femme' OR preference = 'Les deux'))
-      OR
-      (gender = 'Homme' AND (preference = 'Femme' OR preference = 'Les deux'))
-    )`;
-  }
-}
+      if (gender && sexualPreference) {
+        // Homme qui aime Femme
+        if (gender === 'Femme' && sexualPreference === 'Homme') {
+          query += ` AND gender = 'Femme' AND (preference = 'Homme' OR preference = 'Les deux')`;
+        }
+        // Femme qui aime Homme
+        else if (gender === 'Homme' && sexualPreference === 'Femme') {
+          query += ` AND gender = 'Homme' AND (preference = 'Femme' OR preference = 'Les deux')`;
+        }
+        // Homme qui aime Homme
+        else if (gender === 'Homme' && sexualPreference === 'Homme') {
+          query += ` AND gender = 'Homme' AND (preference = 'Homme' OR preference = 'Les deux')`;
+        }
+        // Femme qui aime Femme
+        else if (gender === 'Femme' && sexualPreference === 'Femme') {
+          query += ` AND gender = 'Femme' AND (preference = 'Femme' OR preference = 'Les deux')`;
+        }
+        // Non binaire
+        else if (gender === 'Non binaire' && sexualPreference === 'Non binaire') {
+          query += ` AND gender = 'Non binaire' AND preference = 'Non binaire'`;
+        }
+        // Cas "Les deux" ou autres, à adapter selon ta logique métier
+        else if (gender === 'Les deux' && sexualPreference === 'Homme') {
+          query += ` AND (
+            (gender = 'Homme' AND (preference = 'Homme' OR preference = 'Les deux'))
+            OR
+            (gender = 'Femme' AND (preference = 'Homme' OR preference = 'Les deux'))
+          )`;
+        }
+          else if (gender === 'Les deux' && sexualPreference === 'Femme') {
+          query += ` AND (
+            (gender = 'Femme' AND (preference = 'Femme' OR preference = 'Les deux'))
+            OR
+            (gender = 'Homme' AND (preference = 'Femme' OR preference = 'Les deux'))
+          )`;
+        }
+      }
 
       if (fame_rate) {
         query += ` AND fame_rate <= $${params.length + 1}`;
         params.push(parseInt(fame_rate));
       }
-
-      // if (interests) {
-      //   const interestsArray = interests.split(',').map(interest => interest.trim());
-      //   const placeholders = interestsArray.map((_, index) => `$${params.length + index + 1}`).join(', ');
-      //   query += ` AND interests && ARRAY[${placeholders}]`;
-      //   params.push(...interestsArray);
-      // }
-
-    //   if (interests) {
-    //     let interestsArray = [];
-      
-    //     if (Array.isArray(interests)) {
-    //       interestsArray = interests;
-    //     } else if (typeof interests === 'string') {
-    //       interestsArray = interests.replace(/[{}"]/g, '').split(',').map(i => i.trim());
-    //     }
-      
-    //     if (interestsArray.length > 0) {
-    //       const placeholders = interestsArray.map((_, index) => `$${params.length + index + 1}`).join(', ');
-    //       query += ` AND interests && ARRAY[${placeholders}]`;
-    //       params.push(...interestsArray);
-    //     }
-    //   }
-
-    // if (interests) {
-    //     let interestsArray = [];
-      
-    //     if (Array.isArray(interests)) {
-    //       interestsArray = interests;
-    //     } else if (typeof interests === 'string') {
-    //       interestsArray = interests.replace(/[{}"]/g, '').split(',').map(i => i.trim());
-    //     }
-
-    //     console.log('interestsArray:', interestsArray);
-      
-    //     if (interestsArray.length > 0) {
-    //       const placeholders = interestsArray.map((_, index) => `$${params.length + index + 1}`).join(', ');
-          
-    //       // Filtre : au moins un intérêt commun
-    //       query += ` AND interests && ARRAY[${placeholders}]`;
-      
-    //       // Ajout pour tri : calcul du nombre d’intérêts communs
-    //       query = query.replace(
-    //         'SELECT ',
-    //         `SELECT cardinality(interests && ARRAY[${placeholders}]) AS common_interests, `
-    //       );
-      
-    //       params.push(...interestsArray);
-    //     }
-    //   }
 
     if (interests) {
       let interestsArray = [];
@@ -321,7 +227,9 @@ if (gender && sexualPreference) {
     }
       
       // Fermer la sous-requête
-      query += `) AS filtered_users`;
+      query += ` GROUP BY u.id, u.email, u.firstname, u.lastname, u.description, u.interests, u.age, u.city, 
+        u.profile_picture, u.gender, u.preference, u.fame_rate, u.lastConnection, u.isonline
+      ) AS filtered_users`;
       
       // Maintenant on peut filtrer par distance puisque c'est une colonne dans la sous-requête
       if (latitude && longitude && maxDistance) {

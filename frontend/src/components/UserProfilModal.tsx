@@ -41,7 +41,7 @@ const getInitials = () => {
         <div className="flex items-center gap-4">
           <Avatar className="h-12 w-12">
             {/* Remplacer par une vraie image si disponible */}
-            <AvatarImage src={`/avatars/${user.id}.jpg`} alt={`${user.firstname} ${user.lastname}`} />
+            <AvatarImage src={user.profile_picture} alt={`${user.firstname} ${user.lastname}`} />
             <AvatarFallback className="bg-blue-100 text-blue-600">
               {getInitials()}
             </AvatarFallback>
@@ -143,7 +143,14 @@ const getInitials = () => {
                     ))}
                   </Swiper>
                 ) : (
-                  <div className="text-gray-400 italic">Aucune photo disponible.</div>
+                  <div className="flex justify-center">
+                    <img
+                      src={user.profile_picture}
+                      alt={`${user.firstname} ${user.lastname}`}
+                      className="object-cover w-full h-64 rounded-lg border"
+                      style={{ maxHeight: 300, maxWidth: 300, margin: "0 auto" }}
+                    />
+                  </div>
                 )}
               </div>
 
