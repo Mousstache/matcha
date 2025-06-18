@@ -58,7 +58,7 @@ const Home = () => {
 
   const navigate = useNavigate();
 
-  useEffect(() => {
+  // useEffect(() => {
     const fetchData = async () => {
       const token = localStorage.getItem("token");
       
@@ -119,9 +119,13 @@ const Home = () => {
       }
     };
 
-    fetchData();
-  }, []);
+    // fetchData();
+  // }, []);
 
+  useEffect(() => {
+  fetchData();
+}, []);
+  
   const handleSignal = async (match_id: number) => {
     try {
       const token = localStorage.getItem("token");
@@ -133,11 +137,12 @@ const Home = () => {
         },
         body: JSON.stringify({ match_id, reporter_id: id, reason: "fake account" })
       });
+      await fetchData();
     } catch (error) {
       console.error("Erreur lors du signalement:", error);
     }
   };
-
+  
   const handleBlock = async (match_id: number) => {
     try {
       const token = localStorage.getItem("token");
@@ -150,6 +155,7 @@ const Home = () => {
         },
         body: JSON.stringify({ match_id, blocker_id: id })
       });
+      await fetchData();
     } catch (error) {
       console.error("Erreur lors du blocage:", error);
     }
@@ -167,6 +173,8 @@ const Home = () => {
         },
         body: JSON.stringify({ liker_id: id, liked_id, match_id })
       });
+
+      await fetchData();
 
       const notif_unlike = { 
         userId: liked_id,
@@ -194,7 +202,8 @@ const Home = () => {
         },
         body: JSON.stringify({ liker_id: id, liked_id })
       });
-
+      
+      await fetchData();
       const notif_like = { 
         userId: liked_id,
         type: "like",
@@ -221,6 +230,7 @@ const Home = () => {
         },
         body: JSON.stringify({ block_id, id })
       });
+      await fetchData();
     } catch (error) {
       console.error("Erreur lors du déblocage:", error);
     }
@@ -246,6 +256,8 @@ const Home = () => {
         },
         body: JSON.stringify({viewedId, viewerId}),
       });
+
+      await fetchData();
 
 
       const notif_seen = { 
@@ -602,9 +614,8 @@ const Home = () => {
                user={selectedUser}
              />
             </TabsContent>
-
-
-             <TabsContent value="history" className="p-3 sm:p-4 focus-visible:outline-none focus-visible:ring-0">
+            {/* PAS DE LIGNE VIDE ICI */}
+            <TabsContent value="history" className="p-3 sm:p-4 focus-visible:outline-none focus-visible:ring-0">
               {history && history.length > 0 ? (
                 <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
                   {history.map((user) => (

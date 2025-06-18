@@ -197,17 +197,13 @@ export async function registerUser(req,res){
 
       const user = await db.findOne('users',  { email: decoded.email });
 
-
-      console.log("dans le back", user.id, ">>>>>>>", user.email);
-
       
       if (!user) {
         return res.status(400).json({ message: "ID utilisateur requis" });
       }
       
-      console.log("user id = ", user.id);
-      
-      const {email, lastname, firstname, description, gender, birthDate, preference, interests, city, age} = req.body;
+
+      const {email, lastname, firstname, description, gender, birthDate, preference, interests, city, age, longitude, latitude} = req.body;
       console.log(firstname, lastname, description);
 
       const conditions = { id: user.id};
@@ -221,6 +217,8 @@ export async function registerUser(req,res){
       if (preference !== undefined) updateData.preference = preference;
       if (interests !== undefined) updateData.interests = interests;
       if (city !== undefined) updateData.city = city;
+      if (longitude !== undefined) updateData.longitude = longitude;
+      if (latitude !== undefined) updateData.latitude = latitude;
       if (email !== undefined) updateData.email = email;
       if (age !== undefined) updateData.age = age;
 
@@ -276,12 +274,6 @@ export async function confirmEmail (req, res){
       { id: users[0].id }
     );
 
-    // console.log("users >>> apres ",users);
-
-
-    // const usersconf = await db.query(sql, [token, now]);
-
-    // console.log("userconf <<<< ", usersconf);
     const checkSql = `SELECT emailConfirmed FROM users WHERE id = $1`;
     const checkResult = await db.query(checkSql, [users[0].id]);
 

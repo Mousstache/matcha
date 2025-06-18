@@ -4,6 +4,7 @@ import { Heart, MapPin, User, Edit3, Camera, Trash } from 'lucide-react';
 import { Button, Avatar, Input, Textarea, Card } from "@heroui/react";
 import { addToast } from "@heroui/toast";
 import { Select, SelectItem } from "@heroui/select";
+
 // import { MultiSelect } from "@heroui/multiselect";
 
 interface User {
@@ -16,6 +17,9 @@ interface User {
   gender: string;
   birthDate: number;
   city: string;
+  country: string;
+  latitude: number;
+  longitude: number;
   age: number;
   preference: string;
   profile_picture: string | null;
@@ -24,9 +28,12 @@ interface User {
 const Profile = () => {
   const [user, setUser] = useState<User | null>(null);
   const { id, profile_picture, setProfilePicture } = useAuth();
+  const { refreshUser } = useAuth();
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [profilePictureIndex, setProfilePictureIndex] = useState(0);
   const [isEditing, setIsEditing] = useState(false);
+  const [countries, setCountries] = useState<string[]>([]);
+  const [cities, setCities] = useState<string[]>([]);
   
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -82,7 +89,59 @@ const Profile = () => {
 
     fetchImageUrls();
     fetchUserProfile();
+    // if (!isEditing) {
+    //   fetchLatLng();
+    // }
+    // fetchLatLng();
   }, [id, profile_picture]);
+
+  useEffect(() => {
+    const fetchLatLng = async () => {
+      if (user?.city && user?.country && !isEditing) {
+        const query = encodeURIComponent(`${user.city}, ${user.country}`);
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${query}`;
+        try {
+          const res = await fetch(url, { headers: { 'Accept-Language': 'fr' } });
+          const data = await res.json();
+          if (data && data.length > 0) {
+            setUser(u => u ? ({
+              ...u,
+              latitude: parseFloat(data[0].lat),
+              longitude: parseFloat(data[0].lon)
+            }) : u);
+          }
+        } catch (err) {
+          // Optionnel: gérer l'erreur
+        }
+      }
+    };
+
+    // Délai pour éviter trop d'appels API
+    const timeoutId = setTimeout(() => {
+      fetchLatLng();
+    }, 500);
+
+    return () => clearTimeout(timeoutId);
+  }, [user?.city, user?.country, isEditing]);
+
+  useEffect(() => {
+  // Exemple statique, tu peux remplacer par une API si besoin
+  setCountries([
+    "France", "Belgique", "Suisse", "Canada", "Maroc", "Algérie", "Tunisie"
+  ]);
+}, []);
+
+  useEffect(() => {
+  if (user?.country === "France") {
+    setCities(["Paris", "Lyon", "Marseille", "Toulouse", "Nice"]);
+  } else if (user?.country === "Belgique") {
+    setCities(["Bruxelles", "Anvers", "Liège"]);
+  } else if (user?.country === "Suisse") {
+    setCities(["Genève", "Zurich", "Lausanne"]);
+  } else {
+    setCities([]);
+  }
+}, [user?.country]);
 
   if (!user) {
     return (
@@ -100,6 +159,19 @@ const Profile = () => {
       </div>
     );
   }
+
+//   const refreshUser = async () => {
+//   const token = localStorage.getItem('token');
+//   if (!token) return;
+//   const response = await fetch('http://localhost:5001/api/user', {
+//     headers: { 'Authorization': `Bearer ${token}` }
+//   });
+//   const data = await response.json();
+//   if (response.ok) {
+//     setUser(data.user);
+//   }
+// };
+
 
   const handleUpdate = async () => {
     if (!user) {
@@ -123,6 +195,8 @@ const Profile = () => {
           firstname: user.firstname,
           lastname: user.lastname,
           username: user.username,
+          latitude: user.latitude,
+          longitude: user.longitude,
         }),
       });
 
@@ -135,6 +209,7 @@ const Profile = () => {
           color: 'success'
         });
         setIsEditing(false);
+        await refreshUser();
       } else {
         console.error("Erreur API updateUser:", data.message);
         addToast({
@@ -493,11 +568,36 @@ const Profile = () => {
                   />
 
               
-                  <Input
-                    label="Ville"
-                    value={user.city || ''}
-                    onChange={(e) => setUser({ ...user, city: e.target.value })}
-                  />
+                  <select
+                  value={user.country || ""}
+                  onChange={e => {
+                    const newCountry = e.target.value;
+                    // Si le pays change, reset la ville seulement si elle n'existe pas dans la nouvelle liste
+                    let newCity = user.city;
+                    if (!cities.includes(user.city)) {
+                      newCity = "";
+                    }
+                    setUser({ ...user, country: newCountry, city: newCity });
+                  }}
+                  className="w-full px-4 py-3 border border-pink-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-pink-50/30"
+                >
+                  <option value="" disabled>Sélectionnez votre pays</option>
+                  {countries.map(country => (
+                    <option key={country} value={country}>{country}</option>
+                  ))}
+                </select>
+
+                  <select
+                    value={user.city || ""}
+                    onChange={e => setUser({ ...user, city: e.target.value })}
+                    className="w-full px-4 py-3 border border-pink-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-pink-50/30"
+                    disabled={!user.country}
+                  >
+                    <option value="" disabled>Sélectionnez votre ville</option>
+                    {cities.map(city => (
+                      <option key={city} value={city}>{city}</option>
+                    ))}
+                  </select>
 
              
                   <Input

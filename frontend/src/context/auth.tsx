@@ -34,7 +34,7 @@ interface AuthContextType {
   setLongitude: React.Dispatch<React.SetStateAction<number>>;
   setDescription: React.Dispatch<React.SetStateAction<string>>;
   setProfilePicture: React.Dispatch<React.SetStateAction<string>>;
-  refreshUserData: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -184,7 +184,7 @@ const fetchBlockedUsers = async () => {
         setLatitude,
         setLongitude,
         setSexualPreference,
-        refreshUserData: fetchUserData,
+        refreshUser: fetchUserData,
         setProfilePicture
       }}
     >

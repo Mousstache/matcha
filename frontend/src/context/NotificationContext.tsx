@@ -17,7 +17,7 @@ export const NotificationProvider = ({ children }: { children: React.ReactNode }
 
         socket.on("RECEIVE_NOTIFICATION", (notification) => {
             console.log("🔔 Notification reçue dans le provider", notification);
-            alert(`Nouvelle notification : ${notification.message}`);
+            // alert(`Nouvelle notification : ${notification.message}`);
             setNotifications((prev) => [...prev, notification]);
         });
 

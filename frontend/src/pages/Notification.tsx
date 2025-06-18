@@ -3,6 +3,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Bell, Heart, MessageCircle, Check } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 // Typage de la notification
 interface NotificationType {
@@ -31,13 +32,15 @@ interface NotificationItemProps {
   notif: NotificationType;
   onRemove: () => void;
   animateOut: boolean;
+  onNavigate: () => void;
 }
 
-const NotificationItem = ({ notif, onRemove, animateOut }: NotificationItemProps) => (
+const NotificationItem = ({ notif, onRemove, animateOut, onNavigate }: NotificationItemProps) => (
   <div
-    className={`p-4 border-b border-pink-50 transition-all duration-300 ${
+    className={`p-4 border-b border-pink-50 transition-all duration-300 cursor-pointer hover:bg-pink-25 ${
       animateOut ? "opacity-0 transform translate-x-full" : ""
     } ${notif.read ? "bg-white text-gray-500" : "bg-pink-50 border-l-4 border-l-pink-500"}`}
+    onClick={onNavigate}
   >
     <div className="flex items-start">
       <div className="mr-3 mt-1 p-2 rounded-full bg-pink-100 flex-shrink-0">
@@ -47,7 +50,13 @@ const NotificationItem = ({ notif, onRemove, animateOut }: NotificationItemProps
         <p className={notif.read ? "" : "font-semibold text-gray-800"}>{notif.message}</p>
         <p className="text-xs text-gray-400 mt-1">{notif.time || "À l'instant"}</p>
       </div>
-      <button onClick={onRemove} className="text-gray-400 hover:text-pink-500 p-1">
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onRemove();
+        }}
+        className="text-gray-400 hover:text-pink-500 p-1"
+      >
         <Check size={16} />
       </button>
     </div>
@@ -57,6 +66,7 @@ const NotificationItem = ({ notif, onRemove, animateOut }: NotificationItemProps
 const Notification = () => {
   const { notifications, setNotifications } = useNotifications();
   const [animateOut, setAnimateOut] = useState<number | null>(null);
+  const navigate = useNavigate();
 
   // Marquer toutes les notifications comme lues
   const markAllAsRead = () => {
@@ -70,6 +80,11 @@ const Notification = () => {
       setNotifications((prev: NotificationType[]) => prev.filter((_, i) => i !== index));
       setAnimateOut(null);
     }, 300);
+  };
+
+  // Naviguer vers la page home
+  const handleNotificationClick = () => {
+    navigate("/");
   };
 
   const unreadCount = notifications.filter((n: NotificationType) => !n.read).length;
@@ -102,6 +117,7 @@ const Notification = () => {
                 notif={notif}
                 onRemove={() => removeNotification(i)}
                 animateOut={animateOut === i}
+                onNavigate={handleNotificationClick}
               />
             ))
           )}

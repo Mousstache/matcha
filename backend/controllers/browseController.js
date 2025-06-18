@@ -304,6 +304,8 @@ export async function blockUser(req, res) {
     }else {
       blocked_id = match.user1_id;
     }
+
+    await db.delete('matches', { match_id });
     
     await db.insert('blocks', { blocker_id: blocker_id , blocked_id: blocked_id})
   
@@ -328,12 +330,7 @@ export async function getBlockUser(req, res) {
       SELECT b.block_id, u.id AS user_id, u.email, u.userName, u.firstName, u.lastName
       FROM blocks b
       JOIN users u ON b.blocked_id = u.id
-      WHERE b.blocker_id = $1
-      UNION
-      SELECT b.block_id, u.id AS user_id, u.email, u.userName, u.firstName, u.lastName
-      FROM blocks b
-      JOIN users u ON b.blocker_id = u.id
-      WHERE b.blocked_id = $1;
+      WHERE b.blocker_id = $1;
       `;
   
     const block = await db.query(sql, [user.id]);
