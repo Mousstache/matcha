@@ -254,27 +254,43 @@ export async function likeUser (req, res){
     const user = await db.findOne('users', { email: decoded.email });
     
     const sql = `
-      SELECT m.match_id, u.id AS id, u.email, u.userName, u.firstName, u.lastName
+      SELECT m.match_id, u.id, u.email, u.firstname, u.lastname, u.description, u.interests, u.age, u.city, 
+        u.profile_picture, u.gender, u.preference, u.fame_rate, u.lastConnection, u.isonline,
+        COALESCE(
+          ARRAY_AGG(ui.image_url) FILTER (WHERE ui.image_url IS NOT NULL),
+          ARRAY[]::text[]
+        ) AS images
       FROM matches m
       JOIN users u ON m.user2_id = u.id
+      LEFT JOIN user_images ui ON ui.user_id = u.id
       WHERE m.user1_id = $1
       AND u.id NOT IN (
         SELECT blocked_id FROM blocks WHERE blocker_id = $1
         UNION
         SELECT blocker_id FROM blocks WHERE blocked_id = $1
       )
+      GROUP BY m.match_id, u.id, u.email, u.firstname, u.lastname, u.description, u.interests, u.age, u.city, 
+       u.profile_picture, u.gender, u.preference, u.fame_rate, u.lastConnection, u.isonline
       
       UNION
       
-      SELECT m.match_id, u.id AS id, u.email, u.userName, u.firstName, u.lastName
+      SELECT m.match_id, u.id, u.email, u.firstname, u.lastname, u.description, u.interests, u.age, u.city, 
+        u.profile_picture, u.gender, u.preference, u.fame_rate, u.lastConnection, u.isonline,
+        COALESCE(
+          ARRAY_AGG(ui.image_url) FILTER (WHERE ui.image_url IS NOT NULL),
+          ARRAY[]::text[]
+        ) AS images
       FROM matches m
       JOIN users u ON m.user1_id = u.id
+      LEFT JOIN user_images ui ON ui.user_id = u.id
       WHERE m.user2_id = $1
       AND u.id NOT IN (
         SELECT blocked_id FROM blocks WHERE blocker_id = $1
         UNION
         SELECT blocker_id FROM blocks WHERE blocked_id = $1
       )
+      GROUP BY m.match_id, u.id, u.email, u.firstname, u.lastname, u.description, u.interests, u.age, u.city, 
+       u.profile_picture, u.gender, u.preference, u.fame_rate, u.lastConnection, u.isonline
     `;
     
     const matches = await db.query(sql, [user.id]);

@@ -111,29 +111,61 @@ export async function getMessages (req, res) {
     }
   };
 
+// export async function sendNotification (req, res) {
+//     try {
+  
+//       const { user_id, notification_text } = req.body;
+  
+//       const notifications = await db.insert('notification', {user_id, notification_text, created_at: new Date()});
+  
+//       return res.status(200).json({
+//         message: "listes des notifications",
+//         notifications: notifications,
+//       })
+  
+//     }catch (error){
+//       console.log('Error lors de la recup des matches', error);
+//     }
+//   }; 
+
 export async function sendNotification (req, res) {
     try {
-  
       const { user_id, notification_text } = req.body;
-  
-      const notifications = await db.insert('notification', {user_id, notification_text, created_at: new Date()});
-  
+
+      // Insérer la nouvelle notification
+      await db.insert('notification', {user_id, notification_text, created_at: new Date()});
+
+      // Supprimer les plus anciennes si > 10
+      await db.query(
+        `DELETE FROM notification
+         WHERE user_id = $1
+         AND id NOT IN (
+           SELECT id FROM notification WHERE user_id = $1 ORDER BY created_at DESC LIMIT 10
+         )`,
+        [user_id]
+      );
+
+      const notifications = await db.query(
+        "SELECT * FROM notification WHERE user_id = $1 ORDER BY created_at DESC LIMIT 10",
+        [user_id]
+      );
+
       return res.status(200).json({
         message: "listes des notifications",
-        notifications: notifications,
+        notifications: notifications.rows,
       })
-  
+
     }catch (error){
       console.log('Error lors de la recup des matches', error);
     }
-  }; 
+  }
   
 export async function getNotifications(req, res) {
     try {
       const { user_id } = req.params;
   
       const notifications = await db.query(
-        "SELECT * FROM notification WHERE user_id = $1",
+        "SELECT * FROM notification WHERE user_id = $1 ORDER BY created_at DESC LIMIT 10",
         [user_id]
     );
   

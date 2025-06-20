@@ -37,6 +37,9 @@ const Navbar: React.FC = () => {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  // Ajoute cet état pour la notification
+  const [notificationCount, setNotificationCount] = useState(0); // À remplacer par ta logique réelle
+
   // Fonction de déconnexion
   const handleLogout = async () => {
     const token = localStorage.getItem("token");
@@ -98,9 +101,14 @@ const Navbar: React.FC = () => {
             <Link
               to="/notification"
               title="Notifications"
-              className="rounded-full hover:bg-gray-100 transition text-pink-500 border border-pink-100 shadow flex items-center justify-center w-8 h-8"
+              className="relative rounded-full hover:bg-gray-100 transition text-pink-500 border border-pink-100 shadow flex items-center justify-center w-8 h-8"
             >
               <Bell className="h-5 w-5" />
+              {notificationCount > 0 && (
+                <span className="absolute -top-1 -right-1 flex items-center justify-center h-5 w-5 rounded-full bg-red-500 text-white text-xs font-bold shadow ring-2 ring-white">
+                  {notificationCount}
+                </span>
+              )}
             </Link>
             <Link
               to="/profil"

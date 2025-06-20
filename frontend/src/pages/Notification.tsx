@@ -2,7 +2,7 @@ import { useNotifications } from "@/context/NotificationContext";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Bell, Heart, MessageCircle, Check } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 // Typage de la notification
@@ -67,6 +67,21 @@ const Notification = () => {
   const { notifications, setNotifications } = useNotifications();
   const [animateOut, setAnimateOut] = useState<number | null>(null);
   const navigate = useNavigate();
+
+
+  useEffect(() => {
+    async function fetchNotifications() {
+      // Remplace par l'ID utilisateur réel
+      const userId = localStorage.getItem("user_id");
+      if (!userId) return;
+      const res = await fetch(`/api/notifications/${userId}`);
+      const data = await res.json();
+      // Limite à 10 notifications côté front aussi, par sécurité
+      setNotifications(data.notifications.slice(0, 10));
+    }
+    fetchNotifications();
+  }, [setNotifications]);
+
 
   // Marquer toutes les notifications comme lues
   const markAllAsRead = () => {

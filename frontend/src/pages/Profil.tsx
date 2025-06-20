@@ -535,114 +535,182 @@ const Profile = () => {
                 </Button>
               </div>
                 {isEditing && (
-                <div className="space-y-4">
-               
-                  <Textarea
-                    value={user.description || ''}
-                    onChange={(e) => setUser({ ...user, description: e.target.value })}
-                    className="w-full p-4 border border-pink-200 rounded-2xl"
-                    rows={4}
-                    placeholder="Parlez de vous..."
-                  />
+                <div className="bg-white rounded-2xl shadow-md p-6 border border-pink-100 space-y-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Informations personnelles */}
+      <div className="space-y-4 md:col-span-2">
+        <h3 className="text-lg font-semibold text-pink-700 mb-2 flex items-center">
+          <User size={16} className="mr-2" /> 
+          Informations personnelles
+        </h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="flex flex-col">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Prénom</label>
+            <Input
+              value={user.firstname || ''}
+              onChange={(e) => setUser({ ...user, firstname: e.target.value })}
+              className="w-full"
+              placeholder="Votre prénom"
+            />
+          </div>
+          
+          <div className="flex flex-col">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Nom</label>
+            <Input
+              value={user.lastname || ''}
+              onChange={(e) => setUser({ ...user, lastname: e.target.value })}
+              className="w-full"
+              placeholder="Votre nom"
+            />
+          </div>
+          
+          <div className="flex flex-col">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Pseudo</label>
+            <Input
+              value={user.username || ''}
+              onChange={(e) => setUser({ ...user, username: e.target.value })}
+              className="w-full"
+              placeholder="Votre pseudo"
+            />
+          </div>
+          
+          <div className="flex flex-col">
+            <label className="block text-sm font-medium text-gray-700 mb-1">Âge</label>
+            <Input
+              type="number"
+              value={user.age || ''}
+              onChange={(e) => setUser({ ...user, age: parseInt(e.target.value) })}
+              className="w-full"
+              placeholder="Votre âge"
+            />
+          </div>
+        </div>
+      </div>
+      
+      {/* Localisation */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-pink-700 mb-2 flex items-center">
+          <MapPin size={16} className="mr-2" />
+          Localisation
+        </h3>
+        
+        <div className="space-y-3">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Pays</label>
+            <select
+              value={user.country || ""}
+              onChange={e => {
+                const newCountry = e.target.value;
+                let newCity = user.city;
+                if (!cities.includes(user.city)) {
+                  newCity = "";
+                }
+                setUser({ ...user, country: newCountry, city: newCity });
+              }}
+              className="w-full px-4 py-3 border border-pink-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-pink-50/30"
+            >
+              <option value="" disabled>Sélectionnez votre pays</option>
+              {countries.map(country => (
+                <option key={country} value={country}>{country}</option>
+              ))}
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Ville</label>
+            <select
+              value={user.city || ""}
+              onChange={e => setUser({ ...user, city: e.target.value })}
+              className="w-full px-4 py-3 border border-pink-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-pink-50/30"
+              disabled={!user.country}
+            >
+              <option value="" disabled>Sélectionnez votre ville</option>
+              {cities.map(city => (
+                <option key={city} value={city}>{city}</option>
+              ))}
+            </select>
+          </div>
+        </div>
+      </div>
+      
+      {/* Préférences */}
+      <div className="space-y-4">
+        <h3 className="text-lg font-semibold text-pink-700 mb-2 flex items-center">
+          <Heart size={16} className="mr-2" />
+          Préférences
+        </h3>
+        
+        <div className="space-y-3">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Genre</label>
+            <select 
+              value={user.gender || ""}
+              onChange={(e) => setUser({ ...user, gender: e.target.value })}
+              className="w-full px-4 py-3 border border-pink-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-pink-50/30"
+            >
+              <option value="" disabled>Sélectionnez votre genre</option>
+              <option value="Homme">Homme</option>
+              <option value="Femme">Femme</option>
+              <option value="Non binaire">Non binaire</option>
+            </select>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Intéressé(e) par</label>
+            <select 
+              value={user.preference || ""} 
+              onChange={(e) => setUser({ ...user, preference: e.target.value })}
+              className="w-full px-4 py-3 border border-pink-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-pink-50/30"
+            >
+              <option value="" disabled>Qui vous intéresse ?</option>
+              <option value="Homme">Homme</option>
+              <option value="Femme">Femme</option>
+              <option value="Les deux">Les deux</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      
+      {/* Description */}
+      <div className="space-y-3 md:col-span-2">
+        <h3 className="text-lg font-semibold text-pink-700 mb-2">À propos de moi</h3>
+        <Textarea
+          value={user.description || ''}
+          onChange={(e) => setUser({ ...user, description: e.target.value })}
+          className="w-full p-4 border border-pink-200 rounded-2xl min-h-[120px]"
+          placeholder="Parlez de vous, de vos passions, de ce qui vous rend unique..."
+        />
+      </div>
+    </div>
+    
+    {/* Boutons d'actions */}
+    <div className="flex justify-end gap-2 pt-4 border-t border-pink-100">
+      <Button 
+        onClick={() => setIsEditing(false)} 
+        variant="bordered" 
+        className="border-pink-300 text-pink-600 hover:bg-pink-50"
+      >
+        Annuler
+      </Button>
+      <Button 
+        onClick={handleUpdate} 
+        variant="solid" 
+        className="bg-pink-500 hover:bg-pink-600 text-white"
+      >
+        Enregistrer les modifications
+      </Button>
+    </div>
+  </div>
+)}
 
-                 
-                  <Input
-                    label="Prénom"
-                    value={user.firstname || ''}
-                    onChange={(e) => setUser({ ...user, firstname: e.target.value })}
-                  />
-
-                
-                  <Input
-                    label="Nom"
-                    value={user.lastname || ''}
-                    onChange={(e) => setUser({ ...user, lastname: e.target.value })}
-                  />
-
-                
-                  <Input
-                    label="Âge"
-                    type="number"
-                    value={user.age || ''}
-                    onChange={(e) => setUser({ ...user, age: e.target.value })}
-                  />
-
-              
-                  <select
-                  value={user.country || ""}
-                  onChange={e => {
-                    const newCountry = e.target.value;
-                    // Si le pays change, reset la ville seulement si elle n'existe pas dans la nouvelle liste
-                    let newCity = user.city;
-                    if (!cities.includes(user.city)) {
-                      newCity = "";
-                    }
-                    setUser({ ...user, country: newCountry, city: newCity });
-                  }}
-                  className="w-full px-4 py-3 border border-pink-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-pink-50/30"
-                >
-                  <option value="" disabled>Sélectionnez votre pays</option>
-                  {countries.map(country => (
-                    <option key={country} value={country}>{country}</option>
-                  ))}
-                </select>
-
-                  <select
-                    value={user.city || ""}
-                    onChange={e => setUser({ ...user, city: e.target.value })}
-                    className="w-full px-4 py-3 border border-pink-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-pink-50/30"
-                    disabled={!user.country}
-                  >
-                    <option value="" disabled>Sélectionnez votre ville</option>
-                    {cities.map(city => (
-                      <option key={city} value={city}>{city}</option>
-                    ))}
-                  </select>
-
-             
-                  <Input
-                    label="Pseudo"
-                    value={user.username || ''}
-                    onChange={(e) => setUser({ ...user, username: e.target.value })}
-                  />
-
-                  <select 
-                    value={user.gender} 
-                    // onChange={(e) => setGender(e.target.value)} 
-                      onChange={(e) => setUser({ ...user, gender: e.target.value })}
-                    // onValueChange={(value) => setUser({ ...user, gender: value })}
-
-                    className="w-full px-4 py-3 border border-pink-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-pink-50/30"
-                  >
-                    <option value="" disabled selected>Sélectionnez votre genre</option>
-                    <option value="Homme">Homme</option>
-                    <option value="Femme">Femme</option>
-                    <option value="Non binaire">Non binaire</option>
-                  </select>
-
-                   <select 
-                    value={user.preference} 
-                    // onChange={(e) => setGender(e.target.value)} 
-                      onChange={(e) => setUser({ ...user, preference: e.target.value })}
-                    // onValueChange={(value) => setUser({ ...user, gender: value })}
-
-                    className="w-full px-4 py-3 border border-pink-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-pink-50/30"
-                  >
-                    <option value="" disabled selected>Sélectionnez votre genre</option>
-                    <option value="Homme">Homme</option>
-                    <option value="Femme">Femme</option>
-                    <option value="Les deux">Les deux</option>
-                  </select>
-
-                  {/* Boutons */}
-                  <div className="flex justify-end gap-2">
-                    <Button onClick={() => setIsEditing(false)} variant="bordered">Annuler</Button>
-                    <Button onClick={handleUpdate} variant="solid" className="bg-pink-500 text-white">Enregistrer</Button>
-                  </div>
-                </div>
-
-                
-                )}
+{!isEditing && (
+  <div className="bg-white/90 rounded-xl p-5 shadow-sm border border-pink-100">
+    <p className="text-gray-700 whitespace-pre-wrap text-lg leading-relaxed">
+      {user.description || "Aucune description pour le moment."}
+    </p>
+  </div>
+)}
                  {/* : (
                  <p className="text-gray-700 whitespace-pre-wrap text-lg text-left">
                    {user.description || "Aucune description pour le moment."}
