@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useAuth } from "@/context/auth";
 import { Heart, MapPin, User, Edit3, Camera, Trash } from 'lucide-react';
 import { Button, Avatar, Input, Textarea, Card } from "@heroui/react";
-import { addToast } from "@heroui/toast";
+import { addToast } from "@/utils/toast";
 import { Select, SelectItem } from "@heroui/select";
 
 // import { MultiSelect } from "@heroui/multiselect";

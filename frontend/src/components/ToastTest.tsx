@@ -1,4 +1,5 @@
-import { addToast, Button } from "@heroui/react";
+import { Button } from "@/components/ui/button";
+import { addToast } from "@/utils/toast";
 
 type ColorType = "default" | "primary" | "secondary" | "success" | "warning" | "danger";
 
@@ -10,9 +11,8 @@ export default function ToastTest() {
       {colors.map((color) => (
         <Button
           key={color}
-          color={color}
-          variant={"flat"}
-          onPress={() =>
+          variant={"outline"}
+          onClick={() =>
             addToast({
               title: "Toast title",
               description: "Toast displayed successfully",

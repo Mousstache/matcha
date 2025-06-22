@@ -16,6 +16,8 @@ import Notification from "./pages/Notification";
 import BlockList  from "./pages/BlockList";
 import ForgotPassword  from "./pages/ForgotPassword";
 import ResetPassword  from "./pages/ResetPassword";
+import { ToastProvider } from "./context/ToastContext";
+import ToastContainer from "./components/ToastContainer";
 
 // interface User {
 //   id: number;
@@ -95,8 +97,10 @@ const RouteNotFound = () => {
 function App() {
   
   return (
-   <Router>
-      <Routes>
+    <ToastProvider>
+      <Router>
+        <ToastContainer />
+        <Routes>
         {/* Pages SANS Layout (pas de Navbar) */}
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
@@ -166,6 +170,7 @@ function App() {
         />
       </Routes>
     </Router>
+    </ToastProvider>
   );
 }
 

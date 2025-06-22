@@ -98,8 +98,9 @@ export async function recordProfileView (req, res){
       console.log('maxDistance:', maxDistance);
       console.log('ordered:', ordered);
       console.log('interests:', interests);
+      console.log('excludeIds:', excludeIds);
+      console.log('excludeIds length:', excludeIds ? excludeIds.length : 0);
       console.log('>>>>>>>>>>>>');
-
   
       const currentUserId = req.user.id;
       const blocked_id = req.user.getBlockUsers;
@@ -204,17 +205,20 @@ export async function recordProfileView (req, res){
         params.push(parseInt(fame_rate));
       }
 
+    // Filtrage par intérêts - ne s'applique que si des intérêts sont sélectionnés
     if (interests) {
       let interestsArray = [];
     
       if (Array.isArray(interests)) {
         interestsArray = interests;
       } else if (typeof interests === 'string') {
-        interestsArray = interests.replace(/[{}"]/g, '').split(',').map(i => i.trim());
+        interestsArray = interests.replace(/[{}"]/g, '').split(',').map(i => i.trim()).filter(i => i.length > 0);
       }
     
       console.log('interestsArray:', interestsArray);
+      console.log('interestsArray.length:', interestsArray.length);
     
+      // Ne filtrer par intérêts que si au moins un intérêt est sélectionné
       if (interestsArray.length > 0) {
         const nextParamIndex = params.length + 1;
     
@@ -231,6 +235,9 @@ export async function recordProfileView (req, res){
         );
     
         params.push(interestsArray);
+        console.log('Filtre par intérêts appliqué avec:', interestsArray);
+      } else {
+        console.log('Aucun intérêt sélectionné, pas de filtrage par intérêts');
       }
     }
       
@@ -261,6 +268,10 @@ export async function recordProfileView (req, res){
       // }
   
       const result = await db.query(query, params);
+      
+      console.log('Nombre de profils trouvés:', result.rows ? result.rows.length : result.length);
+      console.log('Requête SQL générée:', query);
+      console.log('Paramètres SQL:', params);
       
       res.status(200).json({
         message: 'Liste des utilisateurs récupérée avec succès',

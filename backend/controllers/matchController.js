@@ -394,22 +394,20 @@ export async function getInteractedProfiles(req, res) {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await db.findOne('users', { email: decoded.email });
 
-    // Récupérer tous les profils avec lesquels l'utilisateur a déjà interagi (likes ou dislikes)
+    // Récupérer seulement les profils likés ou dislikés (pas les vues)
     const sql = `
       SELECT DISTINCT liked_id as user_id
       FROM likes 
       WHERE liker_id = $1
-      UNION
-      SELECT DISTINCT viewed_id as user_id
-      FROM profile_views 
-      WHERE viewer_id = $1
     `;
 
     const interacted = await db.query(sql, [user.id]);
     const interactedIds = interacted.rows ? interacted.rows.map(row => row.user_id) : interacted.map(row => row.user_id);
 
+    console.log(`Profils exclus pour l'utilisateur ${user.id}:`, interactedIds);
+
     return res.status(200).json({
-      message: "Liste des profils déjà interagis",
+      message: "Liste des profils déjà likés/dislikés",
       interactedIds: interactedIds,
     });
   } catch (error) {
