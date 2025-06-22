@@ -388,4 +388,37 @@ export async function getConsultedUsers(req, res) {
   }
 }
 
-export default { ConsultProfile, likeUser, unlikeUser, getLikes, getOtherLikes, getMatches, dislikeUser , getViewlist, getConsultedUsers};
+export async function getInteractedProfiles(req, res) {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await db.findOne('users', { email: decoded.email });
+
+    // Récupérer tous les profils avec lesquels l'utilisateur a déjà interagi (likes ou dislikes)
+    const sql = `
+      SELECT DISTINCT liked_id as user_id
+      FROM likes 
+      WHERE liker_id = $1
+      UNION
+      SELECT DISTINCT viewed_id as user_id
+      FROM profile_views 
+      WHERE viewer_id = $1
+    `;
+
+    const interacted = await db.query(sql, [user.id]);
+    const interactedIds = interacted.rows ? interacted.rows.map(row => row.user_id) : interacted.map(row => row.user_id);
+
+    return res.status(200).json({
+      message: "Liste des profils déjà interagis",
+      interactedIds: interactedIds,
+    });
+  } catch (error) {
+    console.log('Error lors de la récupération des profils interagis', error);
+    return res.status(500).json({
+      message: "Erreur lors de la récupération des profils interagis",
+      error: error.message
+    });
+  }
+}
+
+export default { ConsultProfile, likeUser, unlikeUser, getLikes, getOtherLikes, getMatches, dislikeUser , getViewlist, getConsultedUsers, getInteractedProfiles};

@@ -91,6 +91,7 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
   const [error, setError] = useState("");
+  const [emailSent, setEmailSent] = useState(false);
 
   const handleNext = (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,6 +131,8 @@ const Register = () => {
         setLoading(false);
       } else {
         localStorage.setItem("token", data.token);
+        setEmailSent(true);
+        setLoading(false);
         // navigate("/confirm-email");
       }
     } catch (error) {
@@ -165,7 +168,28 @@ const Register = () => {
               </div>
             )}
             
-            {step === 1 ? (
+            {emailSent ? (
+              <div className="text-center py-8">
+                <div className="inline-flex items-center justify-center p-4 bg-green-100 rounded-full mb-4">
+                  <Mail size={32} className="text-green-600" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-800 mb-2">Vérifiez votre email !</h3>
+                <p className="text-gray-600 mb-4">
+                  Nous avons envoyé un lien de confirmation à <strong>{email}</strong>
+                </p>
+                <p className="text-gray-500 text-sm mb-6">
+                  Cliquez sur le lien dans l'email pour activer votre compte. 
+                  N'oubliez pas de vérifier vos spams si vous ne trouvez pas l'email.
+                </p>
+                <button 
+                  onClick={() => navigate("/login")}
+                  className="bg-gradient-to-r from-pink-500 to-purple-500 text-white px-6 py-2 rounded-lg hover:shadow-lg transition duration-300"
+                >
+                  Aller à la connexion
+                </button>
+              </div>
+            ) : (
+              step === 1 ? (
               <form onSubmit={handleNext} className="flex flex-col space-y-5">
                 <div>
                   <label className="block text-gray-700 mb-1 font-medium">Email</label>
@@ -284,6 +308,7 @@ const Register = () => {
                   </button>
                 </div>
               </form>
+              )
             )}
           </CardContent>
           
