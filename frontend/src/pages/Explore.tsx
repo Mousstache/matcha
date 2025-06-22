@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Heart, X, SlidersHorizontal, Search } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import UserProfilModal from "@/components/UserProfilModal";
+import { addToast } from "@/utils/toast";
 
 interface Profile {
   id: string;
@@ -72,7 +73,7 @@ const FilterSection: React.FC<FilterSectionProps> = ({
         <SlidersHorizontal className="h-5 w-5 text-[#ec4899]" />
         <h3 className="text-[#ec4899] text-xl font-bold">Filtres de recherche</h3>
       </div>
-      
+
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onApplyFilters)} className="flex flex-col gap-6">
           <FormField
@@ -205,12 +206,12 @@ const FilterSection: React.FC<FilterSectionProps> = ({
 
 const Explore = () => {
   const { id, sexualPreference, gender, longitude, latitude, socket, firstname } = useAuth();
-  
+
   // States for profiles and current profile view
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [currentProfileIndex, setCurrentProfileIndex] = useState(0);
   const [direction, setDirection] = useState('');
-  
+
   // Default filter values
   const [minAge, setMinAge] = useState(18);
   const [maxAge, setMaxAge] = useState(40);
@@ -221,7 +222,7 @@ const Explore = () => {
   const [finished, setFinished] = useState(false);
   // Track viewed profiles to avoid showing them again
   const [viewedProfiles, setViewedProfiles] = useState<Set<string>>(new Set());
-  
+
 
   const interestsList: Interest[] = [
     { id: "sport", label: "sport" },
@@ -236,7 +237,7 @@ const Explore = () => {
 
   const [selectedUser, setSelectedUser] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  
+
   // Create form with react-hook-form
   const form = useForm<FilterFormValues>({
     defaultValues: {
@@ -275,10 +276,10 @@ const Explore = () => {
       const viewedId = viewed_id;
       const viewerId = id;
       console.log("l'id du mec que je regarde", viewedId);
-      
+
       // Add to local viewed profiles set
       setViewedProfiles(prev => new Set(prev).add(viewedId));
-      
+
       const res = await fetch('http://localhost:5001/api/record-profile-view', {
         method: "POST",
         headers: {
@@ -306,7 +307,14 @@ const Explore = () => {
         body: JSON.stringify({ liked_id, liker_id }),
       });
       if (!res) return;
-      
+
+      // Show success toast
+      addToast({
+        title: "💖 Like envoyé !",
+        description: `Vous avez liké ${currentProfile?.firstname || 'cette personne'}`,
+        color: "success"
+      });
+
       const notif_like = {
         userId: liked_id,
         type: "like",
@@ -319,8 +327,8 @@ const Explore = () => {
     } catch (error) {
       console.error(error);
     }
-      setDirection('right');
-      setTimeout(() => {
+    setDirection('right');
+    setTimeout(() => {
       if (currentProfileIndex + 1 >= profiles.length) {
         setFinished(true);
       } else {
@@ -343,6 +351,14 @@ const Explore = () => {
         body: JSON.stringify({ liked_id, liker_id }),
       });
       if (!res) return;
+      
+      // Show dislike toast
+      addToast({
+        title: "👋 Passé !",
+        description: `Vous avez passé ${currentProfile?.firstname || 'cette personne'}`,
+        color: "warning"
+      });
+      
       markViewed(profileId);
     } catch (error) {
       console.error(error);
@@ -368,7 +384,7 @@ const Explore = () => {
           'Content-Type': 'application/json'
         }
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         return data.interactedIds || [];
@@ -384,33 +400,43 @@ const Explore = () => {
     try {
       // D'abord récupérer les profils déjà interagis
       const interactedIds = await getInteractedProfiles();
-      
+      console.log('Profils à exclure:', interactedIds);
+
+      const requestBody = {
+        minAge,
+        maxAge,
+        maxDistance: distance,
+        sexualPreference: sexualPreference,
+        gender: gender,
+        longitude,
+        latitude,
+        interests: interests.length > 0 ? interests : null, // Envoie null si aucun intérêt sélectionné
+        id,
+        excludeIds: interactedIds  // Exclure les profils déjà interagis
+      };
+
+      console.log('Paramètres de recherche:');
+      console.log('- interests:', interests);
+      console.log('- interests.length:', interests.length);
+      console.log('- requestBody.interests:', requestBody.interests);
+      console.log('- excludeIds count:', interactedIds.length);
+      console.log('Requête complète:', requestBody);
+
       const response = await fetch('http://localhost:5001/api/allUsers', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          minAge,
-          maxAge,
-          maxDistance: distance,
-          sexualPreference: gender,
-          gender: sexualPreference,
-          longitude,
-          latitude,
-          interests,
-          id,
-          excludeIds: interactedIds  // Exclure les profils déjà interagis
-        }),
+        body: JSON.stringify(requestBody),
       });
-      
+
       const data = await response.json();
-      
+
       if (!response.ok) {
         throw new Error(data.message || 'Failed to fetch users');
       }
-      
+
       setProfiles(data.users);
       setCurrentProfileIndex(0);
       setDirection('');
@@ -424,6 +450,14 @@ const Explore = () => {
     setMinAge(data.ageRange[0]);
     setMaxAge(data.ageRange[1]);
     setDistance(data.distance[0]);
+    
+    // Show filter applied toast
+    addToast({
+      title: "🔍 Filtres appliqués !",
+      description: `Recherche mise à jour avec vos nouveaux critères`,
+      color: "primary"
+    });
+    
     getUsers();
   };
 
@@ -466,8 +500,8 @@ const Explore = () => {
     typeof currentProfile?.interests === "string"
       ? (currentProfile.interests as string).split(",").map((i: string) => i.trim())
       : Array.isArray(currentProfile?.interests)
-      ? currentProfile.interests
-      : [];
+        ? currentProfile.interests
+        : [];
 
   return (
     <div className="min-h-screen bg-gradient-to-r from-pink-50 to-purple-100 py-8 px-4">
@@ -478,7 +512,7 @@ const Explore = () => {
               Explorer
             </span>
           </h1>
-          
+
           {/* Bouton filtres pour mobile */}
           <div className="lg:hidden">
             <Sheet>
@@ -558,29 +592,28 @@ const Explore = () => {
                 </div>
               </div>
             ) : finished ? (
-          <div className="text-center p-12 bg-white shadow-lg rounded-xl border border-pink-100">
-            <div className="mb-6">
-              <Heart className="mx-auto h-16 w-16 text-pink-200" />
-              <p className="mt-4 text-gray-500 text-lg">
-                Vous avez parcouru tous les profils disponibles !
-              </p>
-              <p className="text-gray-400 text-sm mt-2">
-                Revenez plus tard ou ajustez vos filtres pour découvrir de nouveaux profils.
-              </p>
-            </div>
-          </div>
-        ) : (
+              <div className="text-center p-12 bg-white shadow-lg rounded-xl border border-pink-100">
+                <div className="mb-6">
+                  <Heart className="mx-auto h-16 w-16 text-pink-200" />
+                  <p className="mt-4 text-gray-500 text-lg">
+                    Vous avez parcouru tous les profils disponibles !
+                  </p>
+                  <p className="text-gray-400 text-sm mt-2">
+                    Revenez plus tard ou ajustez vos filtres pour découvrir de nouveaux profils.
+                  </p>
+                </div>
+              </div>
+            ) : (
               <Card
-                className={`transform transition-all duration-500 shadow-2xl rounded-xl overflow-hidden ${
-                  direction === 'right' ? 'translate-x-full rotate-12 opacity-0' :
+                className={`transform transition-all duration-500 shadow-2xl rounded-xl overflow-hidden p-0 ${direction === 'right' ? 'translate-x-full rotate-12 opacity-0' :
                   direction === 'left' ? '-translate-x-full -rotate-12 opacity-0' : ''
-                }`}
+                  }`}
               >
-                <div className="relative overflow-hidden">
+                <div className="relative overflow-hidden rounded-t-xl">
                   <img
                     src={currentProfile.profile_picture || '/placeholder-profile.jpg'}
                     alt={currentProfile.firstname}
-                    className="w-full h-[450px] object-cover"
+                    className="w-full h-[450px] object-cover block"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 via-black/20 to-black/10"></div>
                   <div className="absolute bottom-0 left-0 right-0 p-6">
@@ -595,22 +628,40 @@ const Explore = () => {
                     </div>
                   </div>
                 </div>
-                
-                <CardContent className="bg-white rounded-b-xl -mt-4">
-                  <div className="p-3 pb-1 flex flex-wrap gap-2">
-                    <Badge variant="secondary" className="bg-pink-100 text-pink-700 hover:bg-pink-200">
-                      {currentProfile.gender}
-                    </Badge>
-                    {currentProfile.interests && interestsArray.map((interest, i) => (
-                      <Badge key={i} variant="outline" className="border-pink-200 text-gray-700 hover:bg-pink-50">
-                        {interest}
-                      </Badge>
-                    ))}
+
+                <CardContent>
+                  <div className="px-3">
+                    <div className="mb-2">
+                      <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Sexe & Intérêts</h4>
+                      <div className="flex flex-wrap gap-2">
+                        <Badge variant="secondary" className="bg-pink-100 text-pink-700 hover:bg-pink-200">
+                          {typeof currentProfile.gender === 'number' 
+                            ? currentProfile.gender === 1 ? 'Homme' : currentProfile.gender === 2 ? 'Femme' : 'Autre' 
+                            : currentProfile.gender || "Non spécifié"}
+                        </Badge>
+                        <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-150">
+                          Recherche: {typeof currentProfile.preference === 'number' 
+                            ? currentProfile.preference === 1 ? 'Hommes' : currentProfile.preference === 2 ? 'Femmes' : 'Tous' 
+                            : currentProfile.preference || "Non spécifié"}
+                        </Badge>
+                        {currentProfile.interests && interestsArray.map((interest, i) => (
+                          <Badge key={i} variant="outline" className="border-pink-200 text-gray-700 hover:bg-pink-50">
+                            {interest}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+
+                    {currentProfile.description && (
+                      <div>
+                        <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">À propos</h4>
+                        <p className="text-gray-700 leading-relaxed">{currentProfile.description}</p>
+                      </div>
+                    )}
                   </div>
-                  <p className="text-gray-700 leading-relaxed px-3 pb-3">{currentProfile.description}</p>
                 </CardContent>
-                
-                <CardFooter className="flex justify-center items-center gap-6 p-3 bg-white rounded-b-xl border-t-0 -mt-1 pt-0">
+
+                <CardFooter className="flex justify-center items-center gap-6 p-3 bg-white rounded-b-xl border-t-0 pt-0">
                   <Button
                     variant="outline"
                     size="icon"
@@ -620,7 +671,7 @@ const Explore = () => {
                     <X className="h-7 w-7 text-white group-hover:scale-110 transition-transform duration-200 relative z-10" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
                   </Button>
-                  
+
                   <Button
                     variant="outline"
                     size="icon"
@@ -630,7 +681,7 @@ const Explore = () => {
                     <Search className="h-7 w-7 text-white group-hover:scale-110 transition-transform duration-200 relative z-10" />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
                   </Button>
-                  
+
                   <Button
                     variant="outline"
                     size="icon"

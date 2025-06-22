@@ -5,7 +5,7 @@ import useGeolocation from "../hooks/useGeolocation";
 import useReverseGeolocation from "../hooks/useReverseGeolocation";
 import { useNavigate } from "react-router-dom";
 import { XIcon, Camera, Info, MapPin, Heart, Check, X, Upload } from 'lucide-react';
-import { addToast } from "@heroui/toast";
+import { addToast } from "@/utils/toast";
 import { useAuth } from "@/context/auth";
 import { Button, Input } from "@heroui/react";
 import { User, Trash } from 'lucide-react';
@@ -96,9 +96,7 @@ interface Interest {
       { id: "cooking", label: "Cuisine" },
       { id: "art", label: "Art" },
       { id: "literature", label: "Littérature" }
-    ];
-
-    useEffect(() => {
+    ];    useEffect(() => {
       const fetchImageUrls = async () => {
         const token = localStorage.getItem('token');
         if (!token) return;
@@ -130,8 +128,17 @@ interface Interest {
           setImageUrls([]);
         }
       };
-  
+
       fetchImageUrls();
+      
+      // Cleanup function pour nettoyer les URLs temporaires quand le composant se démonte
+      return () => {
+        imageUrls.forEach(url => {
+          if (url.startsWith('blob:')) {
+            URL.revokeObjectURL(url);
+          }
+        });
+      };
     }, [id, profile_picture]);
     
     const calculateAge = (birthDate: string) => {
@@ -308,6 +315,7 @@ const sendForm = async (e: any) => {
           return a.position - b.position;
         });
 
+        // Remplacer complètement les URLs pour éviter le mélange avec les URLs temporaires
         setImageUrls(sortedImages.map(img => img.image_url));
       }
       
@@ -349,7 +357,7 @@ const sendForm = async (e: any) => {
 };
 
 // Modification de handleFileChange pour afficher un aperçu immédiat
-const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
   const files = e.target.files;
   if (!files) return;
   
@@ -373,8 +381,17 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   // Ajouter les nouvelles images aux images existantes au lieu de les remplacer
   setImages(prev => [...prev, ...fileList]);
   
-  // Uploader automatiquement les nouvelles images immédiatement
-  handleUpload(fileList);
+  try {
+    // Uploader automatiquement les nouvelles images immédiatement
+    await handleUpload(fileList);
+    
+    // Nettoyer les URLs temporaires après upload réussi
+    newPreviewUrls.forEach(url => URL.revokeObjectURL(url));
+  } catch (error) {
+    // En cas d'erreur, supprimer les aperçus temporaires
+    setImageUrls(prev => prev.filter(url => !newPreviewUrls.includes(url)));
+    newPreviewUrls.forEach(url => URL.revokeObjectURL(url));
+  }
 };
 
   const handleRemoveImage = async (index: number) => {
