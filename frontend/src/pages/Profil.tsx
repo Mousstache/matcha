@@ -450,7 +450,7 @@ const Profile = () => {
   };
 
   return (
-    <div className="bg-gradient-to-br from-pink-50 via-fuchsia-50 to-purple-100 py-9 px-2">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 via-fuchsia-50 to-purple-100 py-9 px-2">
       <Card className="max-w-3xl mx-auto overflow-hidden shadow-2xl rounded-3xl border-0">
         <div className="relative h-52 bg-gradient-to-r from-pink-400 via-pink-300 to-fuchsia-300">
           {profile_picture ? (
@@ -579,7 +579,7 @@ const Profile = () => {
             <label className="block text-sm font-medium text-gray-700 mb-1">Âge</label>
             <Input
               type="number"
-              value={user.age || ''}
+              value={user.age !== undefined && user.age !== null ? String(user.age) : ''}
               onChange={(e) => setUser({ ...user, age: parseInt(e.target.value) })}
               className="w-full"
               placeholder="Votre âge"

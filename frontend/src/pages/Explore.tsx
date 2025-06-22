@@ -37,7 +37,6 @@ interface Interest {
 interface FilterFormValues {
   ageRange: number[];
   distance: number[];
-  fame_rate: number[];
   interests: string[];
 }
 
@@ -46,11 +45,9 @@ interface FilterSectionProps {
   minAge: number;
   maxAge: number;
   distance: number;
-  fame_rate: number;
   interestsList: Interest[];
   onAgeChange: (values: number[]) => void;
   onDistanceChange: (values: number[]) => void;
-  onFameChange: (values: number[]) => void;
   onInterestChange: (values: string[]) => void;
   onApplyFilters: (data: FilterFormValues) => void;
   className?: string;
@@ -62,11 +59,9 @@ const FilterSection: React.FC<FilterSectionProps> = ({
   minAge,
   maxAge,
   distance,
-  fame_rate,
   interestsList,
   onAgeChange,
   onDistanceChange,
-  onFameChange,
   onInterestChange,
   onApplyFilters,
   className = ""
@@ -168,11 +163,11 @@ const FilterSection: React.FC<FilterSectionProps> = ({
                           checked={field.value?.includes(interest.label)}
                           onChange={(e) => {
                             const currentValues = field.value || [];
-                            let newValues;
+                            let newValues: string[];
                             if (e.target.checked) {
                               newValues = [...currentValues, interest.id];
                             } else {
-                              newValues = currentValues.filter(val => val !== interest.label);
+                              newValues = currentValues.filter((val: string) => val !== interest.label);
                             }
                             field.onChange(newValues);
                             onInterestChange(newValues);
@@ -191,40 +186,6 @@ const FilterSection: React.FC<FilterSectionProps> = ({
                 </FormControl>
                 <FormDescription>
                   Sélectionnez vos centres d'intérêt
-                </FormDescription>
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="fame_rate"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel className="text-gray-700 font-semibold text-base">
-                  Fame_rate Rate : <span className="text-[#ec4899] font-bold">{fame_rate}</span>
-                </FormLabel>
-                <FormControl>
-                  <Slider
-                    onValueChange={(values) => {
-                      field.onChange(values);
-                      onFameChange(values);
-                    }}
-                    value={field.value}
-                    max={5000}
-                    min={1}
-                    step={1}
-                    className="mt-4"
-                    style={{
-                      height: 6,
-                      background: "#fce7f3",
-                      borderRadius: 6,
-                      boxShadow: "none",
-                    }}
-                  />
-                </FormControl>
-                <FormDescription>
-                  Rayon de recherche autour de votre position
                 </FormDescription>
               </FormItem>
             )}
@@ -254,11 +215,12 @@ const Explore = () => {
   const [minAge, setMinAge] = useState(18);
   const [maxAge, setMaxAge] = useState(40);
   const [distance, setDistance] = useState(50);
-  const [fame_rate, setFame] = useState(0);
   const [interests, setInterests] = useState<string[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
 
   const [finished, setFinished] = useState(false);
+  // Track viewed profiles to avoid showing them again
+  const [viewedProfiles, setViewedProfiles] = useState<Set<string>>(new Set());
   
 
   const interestsList: Interest[] = [
@@ -280,7 +242,6 @@ const Explore = () => {
     defaultValues: {
       ageRange: [minAge, maxAge],
       distance: [distance],
-      fame_rate: [fame_rate],
       interests: [],
     },
   });
@@ -291,10 +252,9 @@ const Explore = () => {
     form.reset({
       ageRange: [minAge, maxAge],
       distance: [distance],
-      fame_rate: [fame_rate],
       interests: [],
     });
-  }, [minAge, maxAge, distance, fame_rate]);
+  }, [minAge, maxAge, distance]);
 
   const handleAgeChange = (values: number[]) => {
     setMinAge(values[0]);
@@ -303,10 +263,6 @@ const Explore = () => {
 
   const handleDistanceChange = (values: number[]) => {
     setDistance(values[0]);
-  };
-
-  const handleFameChange = (values: number[]) => {
-    setFame(values[0]);
   };
 
   const handleInterestChange = (values: string[]) => {
@@ -319,6 +275,10 @@ const Explore = () => {
       const viewedId = viewed_id;
       const viewerId = id;
       console.log("l'id du mec que je regarde", viewedId);
+      
+      // Add to local viewed profiles set
+      setViewedProfiles(prev => new Set(prev).add(viewedId));
+      
       const res = await fetch('http://localhost:5001/api/record-profile-view', {
         method: "POST",
         headers: {
@@ -398,8 +358,33 @@ const Explore = () => {
     }, 300);
   };
 
+  // Fonction pour récupérer les profils déjà interagis (likés ou passés)
+  const getInteractedProfiles = async () => {
+    try {
+      const response = await fetch('http://localhost:5001/api/getInteractedProfiles', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        return data.interactedIds || [];
+      }
+      return [];
+    } catch (error) {
+      console.error('Error fetching interacted profiles:', error);
+      return [];
+    }
+  };
+
   const getUsers = async () => {
     try {
+      // D'abord récupérer les profils déjà interagis
+      const interactedIds = await getInteractedProfiles();
+      
       const response = await fetch('http://localhost:5001/api/allUsers', {
         method: 'POST',
         headers: {
@@ -414,9 +399,9 @@ const Explore = () => {
           gender: sexualPreference,
           longitude,
           latitude,
-          fame_rate: fame_rate,
           interests,
-          id
+          id,
+          excludeIds: interactedIds  // Exclure les profils déjà interagis
         }),
       });
       
@@ -517,11 +502,9 @@ const Explore = () => {
                   minAge={minAge}
                   maxAge={maxAge}
                   distance={distance}
-                  fame_rate={fame_rate}
                   interestsList={interestsList}
                   onAgeChange={handleAgeChange}
                   onDistanceChange={handleDistanceChange}
-                  onFameChange={handleFameChange}
                   onInterestChange={handleInterestChange}
                   onApplyFilters={applyFilters}
                   className="border-0 shadow-none p-0"
@@ -539,11 +522,9 @@ const Explore = () => {
               minAge={minAge}
               maxAge={maxAge}
               distance={distance}
-              fame_rate={fame_rate}
               interestsList={interestsList}
               onAgeChange={handleAgeChange}
               onDistanceChange={handleDistanceChange}
-              onFameChange={handleFameChange}
               onInterestChange={handleInterestChange}
               onApplyFilters={applyFilters}
               className="sticky top-4"
@@ -595,13 +576,13 @@ const Explore = () => {
                   direction === 'left' ? '-translate-x-full -rotate-12 opacity-0' : ''
                 }`}
               >
-                <div className="relative">
+                <div className="relative overflow-hidden">
                   <img
                     src={currentProfile.profile_picture || '/placeholder-profile.jpg'}
                     alt={currentProfile.firstname}
-                    className="w-full h-96 object-cover"
+                    className="w-full h-[450px] object-cover"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 via-black/20 to-black/10"></div>
                   <div className="absolute bottom-0 left-0 right-0 p-6">
                     <h2 className="text-white text-3xl font-bold">
                       {currentProfile.firstname}, {currentProfile.age} ans
@@ -615,8 +596,8 @@ const Explore = () => {
                   </div>
                 </div>
                 
-                <CardContent className="p-6 bg-white">
-                  <div className="mb-4 flex flex-wrap gap-2">
+                <CardContent className="bg-white rounded-b-xl -mt-4">
+                  <div className="p-3 pb-1 flex flex-wrap gap-2">
                     <Badge variant="secondary" className="bg-pink-100 text-pink-700 hover:bg-pink-200">
                       {currentProfile.gender}
                     </Badge>
@@ -626,35 +607,38 @@ const Explore = () => {
                       </Badge>
                     ))}
                   </div>
-                  <p className="text-gray-700 leading-relaxed">{currentProfile.description}</p>
+                  <p className="text-gray-700 leading-relaxed px-3 pb-3">{currentProfile.description}</p>
                 </CardContent>
                 
-                <CardFooter className="flex justify-between p-4 bg-white border-t border-gray-100">
+                <CardFooter className="flex justify-center items-center gap-6 p-3 bg-white rounded-b-xl border-t-0 -mt-1 pt-0">
                   <Button
                     variant="outline"
                     size="icon"
-                    className="rounded-full h-14 w-14 bg-white border-2 border-red-500 hover:bg-red-50 shadow-lg transition-all duration-300"
+                    className="group relative rounded-xl h-16 w-16 bg-gradient-to-br from-red-400 to-red-500 border-0 hover:from-red-500 hover:to-red-600 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-110 active:scale-95 overflow-hidden"
                     onClick={() => handleDislike(currentProfile.id)}
                   >
-                    <X className="h-6 w-6 text-red-500" />
+                    <X className="h-7 w-7 text-white group-hover:scale-110 transition-transform duration-200 relative z-10" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
                   </Button>
                   
                   <Button
                     variant="outline"
                     size="icon"
-                    className="rounded-full h-14 w-14 bg-white border-2 border-blue-500 hover:bg-blue-50 shadow-lg transition-all duration-300"
+                    className="group relative rounded-xl h-16 w-16 bg-gradient-to-br from-blue-400 to-blue-500 border-0 hover:from-blue-500 hover:to-blue-600 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-110 active:scale-95 overflow-hidden"
                     onClick={() => handleUserClick(currentProfile)}
                   >
-                    <Search className="h-6 w-6 text-blue-500" />
+                    <Search className="h-7 w-7 text-white group-hover:scale-110 transition-transform duration-200 relative z-10" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
                   </Button>
                   
                   <Button
                     variant="outline"
                     size="icon"
-                    className="rounded-full h-14 w-14 bg-white border-2 border-pink-500 hover:bg-pink-50 shadow-lg transition-all duration-300"
+                    className="group relative rounded-xl h-16 w-16 bg-gradient-to-br from-pink-400 to-pink-500 border-0 hover:from-pink-500 hover:to-pink-600 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-110 active:scale-95 overflow-hidden"
                     onClick={() => handleLike(currentProfile.id)}
                   >
-                    <Heart className="h-6 w-6 text-pink-500" />
+                    <Heart className="h-7 w-7 text-white group-hover:scale-110 transition-transform duration-200 relative z-10" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200"></div>
                   </Button>
                 </CardFooter>
               </Card>

@@ -206,6 +206,9 @@ const sendForm = async (e: any) => {
     const userAge = calculateAge(birthDate);
     const token = localStorage.getItem("token");
 
+    // Les images sont maintenant uploadées immédiatement via handleFileChange
+    // Donc plus besoin de les uploader ici
+    
     const response = await fetch('http://localhost:5001/api/fillInfo', {
       method: 'PUT',
       headers: {
@@ -236,7 +239,7 @@ const sendForm = async (e: any) => {
       return;
     }
 
-    // Succès : redirection
+    // Succès : redirection immédiate
     // localStorage.setItem("token", data.token); // décommente si besoin
     navigate("/login", { state: { email: data.email, password: data.password || "" } });
     console.log(data);
@@ -270,7 +273,7 @@ const sendForm = async (e: any) => {
           description: 'Authentification requise pour uploader.',
           color: 'danger'
       });
-      return;
+      throw new Error('Token manquant');
   }
 
   const currentProfileImgUrl = profile_picture;
@@ -321,6 +324,8 @@ const sendForm = async (e: any) => {
         description: 'Photos ajoutées avec succès !',
         color: 'success'
       });
+      
+      return data; // Retourner les données pour confirmation
     } else {
       console.error("Erreur API upload:", data.error);
       addToast({
@@ -328,6 +333,7 @@ const sendForm = async (e: any) => {
         description: data.error || 'Erreur lors de l\'upload des images.',
         color: 'danger'
       });
+      throw new Error(data.error || 'Erreur upload');
     }
   } catch (error) {
     console.error("Erreur fetch upload:", error);
@@ -336,6 +342,7 @@ const sendForm = async (e: any) => {
       description: 'Erreur de connexion lors de l\'upload.',
       color: 'danger'
     });
+    throw error;
   } finally {
     setLoading(false);
   }
@@ -363,11 +370,11 @@ const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
   // Ajouter les aperçus temporairement à l'affichage
   setImageUrls(prev => [...prev, ...newPreviewUrls]);
   
-  // Stocker les fichiers pour l'upload
-  setImages(fileList);
+  // Ajouter les nouvelles images aux images existantes au lieu de les remplacer
+  setImages(prev => [...prev, ...fileList]);
   
-  // Uploader automatiquement
-  // handleUpload(fileList);
+  // Uploader automatiquement les nouvelles images immédiatement
+  handleUpload(fileList);
 };
 
   const handleRemoveImage = async (index: number) => {

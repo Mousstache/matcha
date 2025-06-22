@@ -22,7 +22,7 @@ router.post('/login', userCtrl.logUser);
 router.post('/upload', authMiddleware ,upload.array("images", 5), userCtrl.imageUpload);
 router.get('/user-images', authMiddleware,  userCtrl.getUserImages);
 
-router.get('/user', authMiddleware,ensureEmailConfirmed,  userCtrl.getUser);
+router.get('/user', authMiddleware,  userCtrl.getUser);
 router.post('/allUsers', authMiddleware,ensureEmailConfirmed,  userCtrl.getAllUsers);
 // router.get('consult-profil/:id', authMiddleware,ensureEmailConfirmed,  userCtrl.getConsultProfil);
 
@@ -33,6 +33,7 @@ router.delete('/unlikeUser',authMiddleware,ensureEmailConfirmed, userCtrl.unlike
 router.get('/getLikes',authMiddleware,ensureEmailConfirmed, userCtrl.getLikes);
 router.get('/getOtherLikes',authMiddleware,ensureEmailConfirmed, userCtrl.getOtherLikes);
 router.get('/getMatches',authMiddleware,ensureEmailConfirmed, userCtrl.getMatches);
+router.get('/getInteractedProfiles',authMiddleware,ensureEmailConfirmed, userCtrl.getInteractedProfiles);
 router.post('/ConsultProfile',authMiddleware,ensureEmailConfirmed, userCtrl.ConsultProfile);
 router.get('/getViewlist',authMiddleware,ensureEmailConfirmed, userCtrl.getViewlist);
 router.get('/getHistory',authMiddleware,ensureEmailConfirmed, userCtrl.getConsultedUsers);

@@ -85,6 +85,7 @@ export async function recordProfileView (req, res){
         interests,
         fame_rate,
         id,
+        excludeIds, // Nouveau paramètre pour exclure les profils déjà interagis
       } = req.body;
   
       console.log('>>>>>>>>>>>>');
@@ -141,6 +142,13 @@ export async function recordProfileView (req, res){
           SELECT blocker_id FROM blocks WHERE blocked_id = $${params.length + 1}
         )`;
       params.push(currentUserId);
+      
+      // Exclure les profils déjà interagis
+      if (excludeIds && excludeIds.length > 0) {
+        const placeholders = excludeIds.map((_, index) => `$${params.length + index + 1}`).join(',');
+        query += ` AND u.id NOT IN (${placeholders})`;
+        params.push(...excludeIds);
+      }
       
       // Filtres d'âge
       if (minAge) {
