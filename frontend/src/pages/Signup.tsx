@@ -288,7 +288,7 @@ const Signup = () => {
       // Succès : redirection immédiate
       // localStorage.setItem("token", data.token); // décommente si besoin
       navigate("/login", {
-        state: { email: data.email, password: data.password || "" },
+        state: { email: data.userName, password: data.password || "" },
       });
     } catch (error: any) {
       setError(error.message || "Erreur réseau.");

@@ -4,7 +4,11 @@ import { Send, Ban, Flag, HeartCrack, Heart, UserRound, Eye, MessageSquare, Thum
 import { useAuth } from "@/context/auth";
 import { Tabs, TabsList, TabsContent, TabsTrigger } from "@/components/ui/tabs";
 import UserProfilModal from "@/components/UserProfilModal";
-import { Button } from '@/components/ui/button';
+import SignalModal from '@/components/SignalModal';
+import { addToast } from "@/utils/toast";
+
+
+
 
 
 interface User {
@@ -52,12 +56,19 @@ const Home = () => {
   // const [selectedUser, setSelectedUser] = useState(null);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSignalModalOpen, setIsSignalModalOpen] = useState(false);
   // const [selectedUser, setSelectedUser] = useState(null);
+  // Dans votre composant
 
 
-
+  const handleOpenSignalModal = (user: User) => {
+    setSelectedUser(user);
+    setIsSignalModalOpen(true);
+  };
+  
+  
   const navigate = useNavigate();
-
+  
   // useEffect(() => {
     const fetchData = async () => {
       const token = localStorage.getItem("token");
@@ -129,6 +140,7 @@ const Home = () => {
   const handleSignal = async (match_id: number) => {
     try {
       const token = localStorage.getItem("token");
+      console.log("match_id:", id);
       await fetch('http://localhost:5001/api/signalUser', {
         method: "POST",
         headers: {
@@ -142,6 +154,7 @@ const Home = () => {
       console.error("Erreur lors du signalement:", error);
     }
   };
+
   
   const handleBlock = async (match_id: number) => {
     try {
@@ -213,8 +226,21 @@ const Home = () => {
       if (socket) {
         socket.emit("SEND_NOTIFICATION", notif_like);
       }
+      
+      addToast({
+        title: "Like envoyé",
+        description: "Vous avez liké ce profil avec succès",
+        duration: 3000,
+      });
+      
     } catch (error) {
       console.error("Erreur lors du like:", error);
+      addToast({
+        title: "Erreur",
+        description: "Impossible d'envoyer le like",
+        // variant: "destructive",
+        duration: 3000,
+      });
     }
   };
 
@@ -677,13 +703,28 @@ const Home = () => {
                         <p className="text-gray-500 text-xs sm:text-sm">{user.email}</p>
                         <p className="text-xs text-gray-400 mt-1">A visité le {new Date().toLocaleDateString()}</p>
                       </div>
-                      <button 
-                          onClick={() => handlelike(user.id)}
+                      <div className="flex gap-2 mt-3 justify-center">
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation(); // This prevents the modal from opening
+                            handlelike(user.id);
+                          }}
                           className="flex items-center gap-1 px-3 sm:px-4 py-1.5 sm:py-2 rounded-md font-medium text-xs sm:text-sm shadow font-poppins bg-gray-100 text-pink-600 hover:bg-pink-100 hover:text-pink-700 hover:shadow-lg transition-all"
                         >
                           <Heart size={16} className="mr-1" />
                           <span>Like</span>
                         </button>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation(); // This prevents the modal from opening
+                            handleOpenSignalModal(user);
+                          }}
+                          className="flex items-center gap-1 px-3 sm:px-4 py-1.5 sm:py-2 rounded-md font-medium text-xs sm:text-sm shadow font-poppins bg-red-100 text-red-600 hover:bg-red-200 hover:text-red-700 hover:shadow-lg transition-all"
+                        >
+                          <Flag size={16} className="mr-1" />
+                          <span>Signaler</span>
+                        </button>
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -701,6 +742,14 @@ const Home = () => {
                 onClose={() => setIsModalOpen(false)}
                 user={selectedUser}
               />
+              {selectedUser && (
+                <SignalModal
+                  isOpen={isSignalModalOpen}
+                  onClose={() => setIsSignalModalOpen(false)}
+                  userName={selectedUser.firstname}
+                  matchId={selectedUser.id}
+                />
+              )}
             </TabsContent>
           </Tabs>
         </div>

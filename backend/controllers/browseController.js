@@ -108,7 +108,26 @@ export async function recordProfileView (req, res){
       console.log('blocked_id:', blocked_id);
       console.log('id :', currentUserId);
   
-      // Solution: Utiliser une sous-requête pour pouvoir utiliser l'alias "distance" dans le filtrage
+      // Construction de la requête avec calcul des intérêts communs et distance
+      let interestsArray = [];
+      let hasInterestFilter = false;
+      
+      // Traitement des intérêts
+      if (interests) {
+        if (Array.isArray(interests)) {
+          interestsArray = interests;
+        } else if (typeof interests === 'string') {
+          interestsArray = interests.replace(/[{}"]/g, '').split(',').map(i => i.trim()).filter(i => i.length > 0);
+        }
+        hasInterestFilter = interestsArray.length > 0;
+      }
+
+      console.log('interestsArray:', interestsArray);
+      console.log('hasInterestFilter:', hasInterestFilter);
+
+      const params = [];
+      
+      // Construction de la requête principale
       let query = `
       SELECT * FROM (
         SELECT 
@@ -118,18 +137,30 @@ export async function recordProfileView (req, res){
             ARRAY_AGG(ui.image_url) FILTER (WHERE ui.image_url IS NOT NULL),
             ARRAY[]::text[]
           ) AS images`;
-      
-      const params = [];
+
+      // Ajout du calcul des intérêts communs (toujours calculé)
+      if (hasInterestFilter) {
+        query += `,
+        cardinality(ARRAY(
+          SELECT UNNEST(u.interests)
+          INTERSECT
+          SELECT UNNEST($${params.length + 1}::text[])
+        )) AS common_interests`;
+        params.push(interestsArray);
+      } else {
+        query += `,
+        0 AS common_interests`;
+      }
       
       // Ajout du calcul de distance si les coordonnées sont fournies
       if (latitude && longitude) {
         query += `,
         ROUND(6371 * acos(
-          cos(radians($1)) *
-          cos(radians(latitude)) *
-          cos(radians(longitude) - radians($2)) +
-          sin(radians($1)) *
-          sin(radians(latitude))
+          cos(radians($${params.length + 1})) *
+          cos(radians(u.latitude)) *
+          cos(radians(u.longitude) - radians($${params.length + 2})) +
+          sin(radians($${params.length + 1})) *
+          sin(radians(u.latitude))
         )) AS distance`;
         params.push(parseFloat(latitude), parseFloat(longitude));
       }
@@ -153,12 +184,12 @@ export async function recordProfileView (req, res){
       
       // Filtres d'âge
       if (minAge) {
-        query += ` AND age >= $${params.length + 1}`;
+        query += ` AND u.age >= $${params.length + 1}`;
         params.push(parseInt(minAge));
       }
       
       if (maxAge) {
-        query += ` AND age <= $${params.length + 1}`;
+        query += ` AND u.age <= $${params.length + 1}`;
         params.push(parseInt(maxAge));
       }
 
@@ -166,23 +197,16 @@ export async function recordProfileView (req, res){
       if (gender && sexualPreference) {
         console.log(`Filtrage par genre et préférences: genre=${gender}, préférence=${sexualPreference}`);
         
-        // L'utilisateur cherche des profils qui correspondent à ses critères
-        // ET ces profils doivent aussi être intéressés par le genre de l'utilisateur
-        
         if (sexualPreference === 'Homme') {
-          // L'utilisateur cherche des hommes
           query += ` AND u.gender = 'Homme' AND (u.preference = '${gender}' OR u.preference = 'Les deux')`;
         }
         else if (sexualPreference === 'Femme') {
-          // L'utilisateur cherche des femmes
           query += ` AND u.gender = 'Femme' AND (u.preference = '${gender}' OR u.preference = 'Les deux')`;
         }
         else if (sexualPreference === 'Non binaire') {
-          // L'utilisateur cherche des personnes non binaires
           query += ` AND u.gender = 'Non binaire' AND (u.preference = '${gender}' OR u.preference = 'Les deux')`;
         }
         else if (sexualPreference === 'Les deux') {
-          // L'utilisateur cherche tout le monde
           query += ` AND (
             (u.gender = 'Homme' AND (u.preference = '${gender}' OR u.preference = 'Les deux'))
             OR
@@ -193,46 +217,22 @@ export async function recordProfileView (req, res){
         }
       }
 
-      if (fame_rate) {
-        query += ` AND fame_rate <= $${params.length + 1}`;
+      if (fame_rate && fame_rate < 100) {
+        query += ` AND u.fame_rate <= $${params.length + 1}`;
         params.push(parseInt(fame_rate));
       }
 
-    // Filtrage par intérêts - ne s'applique que si des intérêts sont sélectionnés
-    if (interests) {
-      let interestsArray = [];
-    
-      if (Array.isArray(interests)) {
-        interestsArray = interests;
-      } else if (typeof interests === 'string') {
-        interestsArray = interests.replace(/[{}"]/g, '').split(',').map(i => i.trim()).filter(i => i.length > 0);
-      }
-    
-      console.log('interestsArray:', interestsArray);
-      console.log('interestsArray.length:', interestsArray.length);
-    
-      // Ne filtrer par intérêts que si au moins un intérêt est sélectionné
-      if (interestsArray.length > 0) {
-        const nextParamIndex = params.length + 1;
-    
-        query += ` AND interests && $${nextParamIndex}::text[]`; // Filtre : au moins un intérêt commun
-    
-        // Ajout du calcul des intérêts communs
-        query = query.replace(
-          'SELECT ',
-          `SELECT cardinality(ARRAY(
-             SELECT UNNEST(interests)
-             INTERSECT
-             SELECT UNNEST($${nextParamIndex}::text[])
-           )) AS common_interests, `
-        );
-    
-        params.push(interestsArray);
+      // Filtrage par intérêts si des intérêts sont sélectionnés
+      if (hasInterestFilter) {
+        // L'index du paramètre pour les intérêts est déjà ajouté plus haut
+        const interestParamIndex = params.findIndex(p => Array.isArray(p) && p.length > 0 && p.every(item => typeof item === 'string'));
+        if (interestParamIndex !== -1) {
+          query += ` AND u.interests && $${interestParamIndex + 1}::text[]`;
+        }
         console.log('Filtre par intérêts appliqué avec:', interestsArray);
       } else {
-        console.log('Aucun intérêt sélectionné, pas de filtrage par intérêts');
+        console.log('Pas d\'intérêts fournis ou sélectionnés');
       }
-    }
       
       // Fermer la sous-requête
       query += ` GROUP BY u.id, u.email, u.firstname, u.lastname, u.description, u.interests, u.age, u.city, 
@@ -246,19 +246,56 @@ export async function recordProfileView (req, res){
       }
       
       
-      // Tri des résultats
-      // if (ordered) {
-        //   if (ordered === "age") {
-            //     query += ` ORDER BY age`;
-            //   } else if (ordered === "distance" && latitude && longitude) {
-                //     query += ` ORDER BY distance`;
-                //   } else if (ordered === "interests") {
-                    // query += ` ORDER BY interests`;
-                    //   }
-      // } else if (latitude && longitude) {
-      //   // Par défaut, trier par distance si les coordonnées sont fournies
-      //   query += ` ORDER BY distance`;
-      // }
+      // Tri des résultats par score de pertinence pondéré
+      if (latitude && longitude) {
+        const maxDist = maxDistance || 50;
+        const distParam1 = params.length + 1;
+        const distParam2 = params.length + 2;
+        
+        // Calcul du score de pertinence basé sur les 3 critères
+        query += ` ORDER BY (
+          -- Distance (40 points max - plus proche = meilleur score)
+          CASE 
+            WHEN distance IS NOT NULL AND distance <= $${distParam1} THEN 
+              40 - (distance * 40.0 / $${distParam2})
+            ELSE 0 
+          END +
+          
+          -- Intérêts communs (35 points max)
+          CASE 
+            WHEN common_interests IS NOT NULL THEN 
+              LEAST(common_interests * 35.0 / 3, 35)
+            ELSE 0 
+          END +
+          
+          -- Fame rating (25 points max)
+          CASE 
+            WHEN fame_rate IS NOT NULL THEN 
+              LEAST(fame_rate * 25.0 / 100, 25)
+            ELSE 0 
+          END
+        ) DESC`;
+        
+        // Ajouter les paramètres pour l'ORDER BY
+        params.push(parseFloat(maxDist), parseFloat(maxDist));
+      } else {
+        // Si pas de coordonnées, trier par fame_rate et intérêts communs
+        query += ` ORDER BY (
+          -- Intérêts communs (60 points max)
+          CASE 
+            WHEN common_interests IS NOT NULL THEN 
+              LEAST(common_interests * 60.0 / 3, 60)
+            ELSE 0 
+          END +
+          
+          -- Fame rating (40 points max)
+          CASE 
+            WHEN fame_rate IS NOT NULL THEN 
+              LEAST(fame_rate * 40.0 / 100, 40)
+            ELSE 0 
+          END
+        ) DESC`;
+      }
   
       const result = await db.query(query, params);
       
@@ -380,16 +417,27 @@ export async function unblockUser(req, res) {
 
 export async function signalUser(req, res) {
   try {
-    const { reporter_id, match_id, reason} = req.body;
+    const { reporter_id, match_id, reason, reported_id: directReportedId } = req.body;
   
-    const match = await db.findOne('matches', {match_id});
-  
-    let reported_id;
-  
-    if (match.user1_id === reporter_id) {
-      reported_id = match.user2_id;
-    }else {
-      reported_id = match.user1_id;
+    let reported_id = directReportedId;
+
+    // Si reported_id n'est pas fourni directement, chercher dans les matches
+    if (!reported_id && match_id) {
+      const match = await db.findOne('matches', {match_id});
+      
+      if (!match) {
+        return res.status(404).json({ message: 'Match non trouvé' });
+      }
+    
+      if (match.user1_id === reporter_id) {
+        reported_id = match.user2_id;
+      } else {
+        reported_id = match.user1_id;
+      }
+    }
+
+    if (!reported_id) {
+      return res.status(400).json({ message: 'Impossible de déterminer l\'utilisateur à signaler' });
     }
 
     console.log('reported_id:', reported_id);
@@ -398,12 +446,12 @@ export async function signalUser(req, res) {
     await db.insert('reports', { reporter_id: reporter_id , reported_id: reported_id, reason: reason})
   
     res.status(200).json({
-      message: 'utilisateur bloquer avec succès',
+      message: 'Utilisateur signalé avec succès',
     });
-  }catch (error){
-    console.error('Erreur lors du block de l\'utilisateur:', error);
+  } catch (error) {
+    console.error('Erreur lors du signalement de l\'utilisateur:', error);
     res.status(500).json({ 
-      message: 'Erreur serveur lors du block de l\'utilisateur'
+      message: 'Erreur serveur lors du signalement de l\'utilisateur'
     });
   } 
 };

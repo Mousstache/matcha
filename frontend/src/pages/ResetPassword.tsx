@@ -42,6 +42,12 @@ const ResetPassword: React.FC = () => {
       return;
     }
     
+    if (formData.newPassword.length < 8) {
+      setError('Le mot de passe doit contenir au moins 8 caractères');
+      setIsLoading(false);
+      return;
+    }
+    
     if (!token) {
       setError('Token manquant');
       setIsLoading(false);
@@ -49,23 +55,31 @@ const ResetPassword: React.FC = () => {
     }
     
     try {
-      const res = await fetch('http://localhost:5001/api/reset-password',{
+      const res = await fetch('http://localhost:5001/api/reset-password', {
         method: "POST",
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ token,
-        newPassword: formData.newPassword
-      }),
+        body: JSON.stringify({ 
+          token,
+          newPassword: formData.newPassword
+        }),
       });
-      if (!res)
-        return ;
-      setTimeout(() => {
-        navigate('/login');
-      }, 3000);
-    }catch (error){
-      console.error(error);
+      
+      if (res.ok) {
+        setSuccess(true);
+        setTimeout(() => {
+          navigate('/login');
+        }, 3000);
+      } else {
+        const errorData = await res.json();
+        setError(errorData.message || 'Erreur lors de la réinitialisation du mot de passe');
+      }
+    } catch (error) {
+      console.error('Erreur lors de la réinitialisation:', error);
+      setError('Erreur de connexion. Veuillez réessayer plus tard.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -85,7 +99,7 @@ const ResetPassword: React.FC = () => {
   }
 
   return (
-        <div className="min-h-screen bg-gradient-to-br from-pink-50 to-red-50 flex items-center justify-center p-6">
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-red-50 flex items-center justify-center p-6">
       <div className="bg-white rounded-2xl shadow-lg p-8 max-w-md w-full">
         {/* Header */}
         <div className="text-center mb-8">
@@ -94,12 +108,34 @@ const ResetPassword: React.FC = () => {
               <Lock className="text-pink-500" size={24} />
             </div>
           </div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Nouveau mot de passe</h2>
-          <p className="text-gray-600">Choisissez un mot de passe sécurisé pour protéger votre cœur 💖</p>
+          <h2 className="text-2xl font-bold text-gray-800 mb-2">
+            {success ? 'Mot de passe réinitialisé !' : 'Nouveau mot de passe'}
+          </h2>
+          <p className="text-gray-600">
+            {success 
+              ? 'Votre mot de passe a été mis à jour avec succès 🎉' 
+              : 'Choisissez un mot de passe sécurisé pour protéger votre cœur 💖'
+            }
+          </p>
         </div>
 
-        {/* Form */}
-        <div className="space-y-6">
+        {success ? (
+          <div className="text-center space-y-4">
+            <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-4 rounded-lg">
+              <p className="font-semibold mb-2">Succès ! 🎉</p>
+              <p className="text-sm">Votre mot de passe a été réinitialisé.</p>
+              <p className="text-sm">Redirection vers la connexion...</p>
+            </div>
+            
+            <button
+              onClick={() => navigate('/login')}
+              className="w-full bg-gradient-to-r from-pink-500 to-red-500 text-white py-3 rounded-xl font-semibold hover:from-pink-600 hover:to-red-600 transition-all"
+            >
+              Se connecter maintenant
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-6">
           {/* Nouveau mot de passe */}
           <div>
             <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-2">
@@ -167,7 +203,8 @@ const ResetPassword: React.FC = () => {
               </>
             )}
           </button>
-        </div>
+        </form>
+        )}
 
         {/* Footer */}
         <div className="text-center mt-6">

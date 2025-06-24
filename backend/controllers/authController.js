@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { sendConfirmationEmail, sendPasswordResetEmail } from '../utils/emailService.js';
+import { containsCommonWords, findCommonWords } from '../utils/commonWords.js';
 import db from '../config/db.js';
 
 // Politique de mot de passe :
@@ -10,9 +11,13 @@ import db from '../config/db.js';
 // - Au moins une minuscule
 // - Au moins un chiffre
 // - Au moins un caractère spécial
+// - Ne doit pas contenir de mots anglais communs
 function isPasswordStrong(password) {
   const regex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
-  return regex.test(password);
+  const hasValidFormat = regex.test(password);
+  const hasCommonWords = containsCommonWords(password);
+  
+  return hasValidFormat && !hasCommonWords;
 }
 
 export async function registerUser(req,res){
@@ -20,8 +25,15 @@ export async function registerUser(req,res){
       const { email, userName, firstName, lastName, password } = req.body;
 
       if (!isPasswordStrong(password)) {
+        const commonWords = findCommonWords(password);
+        let errorMessage = 'Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.';
+        
+        if (commonWords.length > 0) {
+          errorMessage += ` De plus, le mot de passe ne doit pas contenir de mots anglais communs comme: ${commonWords.join(', ')}.`;
+        }
+        
         return res.status(400).json({
-          message: 'Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial.'
+          message: errorMessage
         });
       }
 
@@ -179,6 +191,7 @@ export async function registerUser(req,res){
       res.status(200).json({ 
         message: "Informations mises à jour avec succès",
         email: user.email, 
+        userName: user.userName, 
         password: user.password
     });
 
@@ -299,9 +312,9 @@ export async function confirmEmail (req, res){
 
 export async function logUser (req, res){
     try {
-      const { email, password } = req.body;
+      const { userName, password } = req.body;
       
-      const user = await db.findOne('users', { email });
+      const user = await db.findOne('users', { userName });
       if (!user) {
         return res.status(401).json({ 
           message: 'Identifiants invalides'
@@ -330,7 +343,8 @@ export async function logUser (req, res){
         { 
           id: user.id, 
           email: user.email,
-          emailConfirmed :  user.emailconfirmed
+          userName: user.userName,
+          emailConfirmed: user.emailconfirmed
         },
         process.env.JWT_SECRET,
         { expiresIn: '24h' }
@@ -548,7 +562,7 @@ export async function forgotPassword(req, res){
 
 
 export async function resetPassword(req, res) {
-  try{
+  try {
     const { token, newPassword } = req.body;
     const now = new Date();
   
@@ -570,8 +584,7 @@ export async function resetPassword(req, res) {
     }, { id: user[0].id });
   
     res.status(200).json({ message: 'Mot de passe réinitialisé avec succès' });
-  }
-  catch (error){
+  } catch (error) {
     console.error("Erreur lors du changement de mdp :", error);
     res.status(500).json({ error: "Erreur serveur" });
   }
