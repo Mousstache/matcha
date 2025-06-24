@@ -461,7 +461,23 @@ export async function deleteUserImage(req, res) {
     if (!token) return res.status(401).json({ error: "Token manquant" });
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const userId = decoded.id;
+    
+    // Support pour les anciens tokens qui n'ont que l'email
+    let userId = decoded.id;
+    
+    console.log("🔍 BACKEND deleteUserImage: userId extrait du token:", userId);
+    console.log("🔍 BACKEND deleteUserImage: type de userId:", typeof userId);
+    
+    if (!userId) {
+      console.log("🔍 BACKEND deleteUserImage: Pas d'ID dans le token, récupération via email...");
+      const user = await db.findOne('users', { email: decoded.email });
+      if (!user) {
+        return res.status(404).json({ error: "Utilisateur non trouvé" });
+      }
+      userId = user.id;
+      console.log("🔍 BACKEND deleteUserImage: ID récupéré via email:", userId);
+    }
+    
     const { position } = req.params;
 
     // Supprimer l'image à la position donnée
@@ -563,20 +579,45 @@ export async function resetPassword(req, res) {
 
 export async function getUserImages(req, res) {
   try {
-    const userId = req.user.id;
+    let userId = req.user.id;
 
-    console.log("userId", userId);
+    console.log("🔍 BACKEND getUserImages: userId extrait du token:", userId);
+    console.log("🔍 BACKEND getUserImages: type de userId:", typeof userId);
+    console.log("🔍 BACKEND getUserImages: contenu complet du token:", req.user);
+
+    // Si pas d'ID dans le token, essayer de le récupérer via l'email
+    if (!userId && req.user.email) {
+      console.log("🔍 BACKEND getUserImages: Pas d'ID dans le token, récupération via email...");
+      const userResult = await db.query(
+        'SELECT id FROM public.users WHERE email = $1',
+        [req.user.email]
+      );
+      
+      if (userResult && userResult.length > 0) {
+        userId = userResult[0].id;
+        console.log("🔍 BACKEND getUserImages: ID récupéré via email:", userId);
+      } else {
+        console.log("🔍 BACKEND getUserImages: Aucun utilisateur trouvé avec cet email");
+        return res.status(404).json({ error: "Utilisateur non trouvé" });
+      }
+    }
+
+    if (!userId) {
+      console.log("🔍 BACKEND getUserImages: Aucun userId disponible");
+      return res.status(400).json({ error: "ID utilisateur manquant" });
+    }
 
     const result = await db.query(
       'SELECT image_url, position FROM user_images WHERE user_id = $1 ORDER BY position',
       [userId]
     );
 
-    console.log("result", result);
+    console.log("🔍 BACKEND getUserImages: résultat de la requête:", result);
+    console.log("🔍 BACKEND getUserImages: nombre d'images trouvées:", result ? result.length : 0);
 
     res.status(200).json({ images: result });
   } catch (error) {
-    console.error("Erreur lors de la récupération des images :", error);
+    console.error("🔍 BACKEND getUserImages: Erreur:", error);
     res.status(500).json({ error: "Erreur serveur" });
   }
 }
@@ -587,7 +628,24 @@ export async function setProfilePicture(req, res) {
     if (!token) return res.status(401).json({ error: "Token manquant" });
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const userId = decoded.id;
+    
+    // Support pour les anciens tokens qui n'ont que l'email
+    let userId = decoded.id;
+    
+    console.log("🔍 BACKEND setProfilePicture: userId extrait du token:", userId);
+    console.log("🔍 BACKEND setProfilePicture: type de userId:", typeof userId);
+    console.log("🔍 BACKEND setProfilePicture: contenu complet du token:", decoded);
+    
+    if (!userId) {
+      console.log("🔍 BACKEND setProfilePicture: Pas d'ID dans le token, récupération via email...");
+      const user = await db.findOne('users', { email: decoded.email });
+      if (!user) {
+        return res.status(404).json({ error: "Utilisateur non trouvé" });
+      }
+      userId = user.id;
+      console.log("🔍 BACKEND setProfilePicture: ID récupéré via email:", userId);
+    }
+    
     const { position } = req.body;
 
     console.log("Changement de photo principale - userId:", userId, "position:", position);

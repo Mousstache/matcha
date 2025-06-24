@@ -106,6 +106,11 @@ io.on("connection", (socket) => {
     const userSocketId = connectedUsers[userId];
     if (userSocketId) {
       io.to(userSocketId).emit("RECEIVE_NOTIFICATION", newNotification);
+      
+      // Si c'est un message de chat, émettre aussi un événement spécifique pour le toast
+      if (type === "message") {
+        io.to(userSocketId).emit("message", newNotification);
+      }
     }
   });
   

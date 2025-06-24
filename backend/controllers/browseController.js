@@ -162,40 +162,33 @@ export async function recordProfileView (req, res){
         params.push(parseInt(maxAge));
       }
 
+      // Amélioration de la logique de matching pour vérifier la compatibilité mutuelle
       if (gender && sexualPreference) {
-        // Homme qui aime Femme
-        if (gender === 'Femme' && sexualPreference === 'Homme') {
-          query += ` AND gender = 'Femme' AND (preference = 'Homme' OR preference = 'Les deux')`;
+        console.log(`Filtrage par genre et préférences: genre=${gender}, préférence=${sexualPreference}`);
+        
+        // L'utilisateur cherche des profils qui correspondent à ses critères
+        // ET ces profils doivent aussi être intéressés par le genre de l'utilisateur
+        
+        if (sexualPreference === 'Homme') {
+          // L'utilisateur cherche des hommes
+          query += ` AND u.gender = 'Homme' AND (u.preference = '${gender}' OR u.preference = 'Les deux')`;
         }
-        // Femme qui aime Homme
-        else if (gender === 'Homme' && sexualPreference === 'Femme') {
-          query += ` AND gender = 'Homme' AND (preference = 'Femme' OR preference = 'Les deux')`;
+        else if (sexualPreference === 'Femme') {
+          // L'utilisateur cherche des femmes
+          query += ` AND u.gender = 'Femme' AND (u.preference = '${gender}' OR u.preference = 'Les deux')`;
         }
-        // Homme qui aime Homme
-        else if (gender === 'Homme' && sexualPreference === 'Homme') {
-          query += ` AND gender = 'Homme' AND (preference = 'Homme' OR preference = 'Les deux')`;
+        else if (sexualPreference === 'Non binaire') {
+          // L'utilisateur cherche des personnes non binaires
+          query += ` AND u.gender = 'Non binaire' AND (u.preference = '${gender}' OR u.preference = 'Les deux')`;
         }
-        // Femme qui aime Femme
-        else if (gender === 'Femme' && sexualPreference === 'Femme') {
-          query += ` AND gender = 'Femme' AND (preference = 'Femme' OR preference = 'Les deux')`;
-        }
-        // Non binaire
-        else if (gender === 'Non binaire' && sexualPreference === 'Non binaire') {
-          query += ` AND gender = 'Non binaire' AND preference = 'Non binaire'`;
-        }
-        // Cas "Les deux" ou autres, à adapter selon ta logique métier
-        else if (gender === 'Les deux' && sexualPreference === 'Homme') {
+        else if (sexualPreference === 'Les deux') {
+          // L'utilisateur cherche tout le monde
           query += ` AND (
-            (gender = 'Homme' AND (preference = 'Homme' OR preference = 'Les deux'))
+            (u.gender = 'Homme' AND (u.preference = '${gender}' OR u.preference = 'Les deux'))
             OR
-            (gender = 'Femme' AND (preference = 'Homme' OR preference = 'Les deux'))
-          )`;
-        }
-          else if (gender === 'Les deux' && sexualPreference === 'Femme') {
-          query += ` AND (
-            (gender = 'Femme' AND (preference = 'Femme' OR preference = 'Les deux'))
+            (u.gender = 'Femme' AND (u.preference = '${gender}' OR u.preference = 'Les deux'))
             OR
-            (gender = 'Homme' AND (preference = 'Femme' OR preference = 'Les deux'))
+            (u.gender = 'Non binaire' AND (u.preference = '${gender}' OR u.preference = 'Les deux'))
           )`;
         }
       }

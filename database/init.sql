@@ -138,6 +138,21 @@ CREATE TABLE reports (
     UNIQUE(reporter_id, reported_id) 
 );
 
+-- Table pour les dislikes
+CREATE TABLE IF NOT EXISTS dislikes (
+    dislike_id SERIAL PRIMARY KEY,
+    disliker_id INT NOT NULL,
+    disliked_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (disliker_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (disliked_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE (disliker_id, disliked_id)
+);
+
+CREATE INDEX idx_disliker ON dislikes (disliker_id);
+CREATE INDEX idx_disliked ON dislikes (disliked_id);
+
+
 -- INSERT INTO users (
 --   email, password, userName, firstName, lastName, description, 
 --   preference, gender, birthDate, age, interests, profile_picture, 
