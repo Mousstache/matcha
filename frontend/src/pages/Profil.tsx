@@ -154,10 +154,6 @@ const Profile = () => {
       "France",
       "Belgique",
       "Suisse",
-      "Canada",
-      "Maroc",
-      "Algérie",
-      "Tunisie",
     ]);
   }, []);
 

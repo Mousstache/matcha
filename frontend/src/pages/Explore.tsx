@@ -41,6 +41,7 @@ interface Profile {
   fame_rate: number;
   lastConnection: string;
   isonline: boolean;
+  common_interests?: number;
 }
 
 interface Interest {
@@ -51,6 +52,7 @@ interface Interest {
 interface FilterFormValues {
   ageRange: number[];
   distance: number[];
+  fameRate: number[];
   interests: string[];
 }
 
@@ -59,9 +61,11 @@ interface FilterSectionProps {
   minAge: number;
   maxAge: number;
   distance: number;
+  fameRate: number;
   interestsList: Interest[];
   onAgeChange: (values: number[]) => void;
   onDistanceChange: (values: number[]) => void;
+  onFameRateChange: (values: number[]) => void;
   onInterestChange: (values: string[]) => void;
   onApplyFilters: (data: FilterFormValues) => void;
   className?: string;
@@ -73,9 +77,11 @@ const FilterSection: React.FC<FilterSectionProps> = ({
   minAge,
   maxAge,
   distance,
+  fameRate,
   interestsList,
   onAgeChange,
   onDistanceChange,
+  onFameRateChange,
   onInterestChange,
   onApplyFilters,
   className = "",
@@ -172,6 +178,41 @@ const FilterSection: React.FC<FilterSectionProps> = ({
 
           <FormField
             control={form.control}
+            name="fameRate"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel className="text-gray-700 font-semibold text-base">
+                  Fame Rating maximum :{" "}
+                  <span className="text-[#ec4899] font-bold">{fameRate}</span>
+                </FormLabel>
+                <FormControl>
+                  <Slider
+                    onValueChange={(values) => {
+                      field.onChange(values);
+                      onFameRateChange(values);
+                    }}
+                    value={field.value}
+                    max={100}
+                    min={0}
+                    step={5}
+                    className="mt-4"
+                    style={{
+                      height: 6,
+                      background: "#fce7f3",
+                      borderRadius: 6,
+                      boxShadow: "none",
+                    }}
+                  />
+                </FormControl>
+                <FormDescription>
+                  Niveau de popularité maximum des profils suggérés
+                </FormDescription>
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
             name="interests"
             render={({ field }) => (
               <FormItem>
@@ -257,6 +298,7 @@ const Explore = () => {
   const [minAge, setMinAge] = useState(18);
   const [maxAge, setMaxAge] = useState(40);
   const [distance, setDistance] = useState(50);
+  const [fameRate, setFameRate] = useState(100);
   const [interests, setInterests] = useState<string[]>([]);
   const [hasSearched, setHasSearched] = useState(false);
 
@@ -283,19 +325,78 @@ const Explore = () => {
     defaultValues: {
       ageRange: [minAge, maxAge],
       distance: [distance],
+      fameRate: [fameRate],
       interests: [],
     },
   });
 
   const currentProfile: Profile | null = profiles[currentProfileIndex] ?? null;
 
+  // Fonction pour calculer le score de compatibilité et les raisons
+  const calculateCompatibility = (profile: Profile) => {
+    if (!profile) return { score: 0, reasons: [] };
+
+    let score = 0;
+    const reasons = [];
+
+    // Score distance (40% max)
+    if (profile.distance && parseFloat(profile.distance) <= distance) {
+      const distanceScore = Math.max(0, 40 - (parseFloat(profile.distance) * 40) / distance);
+      score += distanceScore;
+      if (parseFloat(profile.distance) <= 5) {
+        reasons.push("🏠 Très proche");
+      } else if (parseFloat(profile.distance) <= 20) {
+        reasons.push("📍 Proximité géographique");
+      }
+    }
+
+    // Score intérêts communs (35% max)
+    const userInterests = interests;
+    const profileInterests = typeof profile.interests === 'string' 
+      ? (profile.interests as string).split(',').map((i: string) => i.trim())
+      : Array.isArray(profile.interests) ? profile.interests : [];
+    
+    const commonInterests = userInterests.filter((interest: string) => 
+      profileInterests.some((profileInterest: string) => 
+        profileInterest.toLowerCase().includes(interest.toLowerCase())
+      )
+    );
+
+    if (commonInterests.length > 0) {
+      const interestScore = Math.min((commonInterests.length * 35) / 3, 35);
+      score += interestScore;
+      if (commonInterests.length === 1) {
+        reasons.push("💫 1 intérêt commun");
+      } else {
+        reasons.push(`💫 ${commonInterests.length} intérêts communs`);
+      }
+    }
+
+    // Score fame rating (25% max)
+    if (profile.fame_rate) {
+      const fameScore = Math.min((profile.fame_rate * 25) / 100, 25);
+      score += fameScore;
+      if (profile.fame_rate >= 80) {
+        reasons.push("⭐ Très populaire");
+      } else if (profile.fame_rate >= 50) {
+        reasons.push("⭐ Populaire");
+      }
+    }
+
+    return {
+      score: Math.round(score),
+      reasons: reasons.length > 0 ? reasons : ["🎯 Profil suggéré"]
+    };
+  };
+
   useEffect(() => {
     form.reset({
       ageRange: [minAge, maxAge],
       distance: [distance],
+      fameRate: [fameRate],
       interests: [],
     });
-  }, [minAge, maxAge, distance]);
+  }, [minAge, maxAge, distance, fameRate]);
 
   const handleAgeChange = (values: number[]) => {
     setMinAge(values[0]);
@@ -304,6 +405,10 @@ const Explore = () => {
 
   const handleDistanceChange = (values: number[]) => {
     setDistance(values[0]);
+  };
+
+  const handleFameRateChange = (values: number[]) => {
+    setFameRate(values[0]);
   };
 
   const handleInterestChange = (values: string[]) => {
@@ -481,6 +586,7 @@ const Explore = () => {
         longitude,
         latitude,
         interests: interests.length > 0 ? interests : null, // Envoie null si aucun intérêt sélectionné
+        fame_rate: fameRate, // Ajout du filtre fame_rate
         id,
         excludeIds: interactedIds, // Exclure les profils déjà interagis
       };
@@ -520,6 +626,7 @@ const Explore = () => {
     setMinAge(data.ageRange[0]);
     setMaxAge(data.ageRange[1]);
     setDistance(data.distance[0]);
+    setFameRate(data.fameRate[0]);
 
     // Show filter applied toast
     addToast({
@@ -608,9 +715,11 @@ const Explore = () => {
                   minAge={minAge}
                   maxAge={maxAge}
                   distance={distance}
+                  fameRate={fameRate}
                   interestsList={interestsList}
                   onAgeChange={handleAgeChange}
                   onDistanceChange={handleDistanceChange}
+                  onFameRateChange={handleFameRateChange}
                   onInterestChange={handleInterestChange}
                   onApplyFilters={applyFilters}
                   className="border-0 shadow-none p-0"
@@ -628,9 +737,11 @@ const Explore = () => {
               minAge={minAge}
               maxAge={maxAge}
               distance={distance}
+              fameRate={fameRate}
               interestsList={interestsList}
               onAgeChange={handleAgeChange}
               onDistanceChange={handleDistanceChange}
+              onFameRateChange={handleFameRateChange}
               onInterestChange={handleInterestChange}
               onApplyFilters={applyFilters}
               className="sticky top-4"
@@ -710,6 +821,25 @@ const Explore = () => {
                         </span>
                       </p>
                     </div>
+                    
+                    {/* Indicateur de compatibilité */}
+                    {(() => {
+                      const compatibility = calculateCompatibility(currentProfile);
+                      return (
+                        <div className="mt-3 bg-white/90 backdrop-blur-sm rounded-lg p-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center">
+                              <div className="bg-gradient-to-r from-pink-500 to-purple-500 text-white text-xs font-bold px-2 py-1 rounded-full mr-2">
+                                {compatibility.score}% compatible
+                              </div>
+                              <div className="text-xs text-gray-600">
+                                {compatibility.reasons.join(" • ")}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
                 </div>
 

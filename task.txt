@@ -1,16 +1,14 @@
-autres :
-- responsive
-- bonus belek
-
-
 front :
-- Modal
-- like/block/signal vues et history -
-- virer like retour 
+- like/block/signal vues et history - si deja like pas like
+
+
+- virer like retour
+
+- changer interet dans profil
+
 - notif pastille
-- ne pas reproposer des utilisateur deja like ou unlike
-- signal 
 
+A user that doesn't have a profile picture can't like another user. The profile of other users must clearly display if they're connected with the current user or if they like the current user.
+ne pas pouvoir enleverles 
 
-notification :
-- persister les notif pour chaque utilisateur et lui proposer de pouvoir la suprimmer, tourner sur une anciennete de 10 notif a chaque fois
+- actualisation
