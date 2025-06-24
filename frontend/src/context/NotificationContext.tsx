@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 // import io from "socket.io-client";
 import { useAuth } from "@/context/auth";
 import { addToast } from "@/utils/toast";
@@ -13,6 +14,7 @@ export const NotificationProvider = ({
 }) => {
   const [notifications, setNotifications] = useState<string[]>([]);
   const { socket } = useAuth();
+  const location = useLocation();
 
   useEffect(() => {
     if (!socket) return;
@@ -60,10 +62,36 @@ export const NotificationProvider = ({
       });
     });
 
+    // Nouvelle notification pour les messages de chat
+    socket.on("message", (messageData) => {
+      console.log("💬 Message reçu dans le provider", messageData);
+      setNotifications((prev) => [
+        ...prev,
+        {
+          ...messageData,
+          id: Date.now(),
+          timestamp: new Date(),
+        },
+      ]);
+
+      // Afficher un toast pour les nouveaux messages seulement si l'utilisateur n'est pas dans la page de chat
+      // ou si ce n'est pas la conversation actuellement active
+      const isInChatPage = location.pathname.startsWith("/chat/");
+
+      if (!isInChatPage) {
+        addToast({
+          title: "💬 Nouveau message !",
+          description: messageData.message,
+          color: "primary",
+        });
+      }
+    });
+
     return () => {
       socket.off("RECEIVE_NOTIFICATION");
       socket.off("match");
       socket.off("like");
+      socket.off("message");
     };
   }, [socket]);
 

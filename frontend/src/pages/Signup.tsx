@@ -1,4 +1,4 @@
-//import { Calendar } from "lucide-react";
+import React from "react";
 import {
   Card,
   CardContent,
@@ -290,10 +290,8 @@ const Signup = () => {
       navigate("/login", {
         state: { email: data.email, password: data.password || "" },
       });
-      console.log(data);
     } catch (error: any) {
       setError(error.message || "Erreur réseau.");
-      console.error(error);
     }
   };
 
@@ -341,10 +339,6 @@ const Signup = () => {
     uploadPromise
       .then(async (data) => {
         if (data.success) {
-          console.log(
-            "🔍 SIGNUP handleUpload: Upload réussi, rechargement des images..."
-          );
-
           // Attendre un peu pour s'assurer que la DB est mise à jour
           await new Promise((resolve) => setTimeout(resolve, 100));
 
@@ -363,11 +357,19 @@ const Signup = () => {
             color: "success",
           });
         } else {
-          console.error("Erreur API upload:", data.error);
+          addToast({
+            title: "Erreur",
+            description: data.error || "Erreur lors de l'upload",
+            color: "danger",
+          });
         }
       })
       .catch((error) => {
-        console.error("Erreur fetch upload:", error);
+        addToast({
+          title: "Erreur",
+          description: "Erreur de connexion lors de l'upload",
+          color: "danger",
+        });
       });
   };
 
@@ -390,11 +392,6 @@ const Signup = () => {
   };
 
   const handleRemoveImage = async (index: number) => {
-    console.log(
-      "🔍 SIGNUP handleRemoveImage: Début fonction avec index:",
-      index
-    );
-
     const token = localStorage.getItem("token");
     if (!token) {
       addToast({
@@ -435,9 +432,6 @@ const Signup = () => {
       }
 
       const positionToDelete = imageToDelete.position;
-      console.log(
-        `Suppression de l'image à la position DB: ${positionToDelete}`
-      );
 
       const deletePromise = fetch(
         `http://localhost:5001/api/delete-image/${positionToDelete}`,
@@ -452,10 +446,6 @@ const Signup = () => {
       deletePromise
         .then(async (data) => {
           if (data.success) {
-            console.log(
-              "🔍 SIGNUP handleRemoveImage: Suppression réussie, rechargement des images..."
-            );
-
             // Recharger les images depuis la base de données
             await refreshImages();
 
@@ -471,14 +461,21 @@ const Signup = () => {
               color: "success",
             });
           } else {
-            console.error("Erreur API delete-image:", data.error);
+            addToast({
+              title: "Erreur",
+              description: data.error || "Erreur lors de la suppression",
+              color: "danger",
+            });
           }
         })
         .catch((error) => {
-          console.error("Erreur fetch delete-image:", error);
+          addToast({
+            title: "Erreur",
+            description: "Erreur de connexion lors de la suppression",
+            color: "danger",
+          });
         });
     } catch (error: any) {
-      console.error("Erreur lors de la suppression de l'image :", error);
       addToast({
         title: "Erreur",
         description:
@@ -489,11 +486,6 @@ const Signup = () => {
   };
 
   const handleSetProfilePicture = async (index: number) => {
-    console.log(
-      "🔍 SIGNUP handleSetProfilePicture: Début fonction avec index:",
-      index
-    );
-
     const token = localStorage.getItem("token");
     if (!token) {
       addToast({
@@ -506,20 +498,11 @@ const Signup = () => {
     }
 
     try {
-      console.log(
-        "🔍 SIGNUP handleSetProfilePicture: Début du processus pour index:",
-        index
-      );
-
       // D'abord rafraîchir la liste des images pour avoir les données les plus récentes
       await refreshImages();
 
       // Récupérer l'URL de l'image à partir de l'état mis à jour
       const imageUrlToSet = imageUrls[index];
-      console.log(
-        "🔍 SIGNUP handleSetProfilePicture: URL à définir comme principale:",
-        imageUrlToSet
-      );
 
       if (!imageUrlToSet) {
         addToast({
@@ -868,160 +851,64 @@ const Signup = () => {
                     </span>
                   </div>
 
-                  {/* Debug info */}
-                  <div className="mb-4 p-3 bg-gray-100 rounded-lg text-sm">
-                    <strong>Debug:</strong> {imageUrls.length} images dans
-                    l'état
-                    {imageUrls.length > 0 && (
-                      <div className="mt-1">
-                        URLs:{" "}
-                        {imageUrls.map((url, i) => (
-                          <div
-                            key={i}
-                            className="text-xs text-gray-600 truncate"
-                          >
-                            {i}: {url}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    <button
-                      onClick={() => {
-                        console.log(
-                          "🔍 SIGNUP DEBUG: Test rechargement manuel"
-                        );
-                        refreshImages();
-                      }}
-                      className="mt-2 px-3 py-1 bg-blue-500 text-white rounded text-xs"
-                    >
-                      🔄 Test recharger images
-                    </button>
-                  </div>
-
-                  {/* <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
-                  {imageUrls.map((url, index) => (
-                    <div 
-                      key={index} 
-                      className={`relative rounded-lg overflow-hidden h-36 ${
-                        profilePictureIndex === index ? 'ring-2 ring-pink-500' : ''
-                      }`}
-                    >
-                      <img 
-                        src={url} 
-                        alt={`Photo ${index + 1}`} 
-                        className="w-full h-full object-cover" 
-                      />
-                      <div className="absolute inset-0 bg-black bg-opacity-40 opacity-0 hover:opacity-100 transition-opacity flex flex-col justify-between p-2">
-                        <button 
-                          type="button"
-                          onClick={() => handleRemoveImage(index)} 
-                          className="self-end bg-red-500 text-white p-1 rounded-full"
-                        >
-                          <X size={16} />
-                        </button>
-                        <button 
-                          type="button"
-                          onClick={() => handleSetProfilePicture(index)}
-                          className={`mt-auto w-full py-1 text-xs font-medium rounded ${
-                            profilePictureIndex === index 
-                              ? 'bg-pink-600 text-white' 
-                              : 'bg-white text-pink-600'
-                          }`}
-                        >
-                          {profilePictureIndex === index ? 'Photo principale' : 'Définir comme principale'}
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                  
-                  {imageUrls.length < 5 && (
-                    <label className="flex items-center justify-center h-36 border-2 border-dashed border-pink-200 rounded-lg cursor-pointer hover:bg-pink-50 transition-colors duration-300">
-                      <div className="text-center">
-                        <Camera size={24} className="mx-auto text-pink-400" />
-                        <div className="mt-2 text-sm text-pink-600">
-                          Ajouter une photo
-                        </div>
-                        <input 
-                          type="file" 
-                          className="hidden" 
-                          accept="image/*" 
-                          onChange={handleFileChange} 
-                        />
-                      </div>
-                    </label>
-                  )}
-                </div> */}
-
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
-                    {/* Debug: affichage du nombre d'images */}
-                    {imageUrls.length === 0 && (
-                      <div className="col-span-full text-center text-gray-500 p-4 border-2 border-dashed border-gray-200 rounded-lg">
-                        Aucune image uploadée pour le moment ({imageUrls.length}{" "}
-                        images)
-                      </div>
-                    )}
-                    {imageUrls.map((url, index) => {
-                      console.log(`Affichage image ${index}:`, url);
-                      return (
-                        <div
-                          key={index}
-                          className={`relative rounded-2xl overflow-hidden h-36 shadow-lg border-2 border-pink-100 ${
-                            profile_picture === url
-                              ? "ring-4 ring-pink-400"
-                              : ""
-                          } group`}
+                    {imageUrls.map((url, index) => (
+                      <div
+                        key={index}
+                        className={`relative rounded-2xl overflow-hidden h-36 shadow-lg border-2 border-pink-100 ${
+                          profile_picture === url ? "ring-4 ring-pink-400" : ""
+                        } group`}
+                      >
+                        <img
+                          src={url}
+                          alt={`Photo ${index + 1}`}
+                          className="w-full h-full object-cover"
+                        />
+                        {/* Bouton de suppression avec meilleure visibilité */}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleRemoveImage(index);
+                          }}
+                          className="absolute top-2 right-2 w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-200 z-10"
+                          title="Supprimer cette photo"
                         >
-                          <img
-                            src={url}
-                            alt={`Photo ${index + 1}`}
-                            className="w-full h-full object-cover"
-                          />
-                          {/* Bouton de suppression avec meilleure visibilité */}
-                          <button
-                            type="button"
+                          <span className="text-white font-bold text-lg leading-none">
+                            ×
+                          </span>
+                        </button>
+                        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-[90%] flex justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                          <Button
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              handleRemoveImage(index);
-                            }}
-                            className="absolute top-2 right-2 w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-200 z-10"
-                            title="Supprimer cette photo"
-                          >
-                            <span className="text-white font-bold text-lg leading-none">
-                              ×
-                            </span>
-                          </button>
-                          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-[90%] flex justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                            <Button
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                if (profile_picture !== url) {
-                                  handleSetProfilePicture(index);
-                                }
-                              }}
-                              variant={
-                                profile_picture === url ? "solid" : "bordered"
+                              if (profile_picture !== url) {
+                                handleSetProfilePicture(index);
                               }
-                              color="primary"
-                              size="sm"
-                              className={`w-full text-xs font-semibold rounded-full shadow-sm py-1 px-2 bg-white/80 backdrop-blur border border-pink-200 transition-all duration-200
+                            }}
+                            variant={
+                              profile_picture === url ? "solid" : "bordered"
+                            }
+                            color="primary"
+                            size="sm"
+                            className={`w-full text-xs font-semibold rounded-full shadow-sm py-1 px-2 bg-white/80 backdrop-blur border border-pink-200 transition-all duration-200
                           ${
                             profile_picture === url
                               ? "bg-pink-500 text-white cursor-not-allowed"
                               : "text-pink-600 hover:bg-pink-50 active:bg-pink-100 active:scale-95"
                           }`}
-                              style={{ fontSize: "0.85rem" }}
-                              disabled={profile_picture === url}
-                            >
-                              {profile_picture === url
-                                ? "Photo principale"
-                                : "Définir comme principale"}
-                            </Button>
-                          </div>
+                            style={{ fontSize: "0.85rem" }}
+                            disabled={profile_picture === url}
+                          >
+                            {profile_picture === url
+                              ? "Photo principale"
+                              : "Définir comme principale"}
+                          </Button>
                         </div>
-                      );
-                    })}
+                      </div>
+                    ))}
                     {imageUrls.length < 5 && (
                       <label className="flex items-center justify-center h-36 border-2 border-dashed border-pink-200 rounded-2xl cursor-pointer hover:bg-pink-50 transition-colors duration-300">
                         <div className="text-center">
