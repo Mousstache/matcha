@@ -1,14 +1,27 @@
-import { useState, useEffect } from 'react';
-import { MapPin } from 'lucide-react';
-import { useAuth } from '@/context/auth';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
-import { Slider } from '@/components/ui/slider';
-import { Button } from '@/components/ui/button';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel } from "@/components/ui/form";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { useState, useEffect } from "react";
+import { MapPin, Heart, X, SlidersHorizontal, Search } from "lucide-react";
+import { useAuth } from "@/context/auth";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
+import { Slider } from "@/components/ui/slider";
+import { Button } from "@/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+} from "@/components/ui/form";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
-import { Heart, X, SlidersHorizontal, Search } from 'lucide-react';
-import { useForm } from 'react-hook-form';
+import { useForm } from "react-hook-form";
 import UserProfilModal from "@/components/UserProfilModal";
 import { addToast } from "@/utils/toast";
 
@@ -65,24 +78,35 @@ const FilterSection: React.FC<FilterSectionProps> = ({
   onDistanceChange,
   onInterestChange,
   onApplyFilters,
-  className = ""
+  className = "",
 }) => {
   return (
-    <div className={`bg-white rounded-xl shadow-lg border border-pink-100 p-6 ${className}`}>
+    <div
+      className={`bg-white rounded-xl shadow-lg border border-pink-100 p-6 ${className}`}
+    >
       <div className="flex items-center gap-2 mb-6">
         <SlidersHorizontal className="h-5 w-5 text-[#ec4899]" />
-        <h3 className="text-[#ec4899] text-xl font-bold">Filtres de recherche</h3>
+        <h3 className="text-[#ec4899] text-xl font-bold">
+          Filtres de recherche
+        </h3>
       </div>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onApplyFilters)} className="flex flex-col gap-6">
+        <form
+          onSubmit={form.handleSubmit(onApplyFilters)}
+          className="flex flex-col gap-6"
+        >
           <FormField
             control={form.control}
             name="ageRange"
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-gray-700 font-semibold text-base">
-                  Âge : <span className="text-[#ec4899] font-bold">{minAge} - {maxAge}</span> ans
+                  Âge :{" "}
+                  <span className="text-[#ec4899] font-bold">
+                    {minAge} - {maxAge}
+                  </span>{" "}
+                  ans
                 </FormLabel>
                 <FormControl>
                   <Slider
@@ -116,7 +140,9 @@ const FilterSection: React.FC<FilterSectionProps> = ({
             render={({ field }) => (
               <FormItem>
                 <FormLabel className="text-gray-700 font-semibold text-base">
-                  Distance : <span className="text-[#ec4899] font-bold">{distance}</span> km
+                  Distance :{" "}
+                  <span className="text-[#ec4899] font-bold">{distance}</span>{" "}
+                  km
                 </FormLabel>
                 <FormControl>
                   <Slider
@@ -149,7 +175,9 @@ const FilterSection: React.FC<FilterSectionProps> = ({
             name="interests"
             render={({ field }) => (
               <FormItem>
-                <FormLabel className="text-gray-700 font-semibold text-base">Intérêts communs</FormLabel>
+                <FormLabel className="text-gray-700 font-semibold text-base">
+                  Intérêts communs
+                </FormLabel>
                 <FormControl>
                   <div
                     className="max-h-40 overflow-y-auto border border-pink-200 rounded-md p-2 space-y-2 bg-white custom-scrollbar"
@@ -168,7 +196,9 @@ const FilterSection: React.FC<FilterSectionProps> = ({
                             if (e.target.checked) {
                               newValues = [...currentValues, interest.id];
                             } else {
-                              newValues = currentValues.filter((val: string) => val !== interest.label);
+                              newValues = currentValues.filter(
+                                (val: string) => val !== interest.label
+                              );
                             }
                             field.onChange(newValues);
                             onInterestChange(newValues);
@@ -178,7 +208,10 @@ const FilterSection: React.FC<FilterSectionProps> = ({
                             accentColor: "#ec4899",
                           }}
                         />
-                        <label htmlFor={`interest-${interest.id}`} className="cursor-pointer text-gray-700 hover:text-[#ec4899] select-none">
+                        <label
+                          htmlFor={`interest-${interest.id}`}
+                          className="cursor-pointer text-gray-700 hover:text-[#ec4899] select-none"
+                        >
                           {interest.label}
                         </label>
                       </div>
@@ -205,12 +238,20 @@ const FilterSection: React.FC<FilterSectionProps> = ({
 };
 
 const Explore = () => {
-  const { id, sexualPreference, gender, longitude, latitude, socket, firstname } = useAuth();
+  const {
+    id,
+    sexualPreference,
+    gender,
+    longitude,
+    latitude,
+    socket,
+    firstname,
+  } = useAuth();
 
   // States for profiles and current profile view
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [currentProfileIndex, setCurrentProfileIndex] = useState(0);
-  const [direction, setDirection] = useState('');
+  const [direction, setDirection] = useState("");
 
   // Default filter values
   const [minAge, setMinAge] = useState(18);
@@ -223,7 +264,6 @@ const Explore = () => {
   // Track viewed profiles to avoid showing them again
   const [viewedProfiles, setViewedProfiles] = useState<Set<string>>(new Set());
 
-
   const interestsList: Interest[] = [
     { id: "sport", label: "sport" },
     { id: "music", label: "music" },
@@ -232,7 +272,7 @@ const Explore = () => {
     { id: "travel", label: "travel" },
     { id: "cooking", label: "cooking" },
     { id: "art", label: "art" },
-    { id: "literature", label: "literature" }
+    { id: "literature", label: "literature" },
   ];
 
   const [selectedUser, setSelectedUser] = useState(null);
@@ -278,13 +318,13 @@ const Explore = () => {
       console.log("l'id du mec que je regarde", viewedId);
 
       // Add to local viewed profiles set
-      setViewedProfiles(prev => new Set(prev).add(viewedId));
+      setViewedProfiles((prev) => new Set(prev).add(viewedId));
 
-      const res = await fetch('http://localhost:5001/api/record-profile-view', {
+      const res = await fetch("http://localhost:5001/api/record-profile-view", {
         method: "POST",
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ viewedId, viewerId }),
       });
@@ -298,27 +338,44 @@ const Explore = () => {
     try {
       const liked_id = profileId;
       const liker_id = id;
-      const res = await fetch('http://localhost:5001/api/likeUser', {
+      const res = await fetch("http://localhost:5001/api/likeUser", {
         method: "POST",
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ liked_id, liker_id }),
       });
-      if (!res) return;
 
-      // Show success toast
-      addToast({
-        title: "💖 Like envoyé !",
-        description: `Vous avez liké ${currentProfile?.firstname || 'cette personne'}`,
-        color: "success"
-      });
+      if (!res.ok) return;
+
+      const data = await res.json();
+
+      // Vérifier si c'est un match
+      if (data.isMatch) {
+        // Afficher une notification spéciale pour le match
+        addToast({
+          title: "🎉 C'est un match !",
+          description: `Vous et ${
+            currentProfile?.firstname || "cette personne"
+          } vous êtes likés mutuellement !`,
+          color: "success",
+        });
+      } else {
+        // Show success toast pour un simple like
+        addToast({
+          title: "💖 Like envoyé !",
+          description: `Vous avez liké ${
+            currentProfile?.firstname || "cette personne"
+          }`,
+          color: "success",
+        });
+      }
 
       const notif_like = {
         userId: liked_id,
         type: "like",
-        message: `📩 Nouveau like de ${firstname}`
+        message: `📩 Nouveau like de ${firstname}`,
       };
       if (socket) {
         socket.emit("SEND_NOTIFICATION", notif_like);
@@ -327,14 +384,14 @@ const Explore = () => {
     } catch (error) {
       console.error(error);
     }
-    setDirection('right');
+    setDirection("right");
     setTimeout(() => {
       if (currentProfileIndex + 1 >= profiles.length) {
         setFinished(true);
       } else {
         setCurrentProfileIndex((prev) => prev + 1);
       }
-      setDirection('');
+      setDirection("");
     }, 300);
   };
 
@@ -342,48 +399,61 @@ const Explore = () => {
     try {
       const liked_id = profileId;
       const liker_id = id;
-      const res = await fetch('http://localhost:5001/api/dislikeUser', {
+      const res = await fetch("http://localhost:5001/api/dislikeUser", {
         method: "POST",
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ liked_id, liker_id }),
       });
-      if (!res) return;
-      
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.error("Erreur dislike:", data.message);
+        return;
+      }
+
       // Show dislike toast
       addToast({
         title: "👋 Passé !",
-        description: `Vous avez passé ${currentProfile?.firstname || 'cette personne'}`,
-        color: "warning"
+        description: `Vous avez passé ${
+          currentProfile?.firstname || "cette personne"
+        }`,
+        color: "warning",
       });
-      
+
       markViewed(profileId);
     } catch (error) {
       console.error(error);
     }
-    setDirection('left');
+
+    // Passer au profil suivant avec animation
+    setDirection("left");
     setTimeout(() => {
       if (currentProfileIndex + 1 >= profiles.length) {
         setFinished(true);
       } else {
         setCurrentProfileIndex((prev) => prev + 1);
       }
-      setDirection('');
+      setDirection("");
     }, 300);
   };
 
   // Fonction pour récupérer les profils déjà interagis (likés ou passés)
   const getInteractedProfiles = async () => {
     try {
-      const response = await fetch('http://localhost:5001/api/getInteractedProfiles', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
+      const response = await fetch(
+        "http://localhost:5001/api/getInteractedProfiles",
+        {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+            "Content-Type": "application/json",
+          },
         }
-      });
+      );
 
       if (response.ok) {
         const data = await response.json();
@@ -391,7 +461,7 @@ const Explore = () => {
       }
       return [];
     } catch (error) {
-      console.error('Error fetching interacted profiles:', error);
+      console.error("Error fetching interacted profiles:", error);
       return [];
     }
   };
@@ -400,7 +470,7 @@ const Explore = () => {
     try {
       // D'abord récupérer les profils déjà interagis
       const interactedIds = await getInteractedProfiles();
-      console.log('Profils à exclure:', interactedIds);
+      console.log("Profils à exclure:", interactedIds);
 
       const requestBody = {
         minAge,
@@ -412,21 +482,21 @@ const Explore = () => {
         latitude,
         interests: interests.length > 0 ? interests : null, // Envoie null si aucun intérêt sélectionné
         id,
-        excludeIds: interactedIds  // Exclure les profils déjà interagis
+        excludeIds: interactedIds, // Exclure les profils déjà interagis
       };
 
-      console.log('Paramètres de recherche:');
-      console.log('- interests:', interests);
-      console.log('- interests.length:', interests.length);
-      console.log('- requestBody.interests:', requestBody.interests);
-      console.log('- excludeIds count:', interactedIds.length);
-      console.log('Requête complète:', requestBody);
+      console.log("Paramètres de recherche:");
+      console.log("- interests:", interests);
+      console.log("- interests.length:", interests.length);
+      console.log("- requestBody.interests:", requestBody.interests);
+      console.log("- excludeIds count:", interactedIds.length);
+      console.log("Requête complète:", requestBody);
 
-      const response = await fetch('http://localhost:5001/api/allUsers', {
-        method: 'POST',
+      const response = await fetch("http://localhost:5001/api/allUsers", {
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(requestBody),
       });
@@ -434,15 +504,15 @@ const Explore = () => {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Failed to fetch users');
+        throw new Error(data.message || "Failed to fetch users");
       }
 
       setProfiles(data.users);
       setCurrentProfileIndex(0);
-      setDirection('');
+      setDirection("");
       setHasSearched(true);
     } catch (error) {
-      console.error('Error fetching users:', error);
+      console.error("Error fetching users:", error);
     }
   };
 
@@ -450,14 +520,14 @@ const Explore = () => {
     setMinAge(data.ageRange[0]);
     setMaxAge(data.ageRange[1]);
     setDistance(data.distance[0]);
-    
+
     // Show filter applied toast
     addToast({
       title: "🔍 Filtres appliqués !",
       description: `Recherche mise à jour avec vos nouveaux critères`,
-      color: "primary"
+      color: "primary",
     });
-    
+
     getUsers();
   };
 
@@ -473,11 +543,11 @@ const Explore = () => {
       const viewedId = viewed_id;
       const viewerId = id;
       console.log("l'id du mec que je regarde", viewedId);
-      const res = await fetch('http://localhost:5001/api/ConsultProfile', {
+      const res = await fetch("http://localhost:5001/api/ConsultProfile", {
         method: "POST",
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ viewedId, viewerId }),
       });
@@ -485,7 +555,7 @@ const Explore = () => {
       const notif_seen = {
         userId: viewed_id,
         type: "like",
-        message: `📩 ${firstname} a consulter votre profil`
+        message: `📩 ${firstname} a consulter votre profil`,
       };
       if (socket) {
         socket.emit("SEND_NOTIFICATION", notif_seen);
@@ -498,19 +568,19 @@ const Explore = () => {
 
   const interestsArray =
     typeof currentProfile?.interests === "string"
-      ? (currentProfile.interests as string).split(",").map((i: string) => i.trim())
+      ? (currentProfile.interests as string)
+          .split(",")
+          .map((i: string) => i.trim())
       : Array.isArray(currentProfile?.interests)
-        ? currentProfile.interests
-        : [];
+      ? currentProfile.interests
+      : [];
 
   return (
     <div className="min-h-screen bg-gradient-to-r from-pink-50 to-purple-100 py-8 px-4">
       <div className="w-full max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold text-gray-800 tracking-tight">
-            <span className="text-[#ec4899]">
-              Explorer
-            </span>
+            <span className="text-[#ec4899]">Explorer</span>
           </h1>
 
           {/* Bouton filtres pour mobile */}
@@ -526,7 +596,9 @@ const Explore = () => {
                 className="max-w-md w-full p-8 rounded-l-2xl shadow-2xl bg-white flex flex-col gap-6 border-l-4 border-[#ec4899]"
               >
                 <SheetHeader>
-                  <SheetTitle className="text-[#ec4899] text-2xl font-bold text-center mb-2">Filtres de recherche</SheetTitle>
+                  <SheetTitle className="text-[#ec4899] text-2xl font-bold text-center mb-2">
+                    Filtres de recherche
+                  </SheetTitle>
                   <SheetDescription className="text-gray-500 text-center mb-4">
                     Configurez vos préférences pour trouver votre match idéal
                   </SheetDescription>
@@ -575,7 +647,8 @@ const Explore = () => {
                     Commencez votre recherche !
                   </p>
                   <p className="text-gray-400 text-sm mt-2">
-                    Configurez vos filtres et cliquez sur "Appliquer les filtres" pour découvrir des profils
+                    Configurez vos filtres et cliquez sur "Appliquer les
+                    filtres" pour découvrir des profils
                   </p>
                 </div>
               </div>
@@ -599,23 +672,31 @@ const Explore = () => {
                     Vous avez parcouru tous les profils disponibles !
                   </p>
                   <p className="text-gray-400 text-sm mt-2">
-                    Revenez plus tard ou ajustez vos filtres pour découvrir de nouveaux profils.
+                    Revenez plus tard ou ajustez vos filtres pour découvrir de
+                    nouveaux profils.
                   </p>
                 </div>
               </div>
             ) : (
               <Card
-                className={`transform transition-all duration-500 shadow-2xl rounded-xl overflow-hidden p-0 ${direction === 'right' ? 'translate-x-full rotate-12 opacity-0' :
-                  direction === 'left' ? '-translate-x-full -rotate-12 opacity-0' : ''
-                  }`}
+                className={`transform transition-all duration-500 shadow-2xl rounded-xl overflow-hidden p-0 ${
+                  direction === "right"
+                    ? "translate-x-full rotate-12 opacity-0"
+                    : direction === "left"
+                    ? "-translate-x-full -rotate-12 opacity-0"
+                    : ""
+                }`}
               >
                 <div className="relative overflow-hidden rounded-t-xl">
                   <img
-                    src={currentProfile.profile_picture || '/placeholder-profile.jpg'}
+                    src={
+                      currentProfile.profile_picture ||
+                      "/placeholder-profile.jpg"
+                    }
                     alt={currentProfile.firstname}
                     className="w-full h-[450px] object-cover block"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 via-black/20 to-black/10"></div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-black/10"></div>
                   <div className="absolute bottom-0 left-0 right-0 p-6">
                     <h2 className="text-white text-3xl font-bold">
                       {currentProfile.firstname}, {currentProfile.age} ans
@@ -623,7 +704,10 @@ const Explore = () => {
                     <div className="flex items-center mt-2 text-white opacity-90">
                       <MapPin className="h-4 w-4 mr-1" />
                       <p className="text-sm">
-                        {currentProfile.city} · <span className="font-medium">{currentProfile.distance} km</span>
+                        {currentProfile.city} ·{" "}
+                        <span className="font-medium">
+                          {currentProfile.distance} km
+                        </span>
                       </p>
                     </div>
                   </div>
@@ -632,30 +716,56 @@ const Explore = () => {
                 <CardContent>
                   <div className="px-3">
                     <div className="mb-2">
-                      <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Sexe & Intérêts</h4>
+                      <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                        Sexe & Intérêts
+                      </h4>
                       <div className="flex flex-wrap gap-2">
-                        <Badge variant="secondary" className="bg-pink-100 text-pink-700 hover:bg-pink-200">
-                          {typeof currentProfile.gender === 'number' 
-                            ? currentProfile.gender === 1 ? 'Homme' : currentProfile.gender === 2 ? 'Femme' : 'Autre' 
+                        <Badge
+                          variant="secondary"
+                          className="bg-pink-100 text-pink-700 hover:bg-pink-200"
+                        >
+                          {typeof currentProfile.gender === "number"
+                            ? currentProfile.gender === 1
+                              ? "Homme"
+                              : currentProfile.gender === 2
+                              ? "Femme"
+                              : "Autre"
                             : currentProfile.gender || "Non spécifié"}
                         </Badge>
-                        <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-150">
-                          Recherche: {typeof currentProfile.preference === 'number' 
-                            ? currentProfile.preference === 1 ? 'Hommes' : currentProfile.preference === 2 ? 'Femmes' : 'Tous' 
+                        <Badge
+                          variant="outline"
+                          className="bg-blue-100 text-blue-700 border-blue-200 hover:bg-blue-150"
+                        >
+                          Recherche:{" "}
+                          {typeof currentProfile.preference === "number"
+                            ? currentProfile.preference === 1
+                              ? "Hommes"
+                              : currentProfile.preference === 2
+                              ? "Femmes"
+                              : "Tous"
                             : currentProfile.preference || "Non spécifié"}
                         </Badge>
-                        {currentProfile.interests && interestsArray.map((interest, i) => (
-                          <Badge key={i} variant="outline" className="border-pink-200 text-gray-700 hover:bg-pink-50">
-                            {interest}
-                          </Badge>
-                        ))}
+                        {currentProfile.interests &&
+                          interestsArray.map((interest, i) => (
+                            <Badge
+                              key={i}
+                              variant="outline"
+                              className="border-pink-200 text-gray-700 hover:bg-pink-50"
+                            >
+                              {interest}
+                            </Badge>
+                          ))}
                       </div>
                     </div>
 
                     {currentProfile.description && (
                       <div>
-                        <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">À propos</h4>
-                        <p className="text-gray-700 leading-relaxed">{currentProfile.description}</p>
+                        <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                          À propos
+                        </h4>
+                        <p className="text-gray-700 leading-relaxed">
+                          {currentProfile.description}
+                        </p>
                       </div>
                     )}
                   </div>

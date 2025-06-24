@@ -48,16 +48,62 @@ export async function likeUser (req, res){
         await db.update('users', { fame_rate: fameRate2 }, { id: liker_id });
         await db.insert('matches', {user1_id: liker_id, user2_id: liked_id, created_at: new Date()});
 
+        // Envoi de notifications en temps réel pour les deux utilisateurs
+        if (likedSocketId) {
+          io.to(likedSocketId).emit('match', {
+            type: 'match',
+            message: `Vous avez un nouveau match avec ${user2.firstname} ${user2.lastname}!`,
+            userId: liker_id,
+            userInfo: {
+              id: liker_id,
+              firstname: user2.firstname,
+              lastname: user2.lastname,
+              profile_picture: user2.profile_picture
+            }
+          });
+        }
+
+        if (likerSocketId) {
+          io.to(likerSocketId).emit('match', {
+            type: 'match',
+            message: `Vous avez un nouveau match avec ${user.firstname} ${user.lastname}!`,
+            userId: liked_id,
+            userInfo: {
+              id: liked_id,
+              firstname: user.firstname,
+              lastname: user.lastname,
+              profile_picture: user.profile_picture
+            }
+          });
+        }
+
       return res.status(201).json({
         message: "c'est un match",
+        isMatch: true
       })
     }
     
     await db.insert('likes', {liker_id, liked_id});
 
+    // Notification pour un simple like
+    if (likedSocketId) {
+      const liker = await db.findOne('users', { id: liker_id });
+      io.to(likedSocketId).emit('like', {
+        type: 'like',
+        message: `${liker.firstname} ${liker.lastname} vous a liké!`,
+        userId: liker_id,
+        userInfo: {
+          id: liker_id,
+          firstname: liker.firstname,
+          lastname: liker.lastname,
+          profile_picture: liker.profile_picture
+        }
+      });
+    }
 
       return res.status(201).json({
         message: "like ajouter",
+        isMatch: false
       })
     }catch (error){
       console.error('Error lors du like', error);
@@ -193,18 +239,53 @@ export async function likeUser (req, res){
 
   export async function dislikeUser (req, res){
     try{
-      const { unlike_id } = req.body;
+      const { liked_id, liker_id } = req.body;
   
-      const user = db.findOne('users', { id: unlike_id });
+      if (!liker_id || !liked_id) {
+        return res.status(400).json({
+          message: "Données manquantes",
+        });
+      }
 
-      db.update('users', { fame_rate: user.fame_rate },{id: user.id});    
+      if (liker_id === liked_id) {
+        return res.status(400).json({
+          message: "Impossible de se disliker soi-même",
+        });
+      }
+
+      // Vérifier si déjà disliké
+      const existingDislike = await db.findOne('dislikes', {
+        disliker_id: liker_id,
+        disliked_id: liked_id
+      });
+
+      if (existingDislike) {
+        return res.status(400).json({
+          message: "Profil déjà disliké",
+        });
+      }
+
+      // Ajouter le dislike
+      await db.insert('dislikes', {
+        disliker_id: liker_id,
+        disliked_id: liked_id
+      });
+
+      // Diminuer la fame rate
+      const user = await db.findOne('users', { id: liked_id });
+      const newFameRate = Math.max(0, user.fame_rate - 1);
+      await db.update('users', { fame_rate: newFameRate }, { id: liked_id });    
       
       return res.status(201).json({
-        message: "unlike pour la fame rate",
-      })
+        message: "Dislike enregistré",
+      });
   
     }catch (error){
-      console.error('Error lors du unlike', error);
+      console.error('Error lors du dislike', error);
+      return res.status(500).json({
+        message: "Erreur lors du dislike",
+        error: error.message
+      });
     }
   };
   
@@ -394,11 +475,13 @@ export async function getInteractedProfiles(req, res) {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await db.findOne('users', { email: decoded.email });
 
-    // Récupérer seulement les profils likés ou dislikés (pas les vues)
+    // Récupérer tous les profils avec lesquels l'utilisateur a interagi (likes et dislikes)
     const sql = `
-      SELECT DISTINCT liked_id as user_id
-      FROM likes 
-      WHERE liker_id = $1
+      SELECT DISTINCT user_id FROM (
+        SELECT liked_id as user_id FROM likes WHERE liker_id = $1
+        UNION
+        SELECT disliked_id as user_id FROM dislikes WHERE disliker_id = $1
+      ) AS interacted_profiles
     `;
 
     const interacted = await db.query(sql, [user.id]);
