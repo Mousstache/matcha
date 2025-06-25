@@ -88,6 +88,21 @@ export async function recordProfileView (req, res){
         excludeIds, // Nouveau paramètre pour exclure les profils déjà interagis
       } = req.body;
   
+      const currentUserId = req.user.id;
+      
+      // Vérifier si l'utilisateur qui fait la recherche a au moins une photo
+      const userImages = await db.query(
+        'SELECT image_url FROM user_images WHERE user_id = $1',
+        [currentUserId]
+      );
+      
+      if (!userImages || userImages.length === 0) {
+        return res.status(400).json({
+          message: "Vous devez avoir au moins une photo de profil pour explorer les profils",
+          error: "NO_PROFILE_PICTURE"
+        });
+      }
+  
       console.log('>>>>>>>>>>>>');
       console.log('minAge:', minAge);
       console.log('maxAge:', maxAge);
@@ -102,7 +117,6 @@ export async function recordProfileView (req, res){
       console.log('excludeIds length:', excludeIds ? excludeIds.length : 0);
       console.log('>>>>>>>>>>>>');
   
-      const currentUserId = req.user.id;
       const blocked_id = req.user.getBlockUsers;
   
       console.log('blocked_id:', blocked_id);

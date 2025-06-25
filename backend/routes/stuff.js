@@ -37,6 +37,7 @@ router.get('/getInteractedProfiles',authMiddleware,ensureEmailConfirmed, userCtr
 router.post('/ConsultProfile',authMiddleware,ensureEmailConfirmed, userCtrl.ConsultProfile);
 router.get('/getViewlist',authMiddleware,ensureEmailConfirmed, userCtrl.getViewlist);
 router.get('/getHistory',authMiddleware,ensureEmailConfirmed, userCtrl.getConsultedUsers);
+router.get('/relationship-status/:userId',authMiddleware,ensureEmailConfirmed, userCtrl.getRelationshipStatus);
 
 
 // SOCKET 
@@ -53,7 +54,7 @@ router.get('/getBlockUser',authMiddleware,ensureEmailConfirmed, userCtrl.getBloc
 router.delete('/unblockUser',authMiddleware,ensureEmailConfirmed, userCtrl.unblockUser);
 router.post('/signalUser',authMiddleware,ensureEmailConfirmed, userCtrl.signalUser);
 
-// router.put('/logout', authMiddleware,ensureEmailConfirmed,  userCtrl.logoutUser);
+router.put('/logout', authMiddleware, userCtrl.logoutUser);
 
 router.post('/forgot-password', userCtrl.forgotPassword);
 router.post('/reset-password', userCtrl.resetPassword);

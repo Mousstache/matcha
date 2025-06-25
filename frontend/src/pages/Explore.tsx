@@ -341,7 +341,10 @@ const Explore = () => {
 
     // Score distance (40% max)
     if (profile.distance && parseFloat(profile.distance) <= distance) {
-      const distanceScore = Math.max(0, 40 - (parseFloat(profile.distance) * 40) / distance);
+      const distanceScore = Math.max(
+        0,
+        40 - (parseFloat(profile.distance) * 40) / distance
+      );
       score += distanceScore;
       if (parseFloat(profile.distance) <= 5) {
         reasons.push("🏠 Très proche");
@@ -352,12 +355,15 @@ const Explore = () => {
 
     // Score intérêts communs (35% max)
     const userInterests = interests;
-    const profileInterests = typeof profile.interests === 'string' 
-      ? (profile.interests as string).split(',').map((i: string) => i.trim())
-      : Array.isArray(profile.interests) ? profile.interests : [];
-    
-    const commonInterests = userInterests.filter((interest: string) => 
-      profileInterests.some((profileInterest: string) => 
+    const profileInterests =
+      typeof profile.interests === "string"
+        ? (profile.interests as string).split(",").map((i: string) => i.trim())
+        : Array.isArray(profile.interests)
+        ? profile.interests
+        : [];
+
+    const commonInterests = userInterests.filter((interest: string) =>
+      profileInterests.some((profileInterest: string) =>
         profileInterest.toLowerCase().includes(interest.toLowerCase())
       )
     );
@@ -385,7 +391,7 @@ const Explore = () => {
 
     return {
       score: Math.round(score),
-      reasons: reasons.length > 0 ? reasons : ["🎯 Profil suggéré"]
+      reasons: reasons.length > 0 ? reasons : ["🎯 Profil suggéré"],
     };
   };
 
@@ -452,9 +458,23 @@ const Explore = () => {
         body: JSON.stringify({ liked_id, liker_id }),
       });
 
-      if (!res.ok) return;
-
       const data = await res.json();
+
+      if (!res.ok) {
+        // Vérifier si l'erreur est due à l'absence de photo de profil
+        if (data.error === "NO_PROFILE_PICTURE") {
+          addToast({
+            title: "🖼️ Photo de profil requise",
+            description:
+              data.message ||
+              "Vous devez avoir au moins une photo de profil pour liker d'autres utilisateurs",
+            color: "warning",
+          });
+          return;
+        }
+        console.error("Erreur like:", data.message);
+        return;
+      }
 
       // Vérifier si c'est un match
       if (data.isMatch) {
@@ -516,6 +536,17 @@ const Explore = () => {
       const data = await res.json();
 
       if (!res.ok) {
+        // Vérifier si l'erreur est due à l'absence de photo de profil
+        if (data.error === "NO_PROFILE_PICTURE") {
+          addToast({
+            title: "🖼️ Photo de profil requise",
+            description:
+              data.message ||
+              "Vous devez avoir au moins une photo de profil pour interagir avec d'autres utilisateurs",
+            color: "warning",
+          });
+          return;
+        }
         console.error("Erreur dislike:", data.message);
         return;
       }
@@ -610,6 +641,17 @@ const Explore = () => {
       const data = await response.json();
 
       if (!response.ok) {
+        // Vérifier si l'erreur est due à l'absence de photo de profil
+        if (data.error === "NO_PROFILE_PICTURE") {
+          addToast({
+            title: "🖼️ Photo de profil requise",
+            description:
+              data.message ||
+              "Vous devez avoir au moins une photo de profil pour explorer les profils",
+            color: "warning",
+          });
+          return;
+        }
         throw new Error(data.message || "Failed to fetch users");
       }
 
@@ -821,10 +863,11 @@ const Explore = () => {
                         </span>
                       </p>
                     </div>
-                    
+
                     {/* Indicateur de compatibilité */}
                     {(() => {
-                      const compatibility = calculateCompatibility(currentProfile);
+                      const compatibility =
+                        calculateCompatibility(currentProfile);
                       return (
                         <div className="mt-3 bg-white/90 backdrop-blur-sm rounded-lg p-3">
                           <div className="flex items-center justify-between">

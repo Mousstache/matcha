@@ -18,4 +18,9 @@ export interface User {
   preference?: number;
   profile_picture?: string;
   images?: string[];
+  // Relationship status
+  isMatch?: boolean;
+  currentUserLikesTarget?: boolean;
+  targetLikesCurrentUser?: boolean;
+  relationshipStatus?: 'match' | 'mutual_like' | 'you_liked' | 'they_liked' | 'none';
 }

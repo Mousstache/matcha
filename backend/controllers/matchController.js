@@ -21,6 +21,19 @@ export async function likeUser (req, res){
           message: "ya pas de like",
         })
 
+      // Vérifier si l'utilisateur qui like a au moins une photo
+      const likerImages = await db.query(
+        'SELECT image_url FROM user_images WHERE user_id = $1',
+        [liker_id]
+      );
+      
+      if (!likerImages || likerImages.length === 0) {
+        return res.status(400).json({
+          message: "Vous devez avoir au moins une photo de profil pour liker d'autres utilisateurs",
+          error: "NO_PROFILE_PICTURE"
+        });
+      }
+
       const io = req.app.get("io");
       const connectedUsers = req.app.get("connectedUsers");
 
@@ -31,6 +44,35 @@ export async function likeUser (req, res){
         return res.status(400).json({
           message : "pas de like sois meme",
       })
+
+      // Vérifier si un match existe déjà entre ces deux utilisateurs
+      const existingMatchQuery = `
+        SELECT * FROM matches 
+        WHERE (user1_id = $1 AND user2_id = $2) 
+           OR (user1_id = $2 AND user2_id = $1)
+        LIMIT 1
+      `;
+      const existingMatch = await db.query(existingMatchQuery, [liker_id, liked_id]);
+
+      if (existingMatch && existingMatch.length > 0) {
+        return res.status(400).json({
+          message: "Vous êtes déjà en match avec cette personne",
+          error: "ALREADY_MATCHED"
+        });
+      }
+
+      // Vérifier si l'utilisateur a déjà liké cette personne
+      const existingLike = await db.findOne('likes', {
+        liker_id: liker_id,
+        liked_id: liked_id
+      });
+
+      if (existingLike) {
+        return res.status(400).json({
+          message: "Vous avez déjà liké cette personne",
+          error: "ALREADY_LIKED"
+        });
+      }
   
       await db.update('users', { fame_rate: fameRate}, { id: liked_id });
   
@@ -250,6 +292,19 @@ export async function likeUser (req, res){
       if (liker_id === liked_id) {
         return res.status(400).json({
           message: "Impossible de se disliker soi-même",
+        });
+      }
+
+      // Vérifier si l'utilisateur qui dislike a au moins une photo
+      const likerImages = await db.query(
+        'SELECT image_url FROM user_images WHERE user_id = $1',
+        [liker_id]
+      );
+      
+      if (!likerImages || likerImages.length === 0) {
+        return res.status(400).json({
+          message: "Vous devez avoir au moins une photo de profil pour interagir avec d'autres utilisateurs",
+          error: "NO_PROFILE_PICTURE"
         });
       }
 
@@ -502,4 +557,59 @@ export async function getInteractedProfiles(req, res) {
   }
 }
 
-export default { ConsultProfile, likeUser, unlikeUser, getLikes, getOtherLikes, getMatches, dislikeUser , getViewlist, getConsultedUsers, getInteractedProfiles};
+export async function getRelationshipStatus(req, res) {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const currentUser = await db.findOne('users', { email: decoded.email });
+    
+    const { userId } = req.params;
+    
+    if (!userId) {
+      return res.status(400).json({
+        message: "ID utilisateur manquant"
+      });
+    }
+
+    // Vérifier si c'est un match
+    const matchQuery = `
+      SELECT * FROM matches 
+      WHERE (user1_id = $1 AND user2_id = $2) 
+         OR (user1_id = $2 AND user2_id = $1)
+      LIMIT 1
+    `;
+    const matchResult = await db.query(matchQuery, [currentUser.id, parseInt(userId)]);
+    const match = matchResult.rows ? matchResult.rows[0] : matchResult[0];
+
+    // Vérifier si l'utilisateur actuel a liké cet utilisateur
+    const currentUserLikesTarget = await db.findOne('likes', {
+      liker_id: currentUser.id,
+      liked_id: parseInt(userId)
+    });
+
+    // Vérifier si cet utilisateur a liké l'utilisateur actuel
+    const targetLikesCurrentUser = await db.findOne('likes', {
+      liker_id: parseInt(userId),
+      liked_id: currentUser.id
+    });
+
+    return res.status(200).json({
+      isMatch: !!match,
+      currentUserLikesTarget: !!currentUserLikesTarget,
+      targetLikesCurrentUser: !!targetLikesCurrentUser,
+      relationshipStatus: match ? 'match' : 
+                         (currentUserLikesTarget && targetLikesCurrentUser) ? 'mutual_like' :
+                         currentUserLikesTarget ? 'you_liked' :
+                         targetLikesCurrentUser ? 'they_liked' : 'none'
+    });
+
+  } catch (error) {
+    console.error('Error lors de la vérification du statut de relation:', error);
+    return res.status(500).json({
+      message: "Erreur lors de la vérification du statut de relation",
+      error: error.message
+    });
+  }
+}
+
+export default { ConsultProfile, likeUser, unlikeUser, getLikes, getOtherLikes, getMatches, dislikeUser , getViewlist, getConsultedUsers, getInteractedProfiles, getRelationshipStatus};

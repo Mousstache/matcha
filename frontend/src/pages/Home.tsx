@@ -1,15 +1,22 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom"; 
-import { Send, Ban, Flag, HeartCrack, Heart, UserRound, Eye, MessageSquare, ThumbsUp, History } from 'lucide-react';
+import { useNavigate } from "react-router-dom";
+import {
+  Send,
+  Ban,
+  Flag,
+  HeartCrack,
+  Heart,
+  UserRound,
+  Eye,
+  MessageSquare,
+  ThumbsUp,
+  History,
+} from "lucide-react";
 import { useAuth } from "@/context/auth";
 import { Tabs, TabsList, TabsContent, TabsTrigger } from "@/components/ui/tabs";
 import UserProfilModal from "@/components/UserProfilModal";
-import SignalModal from '@/components/SignalModal';
+import SignalModal from "@/components/SignalModal";
 import { addToast } from "@/utils/toast";
-
-
-
-
 
 interface User {
   id: number;
@@ -60,77 +67,82 @@ const Home = () => {
   // const [selectedUser, setSelectedUser] = useState(null);
   // Dans votre composant
 
-
   const handleOpenSignalModal = (user: User) => {
     setSelectedUser(user);
     setIsSignalModalOpen(true);
   };
-  
-  
+
   const navigate = useNavigate();
-  
+
   // useEffect(() => {
-    const fetchData = async () => {
-      const token = localStorage.getItem("token");
-      
-      try {
-        const [likesRes, otherLikesRes, matchesRes, viewlistRes, historyRes] = await Promise.all([
-          fetch('http://localhost:5001/api/getLikes', {
+  const fetchData = async () => {
+    const token = localStorage.getItem("token");
+
+    try {
+      const [likesRes, otherLikesRes, matchesRes, viewlistRes, historyRes] =
+        await Promise.all([
+          fetch("http://localhost:5001/api/getLikes", {
             method: "GET",
             headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
           }),
-          fetch('http://localhost:5001/api/getOtherLikes', {
+          fetch("http://localhost:5001/api/getOtherLikes", {
             method: "GET",
             headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
           }),
-          fetch('http://localhost:5001/api/getMatches', {
+          fetch("http://localhost:5001/api/getMatches", {
             method: "GET",
             headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
           }),
-          fetch('http://localhost:5001/api/getViewlist', {
+          fetch("http://localhost:5001/api/getViewlist", {
             method: "GET",
             headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
           }),
-          fetch('http://localhost:5001/api/getHistory', {
+          fetch("http://localhost:5001/api/getHistory", {
             method: "GET",
             headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            }
-          })
+              Authorization: `Bearer ${token}`,
+              "Content-Type": "application/json",
+            },
+          }),
         ]);
 
-        const [likesData, otherLikesData, matchesData, viewlistData, historyData] = await Promise.all([
-          likesRes.json(),
-          otherLikesRes.json(),
-          matchesRes.json(),
-          viewlistRes.json(),
-          historyRes.json()
-        ]);
+      const [
+        likesData,
+        otherLikesData,
+        matchesData,
+        viewlistData,
+        historyData,
+      ] = await Promise.all([
+        likesRes.json(),
+        otherLikesRes.json(),
+        matchesRes.json(),
+        viewlistRes.json(),
+        historyRes.json(),
+      ]);
 
-        setLikes(likesData.likes);
-        setOtherLikes(otherLikesData.Otherlikes);
-        setMatches(matchesData.matches);
-        setViewlist(viewlistData.viewlist);
-        setHistory(historyData.consulted);
-      } catch (error) {
-        console.error("Erreur lors du chargement des données:", error);
-      }
-    };
+      setLikes(likesData.likes);
+      setOtherLikes(otherLikesData.Otherlikes);
+      setMatches(matchesData.matches);
+      setViewlist(viewlistData.viewlist);
+      setHistory(historyData.consulted);
+    } catch (error) {
+      console.error("Erreur lors du chargement des données:", error);
+    }
+  };
 
-    // fetchData();
+  // fetchData();
   // }, []);
 
   useEffect(() => {
@@ -143,8 +155,8 @@ const Home = () => {
       await fetch('http://localhost:5001/api/signalUser', {
         method: "POST",
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ reported_id, reporter_id: id, reason: "fake account" })
       });
@@ -154,18 +166,17 @@ const Home = () => {
     }
   };
 
-  
   const handleBlock = async (match_id: number) => {
     try {
       const token = localStorage.getItem("token");
-      
-      await fetch('http://localhost:5001/api/blockUser', {
+
+      await fetch("http://localhost:5001/api/blockUser", {
         method: "POST",
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ match_id, blocker_id: id })
+        body: JSON.stringify({ match_id, blocker_id: id }),
       });
       await fetchData();
     } catch (error) {
@@ -177,23 +188,23 @@ const Home = () => {
     try {
       const token = localStorage.getItem("token");
 
-      await fetch('http://localhost:5001/api/unlikeUser', {
+      await fetch("http://localhost:5001/api/unlikeUser", {
         method: "DELETE",
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ liker_id: id, liked_id, match_id })
+        body: JSON.stringify({ liker_id: id, liked_id, match_id }),
       });
 
       await fetchData();
 
-      const notif_unlike = { 
+      const notif_unlike = {
         userId: liked_id,
         type: "unlike",
-        message: `📩 ${firstname} vous a unliker`
+        message: `📩 ${firstname} vous a unliker`,
       };
-      
+
       if (socket) {
         socket.emit("SEND_NOTIFICATION", notif_unlike);
       }
@@ -205,39 +216,99 @@ const Home = () => {
   const handlelike = async (liked_id: number) => {
     try {
       const token = localStorage.getItem("token");
-      
-      await fetch('http://localhost:5001/api/likeUser', {
+
+      const response = await fetch("http://localhost:5001/api/likeUser", {
         method: "POST",
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ liker_id: id, liked_id })
+        body: JSON.stringify({ liker_id: id, liked_id }),
       });
-      
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (data.error === "NO_PROFILE_PICTURE") {
+          addToast({
+            title: "Photo de profil manquante",
+            description:
+              "Vous devez avoir au moins une photo de profil pour pouvoir liker d'autres utilisateurs",
+            duration: 5000,
+          });
+          return;
+        }
+
+        if (data.error === "ALREADY_MATCHED") {
+          addToast({
+            title: "Déjà en match",
+            description: "Vous êtes déjà en match avec cette personne",
+            duration: 3000,
+          });
+          return;
+        }
+
+        if (data.error === "ALREADY_LIKED") {
+          addToast({
+            title: "Déjà liké",
+            description: "Vous avez déjà liké cette personne",
+            duration: 3000,
+          });
+          return;
+        }
+
+        // Vérifier aussi dans le message d'erreur
+        if (data.message && data.message.includes("photo de profil")) {
+          addToast({
+            title: "Photo de profil manquante",
+            description:
+              "Vous devez avoir au moins une photo de profil pour pouvoir liker d'autres utilisateurs",
+            duration: 5000,
+          });
+          return;
+        }
+
+        addToast({
+          title: "Erreur",
+          description: data.message || "Impossible d'envoyer le like",
+          duration: 3000,
+        });
+        return;
+      }
+
       await fetchData();
-      const notif_like = { 
+      const notif_like = {
         userId: liked_id,
         type: "like",
-        message: `📩 ${firstname} liked back`
+        message: `📩 ${firstname} liked back`,
       };
-      
+
       if (socket) {
         socket.emit("SEND_NOTIFICATION", notif_like);
       }
-      
+
       addToast({
         title: "Like envoyé",
         description: "Vous avez liké ce profil avec succès",
         duration: 3000,
       });
-      
-    } catch (error) {
+    } catch (error: any) {
       console.error("Erreur lors du like:", error);
+
+      // Vérifier si l'erreur contient le message sur la photo de profil
+      if (error.message && error.message.includes("photo de profil")) {
+        addToast({
+          title: "Photo de profil manquante",
+          description:
+            "Vous devez avoir au moins une photo de profil pour pouvoir liker d'autres utilisateurs",
+          duration: 5000,
+        });
+        return;
+      }
+
       addToast({
         title: "Erreur",
-        description: "Impossible d'envoyer le like",
-        // variant: "destructive",
+        description: error.message || "Impossible d'envoyer le like",
         duration: 3000,
       });
     }
@@ -246,14 +317,14 @@ const Home = () => {
   const handleUnBlock = async (block_id: number) => {
     try {
       const token = localStorage.getItem("token");
-      
-      await fetch('http://localhost:5001/api/unblockUser', {
+
+      await fetch("http://localhost:5001/api/unblockUser", {
         method: "DELETE",
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ block_id, id })
+        body: JSON.stringify({ block_id, id }),
       });
       await fetchData();
     } catch (error) {
@@ -261,41 +332,39 @@ const Home = () => {
     }
   };
 
-  const handleUserClick = (user:any) => {
+  const handleUserClick = (user: any) => {
     console.log("User clicked:", user);
     setSelectedUser(user);
     setIsModalOpen(true);
     handleConsult(user.id);
   };
 
-  const handleConsult = async (viewed_id:string) => {
-    try{
+  const handleConsult = async (viewed_id: string) => {
+    try {
       const viewedId = viewed_id;
       const viewerId = id;
       console.log("l'id du mec que je regarde", viewedId);
-      const res = await fetch('http://localhost:5001/api/ConsultProfile',{
+      const res = await fetch("http://localhost:5001/api/ConsultProfile", {
         method: "POST",
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({viewedId, viewerId}),
+        body: JSON.stringify({ viewedId, viewerId }),
       });
 
       await fetchData();
 
-
-      const notif_seen = { 
+      const notif_seen = {
         userId: viewed_id,
         type: "like",
-        message: `📩 ${firstname} a consulter votre profil`
-    };
-      if (socket){
-          socket.emit("SEND_NOTIFICATION",  notif_seen);
+        message: `📩 ${firstname} a consulter votre profil`,
+      };
+      if (socket) {
+        socket.emit("SEND_NOTIFICATION", notif_seen);
       }
-      if (!res)
-        return ;
-    }catch (error){
+      if (!res) return;
+    } catch (error) {
       console.error(error);
     }
   };
@@ -304,16 +373,14 @@ const Home = () => {
     <div className="min-h-screen bg-gradient-to-r from-pink-50 to-purple-100 py-6 sm:py-10 px-2 sm:px-4">
       <div className="max-w-3xl mx-auto">
         <h1 className="text-3xl font-bold tracking-tight text-left mb-4 sm:mb-6">
-          <span className="text-[#ec4899]">
-            Vos connexions
-          </span>
+          <span className="text-[#ec4899]">Vos connexions</span>
         </h1>
-        
+
         <div className="bg-white rounded-xl shadow-lg overflow-hidden">
           <Tabs defaultValue="matches" className="w-full">
             <TabsList className="flex flex-wrap overflow-x-auto h-auto w-full bg-pink-500/90 p-2 gap-2 rounded-none">
-              <TabsTrigger 
-                value="matches" 
+              <TabsTrigger
+                value="matches"
                 className={`flex items-center justify-center gap-2 px-4 sm:px-5 py-3 sm:py-4 rounded-md font-medium text-sm sm:text-base shadow font-poppins transition-all duration-100
                   data-[state=active]:bg-pink-900 data-[state=active]:text-white data-[state=active]:shadow-lg data-[state=active]:ring-2 data-[state=active]:ring-white data-[state=active]:ring-offset-2 data-[state=active]:ring-offset-pink-900
                   data-[state=inactive]:bg-pink-400/80 data-[state=inactive]:text-white hover:bg-pink-100 hover:text-pink-600 hover:shadow-lg active:bg-pink-300 active:scale-95 min-w-[140px] sm:min-w-[160px] md:flex-1 relative`}
@@ -328,9 +395,9 @@ const Home = () => {
                   </span>
                 )}
               </TabsTrigger>
-              
-              <TabsTrigger 
-                value="likes" 
+
+              <TabsTrigger
+                value="likes"
                 className={`flex items-center justify-center gap-2 px-4 sm:px-5 py-3 sm:py-4 rounded-md font-medium text-sm sm:text-base shadow font-poppins transition-all duration-100
                   data-[state=active]:bg-pink-900 data-[state=active]:text-white data-[state=active]:shadow-lg
                   data-[state=inactive]:bg-pink-400/80 data-[state=inactive]:text-white hover:bg-pink-100 hover:text-pink-600 hover:shadow-lg active:bg-pink-300 active:scale-95 min-w-[140px] sm:min-w-[160px] md:flex-1 relative`}
@@ -345,9 +412,9 @@ const Home = () => {
                   </span>
                 )}
               </TabsTrigger>
-              
-              <TabsTrigger 
-                value="received-likes" 
+
+              <TabsTrigger
+                value="received-likes"
                 className={`flex items-center justify-center gap-2 px-4 sm:px-5 py-3 sm:py-4 rounded-md font-medium text-sm sm:text-base shadow font-poppins transition-all duration-100
                   data-[state=active]:bg-pink-900 data-[state=active]:text-white data-[state=active]:shadow-lg
                   data-[state=inactive]:bg-pink-400/80 data-[state=inactive]:text-white hover:bg-pink-100 hover:text-pink-600 hover:shadow-lg active:bg-pink-300 active:scale-95 min-w-[140px] sm:min-w-[160px] md:flex-1 relative`}
@@ -362,9 +429,9 @@ const Home = () => {
                   </span>
                 )}
               </TabsTrigger>
-              
-              <TabsTrigger 
-                value="blocked" 
+
+              <TabsTrigger
+                value="blocked"
                 className={`flex items-center justify-center gap-2 px-4 sm:px-5 py-3 sm:py-4 rounded-md font-medium text-sm sm:text-base shadow font-poppins transition-all duration-100
                   data-[state=active]:bg-pink-900 data-[state=active]:text-white data-[state=active]:shadow-lg
                   data-[state=inactive]:bg-pink-400/80 data-[state=inactive]:text-white hover:bg-pink-100 hover:text-pink-600 hover:shadow-lg active:bg-pink-300 active:scale-95 min-w-[140px] sm:min-w-[160px] md:flex-1 relative`}
@@ -379,9 +446,9 @@ const Home = () => {
                   </span>
                 )}
               </TabsTrigger>
-              
-              <TabsTrigger 
-                value="views" 
+
+              <TabsTrigger
+                value="views"
                 className={`flex items-center justify-center gap-2 px-4 sm:px-5 py-3 sm:py-4 rounded-md font-medium text-sm sm:text-base shadow font-poppins transition-all duration-100
                   data-[state=active]:bg-pink-900 data-[state=active]:text-white data-[state=active]:shadow-lg
                   data-[state=inactive]:bg-pink-400/80 data-[state=inactive]:text-white hover:bg-pink-100 hover:text-pink-600 hover:shadow-lg active:bg-pink-300 active:scale-95 min-w-[140px] sm:min-w-[160px] md:flex-1 relative`}
@@ -397,8 +464,8 @@ const Home = () => {
                 )}
               </TabsTrigger>
 
-              <TabsTrigger 
-                value="history" 
+              <TabsTrigger
+                value="history"
                 className={`flex items-center justify-center gap-2 px-4 sm:px-5 py-3 sm:py-4 rounded-md font-medium text-sm sm:text-base shadow font-poppins transition-all duration-100
                   data-[state=active]:bg-pink-900 data-[state=active]:text-white data-[state=active]:shadow-lg
                   data-[state=inactive]:bg-pink-400/80 data-[state=inactive]:text-white hover:bg-pink-100 hover:text-pink-600 hover:shadow-lg active:bg-pink-300 active:scale-95 min-w-[140px] sm:min-w-[160px] md:flex-1 relative`}
@@ -416,18 +483,25 @@ const Home = () => {
             </TabsList>
 
             {/* Contenu des onglets */}
-            <TabsContent value="matches" className="p-3 sm:p-4 focus-visible:outline-none focus-visible:ring-0">
+            <TabsContent
+              value="matches"
+              className="p-3 sm:p-4 focus-visible:outline-none focus-visible:ring-0"
+            >
               {matches && matches.length > 0 ? (
                 <ul className="space-y-3 sm:space-y-4">
                   {matches.map((user) => (
-                    <li 
-                      key={user.match_id} 
+                    <li
+                      key={user.match_id}
                       className="p-3 sm:p-4 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow bg-white hover:bg-pink-50"
                     >
                       <div className="flex items-center mb-3">
                         <div className="w-10 sm:w-12 h-10 sm:h-12 rounded-full bg-gray-200 mr-3 overflow-hidden">
                           {user.profile_picture ? (
-                            <img src={user.profile_picture} alt={user.firstname} className="w-full h-full object-cover" />
+                            <img
+                              src={user.profile_picture}
+                              alt={user.firstname}
+                              className="w-full h-full object-cover"
+                            />
                           ) : (
                             <div className="flex items-center justify-center h-full bg-pink-200">
                               <UserRound size={24} className="text-pink-600" />
@@ -435,29 +509,33 @@ const Home = () => {
                           )}
                         </div>
                         <div>
-                          <p className="font-semibold text-base sm:text-lg">{user.firstname}</p>
-                          <p className="text-gray-500 text-xs sm:text-sm">{user.email}</p>
+                          <p className="font-semibold text-base sm:text-lg">
+                            {user.firstname}
+                          </p>
+                          <p className="text-gray-500 text-xs sm:text-sm">
+                            {user.email}
+                          </p>
                         </div>
                       </div>
-                      
+
                       <div className="flex flex-wrap gap-2 mt-3">
-                        <button 
+                        <button
                           onClick={() => navigate(`/chat/:${user.match_id}`)}
                           className="flex items-center gap-1 px-3 sm:px-4 py-1.5 sm:py-2 rounded-md font-medium text-xs sm:text-sm shadow font-poppins bg-gradient-to-r from-pink-500 to-purple-500 text-white hover:from-pink-600 hover:to-purple-600 hover:shadow-lg transition-all"
                         >
                           <Send size={16} className="mr-1" />
                           <span>Chatter</span>
                         </button>
-                        
-                        <button 
+
+                        <button
                           onClick={() => handleUnlike(user.match_id, user.id)}
                           className="flex items-center gap-1 px-3 sm:px-4 py-1.5 sm:py-2 rounded-md font-medium text-xs sm:text-sm shadow font-poppins bg-gray-100 text-pink-600 hover:bg-pink-100 hover:text-pink-700 hover:shadow-lg transition-all"
                         >
                           <HeartCrack size={16} className="mr-1" />
                           <span>Unlike</span>
                         </button>
-                        
-                        <button 
+
+                        <button
                           onClick={() => handleBlock(user.match_id)}
                           className="flex items-center gap-1 px-3 sm:px-4 py-1.5 sm:py-2 rounded-md font-medium text-xs sm:text-sm shadow font-poppins bg-red-100 text-red-600 hover:bg-red-200 hover:text-red-700 hover:shadow-lg transition-all"
                         >
@@ -467,6 +545,7 @@ const Home = () => {
                         
                         <button 
                           onClick={() => handleSignal(user.id)}
+
                           className="flex items-center gap-1 px-3 sm:px-4 py-1.5 sm:py-2 rounded-md font-medium text-xs sm:text-sm shadow font-poppins bg-orange-100 text-orange-600 hover:bg-orange-200 hover:text-orange-700 hover:shadow-lg transition-all"
                         >
                           <Flag size={16} className="mr-1" />
@@ -478,8 +557,13 @@ const Home = () => {
                 </ul>
               ) : (
                 <div className="flex flex-col items-center justify-center py-4 sm:py-6 text-gray-500">
-                  <MessageSquare size={56} className="mb-3 sm:mb-4 text-pink-200" />
-                  <p className="text-sm sm:text-base">Vous n'avez pas encore de matchs</p>
+                  <MessageSquare
+                    size={56}
+                    className="mb-3 sm:mb-4 text-pink-200"
+                  />
+                  <p className="text-sm sm:text-base">
+                    Vous n'avez pas encore de matchs
+                  </p>
                   <p className="text-xs sm:text-sm mt-2">
                     Commencez à liker des profils pour trouver des matchs
                   </p>
@@ -488,19 +572,26 @@ const Home = () => {
             </TabsContent>
 
             {/* Contenu du tab Vos Likes */}
-            <TabsContent value="likes" className="p-3 sm:p-4 focus-visible:outline-none focus-visible:ring-0">
+            <TabsContent
+              value="likes"
+              className="p-3 sm:p-4 focus-visible:outline-none focus-visible:ring-0"
+            >
               {likes && likes.length > 0 ? (
                 <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   {likes.map((user) => (
-                    <li 
-                      key={user.id} 
+                    <li
+                      key={user.id}
                       onClick={() => handleUserClick(user)}
                       className="p-3 sm:p-4 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow bg-white hover:bg-pink-50"
                     >
                       <div className="flex items-center">
                         <div className="w-10 sm:w-12 h-10 sm:h-12 rounded-full bg-gray-200 mr-3 overflow-hidden">
                           {user.profile_picture ? (
-                            <img src={user.profile_picture} alt={user.firstname} className="w-full h-full object-cover" />
+                            <img
+                              src={user.profile_picture}
+                              alt={user.firstname}
+                              className="w-full h-full object-cover"
+                            />
                           ) : (
                             <div className="flex items-center justify-center h-full bg-pink-200">
                               <UserRound size={24} className="text-pink-600" />
@@ -508,10 +599,13 @@ const Home = () => {
                           )}
                         </div>
                         <div>
-                          <p className="font-semibold text-sm sm:text-base">{user.firstname}</p>
-                          <p className="text-gray-500 text-xs sm:text-sm">{user.email}</p>
+                          <p className="font-semibold text-sm sm:text-base">
+                            {user.firstname}
+                          </p>
+                          <p className="text-gray-500 text-xs sm:text-sm">
+                            {user.email}
+                          </p>
                         </div>
-
                       </div>
                     </li>
                   ))}
@@ -519,33 +613,42 @@ const Home = () => {
               ) : (
                 <div className="flex flex-col items-center justify-center py-4 sm:py-6 text-gray-500">
                   <Heart size={56} className="mb-3 sm:mb-4 text-pink-200" />
-                  <p className="text-sm sm:text-base">Vous n'avez liké aucun profil pour l'instant</p>
+                  <p className="text-sm sm:text-base">
+                    Vous n'avez liké aucun profil pour l'instant
+                  </p>
                   <p className="text-xs sm:text-sm mt-2">
                     Likez des profils pour les retrouver ici
                   </p>
                 </div>
               )}
               <UserProfilModal
-               isOpen={isModalOpen}
-               onClose={() => setIsModalOpen(false)}
-               user={selectedUser}
-             />
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                user={selectedUser}
+              />
             </TabsContent>
 
             {/* Contenu du tab Likes reçus */}
-            <TabsContent value="received-likes" className="p-3 sm:p-4 focus-visible:outline-none focus-visible:ring-0">
+            <TabsContent
+              value="received-likes"
+              className="p-3 sm:p-4 focus-visible:outline-none focus-visible:ring-0"
+            >
               {otherLikes && otherLikes.length > 0 ? (
                 <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                   {otherLikes.map((user) => (
-                    <li 
-                      key={user.id} 
+                    <li
+                      key={user.id}
                       onClick={() => handleUserClick(user)}
                       className="p-3 sm:p-4 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow bg-white hover:bg-pink-50 cursor-pointer"
-                      >
+                    >
                       <div className="flex items-center mb-3">
                         <div className="w-10 sm:w-12 h-10 sm:h-12 rounded-full bg-gray-200 mr-3 overflow-hidden">
                           {user.profile_picture ? (
-                            <img src={user.profile_picture} alt={user.firstname} className="w-full h-full object-cover" />
+                            <img
+                              src={user.profile_picture}
+                              alt={user.firstname}
+                              className="w-full h-full object-cover"
+                            />
                           ) : (
                             <div className="flex items-center justify-center h-full bg-pink-200">
                               <UserRound size={24} className="text-pink-600" />
@@ -553,29 +656,45 @@ const Home = () => {
                           )}
                         </div>
                         <div>
-                          <p className="font-semibold text-sm sm:text-base">{user.firstname}</p>
-                          <p className="text-gray-500 text-xs sm:text-sm">{user.email}</p>
+                          <p className="font-semibold text-sm sm:text-base">
+                            {user.firstname}
+                          </p>
+                          <p className="text-gray-500 text-xs sm:text-sm">
+                            {user.email}
+                          </p>
                         </div>
                       </div>
-                      
-                      <button 
-                        className="w-full flex items-center justify-center gap-1 px-3 sm:px-4 py-1.5 sm:py-2 bg-pink-500 text-white rounded-md hover:bg-pink-600 transition-colors text-xs sm:text-sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handlelike(user.id);
-                        }}
-                      >
-                        <Heart size={16} />
-                        <span>Liker en retour</span>
-                      </button>
-                      <p className="text-xs text-center mt-2 text-gray-500">Cliquez sur le profil pour plus de détails</p>
+
+                      {/* Vérifier si l'utilisateur n'est pas déjà en match avant d'afficher le bouton */}
+                      {!matches.some((match) => match.id === user.id) ? (
+                        <button
+                          className="w-full flex items-center justify-center gap-1 px-3 sm:px-4 py-1.5 sm:py-2 bg-pink-500 text-white rounded-md hover:bg-pink-600 transition-colors text-xs sm:text-sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handlelike(user.id);
+                          }}
+                        >
+                          <Heart size={16} />
+                          <span>Liker en retour</span>
+                        </button>
+                      ) : (
+                        <div className="w-full flex items-center justify-center gap-1 px-3 sm:px-4 py-1.5 sm:py-2 bg-green-100 text-green-700 rounded-md text-xs sm:text-sm">
+                          <Heart size={16} fill="currentColor" />
+                          <span>Déjà en match !</span>
+                        </div>
+                      )}
+                      <p className="text-xs text-center mt-2 text-gray-500">
+                        Cliquez sur le profil pour plus de détails
+                      </p>
                     </li>
                   ))}
                 </ul>
               ) : (
                 <div className="flex flex-col items-center justify-center py-4 sm:py-6 text-gray-500">
                   <ThumbsUp size={56} className="mb-3 sm:mb-4 text-pink-200" />
-                  <p className="text-sm sm:text-base">Personne ne vous a encore liké</p>
+                  <p className="text-sm sm:text-base">
+                    Personne ne vous a encore liké
+                  </p>
                   <p className="text-xs sm:text-sm mt-2">
                     Quand quelqu'un vous like, vous le verrez ici
                   </p>
@@ -589,12 +708,15 @@ const Home = () => {
             </TabsContent>
 
             {/* Contenu du tab Bloqués */}
-            <TabsContent value="blocked" className="p-3 sm:p-4 focus-visible:outline-none focus-visible:ring-0">
+            <TabsContent
+              value="blocked"
+              className="p-3 sm:p-4 focus-visible:outline-none focus-visible:ring-0"
+            >
               {blockedUsers && blockedUsers.length > 0 ? (
                 <ul className="space-y-3 sm:space-y-4">
                   {blockedUsers.map((user: Block) => (
-                    <li 
-                      key={user.block_id} 
+                    <li
+                      key={user.block_id}
                       className="p-3 sm:p-4 border border-gray-200 rounded-lg shadow-sm flex items-center justify-between bg-gray-50"
                     >
                       <div className="flex items-center">
@@ -604,12 +726,16 @@ const Home = () => {
                           </div>
                         </div>
                         <div>
-                          <p className="font-semibold text-sm sm:text-base text-gray-700">{user.firstname}</p>
-                          <p className="text-gray-500 text-xs sm:text-sm">{user.email}</p>
+                          <p className="font-semibold text-sm sm:text-base text-gray-700">
+                            {user.firstname}
+                          </p>
+                          <p className="text-gray-500 text-xs sm:text-sm">
+                            {user.email}
+                          </p>
                         </div>
                       </div>
-                      
-                      <button 
+
+                      <button
                         onClick={() => handleUnBlock(user.block_id)}
                         className="px-3 sm:px-4 py-1.5 sm:py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors text-xs sm:text-sm"
                       >
@@ -621,7 +747,9 @@ const Home = () => {
               ) : (
                 <div className="flex flex-col items-center justify-center py-4 sm:py-6 text-gray-500">
                   <Ban size={56} className="mb-3 sm:mb-4 text-pink-200" />
-                  <p className="text-sm sm:text-base">Vous n'avez bloqué aucun utilisateur</p>
+                  <p className="text-sm sm:text-base">
+                    Vous n'avez bloqué aucun utilisateur
+                  </p>
                   <p className="text-xs sm:text-sm mt-2">
                     Les utilisateurs que vous bloquez apparaîtront ici
                   </p>
@@ -630,80 +758,108 @@ const Home = () => {
             </TabsContent>
 
             {/* Contenu du tab vues */}
-            <TabsContent value="views" className="p-3 sm:p-4 focus-visible:outline-none focus-visible:ring-0">
+            <TabsContent
+              value="views"
+              className="p-3 sm:p-4 focus-visible:outline-none focus-visible:ring-0"
+            >
               {viewlist && viewlist.length > 0 ? (
                 <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
                   {viewlist.map((user) => (
-                    <li 
-                      key={user.id} 
+                    <li
+                      key={user.id}
                       onClick={() => handleUserClick(user)}
                       className="p-3 sm:p-4 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow bg-white"
                     >
                       <div className="flex flex-col items-center text-center">
                         <div className="w-12 sm:w-16 h-12 sm:h-16 rounded-full bg-gray-200 mb-2 overflow-hidden">
                           {user.profile_picture ? (
-                            <img src={user.profile_picture} alt={user.firstname} className="w-full h-full object-cover" />
+                            <img
+                              src={user.profile_picture}
+                              alt={user.firstname}
+                              className="w-full h-full object-cover"
+                            />
                           ) : (
                             <div className="flex items-center justify-center h-full bg-pink-100">
                               <UserRound size={32} className="text-pink-500" />
                             </div>
                           )}
                         </div>
-                        <p className="font-semibold text-sm sm:text-base">{user.firstname}</p>
-                        <p className="text-gray-500 text-xs sm:text-sm">{user.email}</p>
-                        <p className="text-xs text-gray-400 mt-1">A visité le {new Date().toLocaleDateString()}</p>
+                        <p className="font-semibold text-sm sm:text-base">
+                          {user.firstname}
+                        </p>
+                        <p className="text-gray-500 text-xs sm:text-sm">
+                          {user.email}
+                        </p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          A visité le {new Date().toLocaleDateString()}
+                        </p>
                       </div>
-                      <button 
-                          onClick={() => handlelike(user.id)}
-                          className="flex items-center gap-1 px-3 sm:px-4 py-1.5 sm:py-2 rounded-md font-medium text-xs sm:text-sm shadow font-poppins bg-gray-100 text-pink-600 hover:bg-pink-100 hover:text-pink-700 hover:shadow-lg transition-all"
-                        >
-                          <Heart size={16} className="mr-1" />
-                          <span>Like</span>
-                        </button>
+                      <button
+                        onClick={() => handlelike(user.id)}
+                        className="flex items-center gap-1 px-3 sm:px-4 py-1.5 sm:py-2 rounded-md font-medium text-xs sm:text-sm shadow font-poppins bg-gray-100 text-pink-600 hover:bg-pink-100 hover:text-pink-700 hover:shadow-lg transition-all"
+                      >
+                        <Heart size={16} className="mr-1" />
+                        <span>Like</span>
+                      </button>
                     </li>
                   ))}
                 </ul>
               ) : (
                 <div className="flex flex-col items-center justify-center py-4 sm:py-6 text-gray-500">
                   <Eye size={56} className="mb-3 sm:mb-4 text-pink-200" />
-                  <p className="text-sm sm:text-base">Personne n'a encore consulté votre profil</p>
+                  <p className="text-sm sm:text-base">
+                    Personne n'a encore consulté votre profil
+                  </p>
                   <p className="text-xs sm:text-sm mt-2">
                     Les personnes qui consultent votre profil seront listées ici
                   </p>
                 </div>
               )}
               <UserProfilModal
-               isOpen={isModalOpen}
-               onClose={() => setIsModalOpen(false)}
-               user={selectedUser}
-             />
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                user={selectedUser}
+              />
             </TabsContent>
             {/* PAS DE LIGNE VIDE ICI */}
-            <TabsContent value="history" className="p-3 sm:p-4 focus-visible:outline-none focus-visible:ring-0">
+            <TabsContent
+              value="history"
+              className="p-3 sm:p-4 focus-visible:outline-none focus-visible:ring-0"
+            >
               {history && history.length > 0 ? (
                 <ul className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
                   {history.map((user) => (
-                    <li 
-                      key={user.id} 
+                    <li
+                      key={user.id}
                       className="p-3 sm:p-4 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow bg-white cursor-pointer"
                       onClick={() => handleUserClick(user)}
                     >
                       <div className="flex flex-col items-center text-center">
                         <div className="w-12 sm:w-16 h-12 sm:h-16 rounded-full bg-gray-200 mb-2 overflow-hidden">
                           {user.profile_picture ? (
-                            <img src={user.profile_picture} alt={user.firstname} className="w-full h-full object-cover" />
+                            <img
+                              src={user.profile_picture}
+                              alt={user.firstname}
+                              className="w-full h-full object-cover"
+                            />
                           ) : (
                             <div className="flex items-center justify-center h-full bg-pink-100">
                               <UserRound size={32} className="text-pink-500" />
                             </div>
                           )}
                         </div>
-                        <p className="font-semibold text-sm sm:text-base">{user.firstname}</p>
-                        <p className="text-gray-500 text-xs sm:text-sm">{user.email}</p>
-                        <p className="text-xs text-gray-400 mt-1">A visité le {new Date().toLocaleDateString()}</p>
+                        <p className="font-semibold text-sm sm:text-base">
+                          {user.firstname}
+                        </p>
+                        <p className="text-gray-500 text-xs sm:text-sm">
+                          {user.email}
+                        </p>
+                        <p className="text-xs text-gray-400 mt-1">
+                          A visité le {new Date().toLocaleDateString()}
+                        </p>
                       </div>
                       <div className="flex gap-2 mt-3 justify-center">
-                        <button 
+                        <button
                           onClick={(e) => {
                             e.stopPropagation(); // This prevents the modal from opening
                             handlelike(user.id);
@@ -713,7 +869,7 @@ const Home = () => {
                           <Heart size={16} className="mr-1" />
                           <span>Like</span>
                         </button>
-                        <button 
+                        <button
                           onClick={(e) => {
                             e.stopPropagation(); // This prevents the modal from opening
                             handleOpenSignalModal(user);
@@ -730,7 +886,9 @@ const Home = () => {
               ) : (
                 <div className="flex flex-col items-center justify-center py-4 sm:py-6 text-gray-500">
                   <History size={56} className="mb-3 sm:mb-4 text-pink-200" />
-                  <p className="text-sm sm:text-base">Vous n'avez encore consulté aucun profil</p>
+                  <p className="text-sm sm:text-base">
+                    Vous n'avez encore consulté aucun profil
+                  </p>
                   <p className="text-xs sm:text-sm mt-2">
                     Les personnes que vous consulterez seront listées ici
                   </p>
