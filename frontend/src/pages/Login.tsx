@@ -63,7 +63,19 @@ const Login = () => {
 
       if (!response.ok) {
         console.error(data.message);
-        setError(data.message);
+
+        // Modifier le message d'erreur selon l'état de vérification de l'email
+        if (response.status === 403) {
+          if (data.emailVerified === true) {
+            setError(
+              "Vous devez finaliser votre profil en complétant les informations demandées. Utilisez le lien envoyé dans l'email précédent pour terminer votre inscription."
+            );
+          } else {
+            setError(data.message);
+          }
+        } else {
+          setError(data.message);
+        }
         return;
       }
 

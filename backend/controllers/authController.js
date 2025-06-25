@@ -389,12 +389,27 @@ export async function logUser (req, res){
 
       // Vérifier si l'email est confirmé
       console.log("🔍 Vérification emailconfirmed:", user.emailconfirmed, typeof user.emailconfirmed);
+      console.log("🔍 Vérification emailverified:", user.emailverified, typeof user.emailverified);
+      
       if (!user.emailconfirmed) {
         console.log("🚨 Email non confirmé, blocage de la connexion");
-        return res.status(403).json({ 
-          message: 'Votre email n\'est pas encore confirmé. Veuillez vérifier votre boîte email et cliquer sur le lien de confirmation avant de vous connecter.',
-          emailConfirmed: false
-        });
+        
+        // Cas 1: Email vérifié (ils ont cliqué sur le lien) mais compte non finalisé
+        if (user.emailverified) {
+          return res.status(403).json({ 
+            message: 'Veuillez finaliser votre profil en suivant le lien envoyé dans l\'email précédent pour terminer votre inscription.',
+            emailConfirmed: false,
+            emailVerified: true
+          });
+        } 
+        // Cas 2: Email non vérifié (ils n'ont pas cliqué sur le lien)
+        else {
+          return res.status(403).json({ 
+            message: 'Votre email n\'est pas encore confirmé. Veuillez vérifier votre boîte email et cliquer sur le lien de confirmation avant de vous connecter.',
+            emailConfirmed: false,
+            emailVerified: false
+          });
+        }
       }
       
       await db.update(
