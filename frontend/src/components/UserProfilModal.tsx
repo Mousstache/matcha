@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { User } from "@/types/User";
+import { Heart } from "lucide-react";
 
 
 
@@ -23,6 +24,74 @@ interface Props {
 
 
 const UserProfileModal: React.FC<Props> = ({ isOpen, onClose, user }) => {
+  const [relationshipStatus, setRelationshipStatus] = useState<{
+    isMatch: boolean;
+    currentUserLikesTarget: boolean;
+    targetLikesCurrentUser: boolean;
+    relationshipStatus: string;
+  } | null>(null);
+
+  useEffect(() => {
+    if (isOpen && user) {
+      fetchRelationshipStatus();
+    }
+  }, [isOpen, user]);
+
+  const fetchRelationshipStatus = async () => {
+    if (!user) return;
+    
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`http://localhost:5001/api/relationship-status/${user.id}`, {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setRelationshipStatus(data);
+      }
+    } catch (error) {
+      console.error("Erreur lors de la récupération du statut de relation:", error);
+    }
+  };
+
+  const getRelationshipBadge = () => {
+    if (!relationshipStatus) return null;
+
+    if (relationshipStatus.isMatch) {
+      return (
+        <Badge className="bg-gradient-to-r from-pink-500 to-red-500 text-white font-semibold flex items-center gap-2">
+          <Heart size={14} />
+          💕 Match !
+        </Badge>
+      );
+    }
+    
+    if (relationshipStatus.targetLikesCurrentUser) {
+      return (
+        <Badge className="bg-gradient-to-r from-purple-500 to-pink-500 text-white font-semibold flex items-center gap-2">
+          <Heart size={14} />
+          💜 Vous a liké
+        </Badge>
+      );
+    }
+    
+    if (relationshipStatus.currentUserLikesTarget) {
+      return (
+        <Badge className="bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold flex items-center gap-2">
+          <Heart size={14} />
+          💙 Vous avez liké
+        </Badge>
+      );
+    }
+    
+    return null;
+  };
+
   if (!isOpen || !user) return null;
 
 const getInitials = () => {
@@ -49,9 +118,12 @@ const getInitials = () => {
             <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent">
               {user.firstname} {user.lastname}
             </DialogTitle>
-            <p className="text-gray-600 text-sm mt-1">
-              {user.isonline ? "🟢 En ligne" : "⚫ Hors ligne"}
-            </p>
+            <div className="flex items-center gap-2 mt-1">
+              <p className="text-gray-600 text-sm">
+                {user.isonline ? "🟢 En ligne" : "⚫ Hors ligne"}
+              </p>
+              {getRelationshipBadge()}
+            </div>
           </div>
         </div>
       </DialogHeader>

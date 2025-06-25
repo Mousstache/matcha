@@ -37,6 +37,7 @@ router.get('/getInteractedProfiles',authMiddleware,ensureEmailConfirmed, userCtr
 router.post('/ConsultProfile',authMiddleware,ensureEmailConfirmed, userCtrl.ConsultProfile);
 router.get('/getViewlist',authMiddleware,ensureEmailConfirmed, userCtrl.getViewlist);
 router.get('/getHistory',authMiddleware,ensureEmailConfirmed, userCtrl.getConsultedUsers);
+router.get('/relationship-status/:userId',authMiddleware,ensureEmailConfirmed, userCtrl.getRelationshipStatus);
 
 
 // SOCKET 

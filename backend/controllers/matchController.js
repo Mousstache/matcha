@@ -502,4 +502,59 @@ export async function getInteractedProfiles(req, res) {
   }
 }
 
-export default { ConsultProfile, likeUser, unlikeUser, getLikes, getOtherLikes, getMatches, dislikeUser , getViewlist, getConsultedUsers, getInteractedProfiles};
+export async function getRelationshipStatus(req, res) {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const currentUser = await db.findOne('users', { email: decoded.email });
+    
+    const { userId } = req.params;
+    
+    if (!userId) {
+      return res.status(400).json({
+        message: "ID utilisateur manquant"
+      });
+    }
+
+    // Vérifier si c'est un match
+    const matchQuery = `
+      SELECT * FROM matches 
+      WHERE (user1_id = $1 AND user2_id = $2) 
+         OR (user1_id = $2 AND user2_id = $1)
+      LIMIT 1
+    `;
+    const matchResult = await db.query(matchQuery, [currentUser.id, parseInt(userId)]);
+    const match = matchResult.rows ? matchResult.rows[0] : matchResult[0];
+
+    // Vérifier si l'utilisateur actuel a liké cet utilisateur
+    const currentUserLikesTarget = await db.findOne('likes', {
+      liker_id: currentUser.id,
+      liked_id: parseInt(userId)
+    });
+
+    // Vérifier si cet utilisateur a liké l'utilisateur actuel
+    const targetLikesCurrentUser = await db.findOne('likes', {
+      liker_id: parseInt(userId),
+      liked_id: currentUser.id
+    });
+
+    return res.status(200).json({
+      isMatch: !!match,
+      currentUserLikesTarget: !!currentUserLikesTarget,
+      targetLikesCurrentUser: !!targetLikesCurrentUser,
+      relationshipStatus: match ? 'match' : 
+                         (currentUserLikesTarget && targetLikesCurrentUser) ? 'mutual_like' :
+                         currentUserLikesTarget ? 'you_liked' :
+                         targetLikesCurrentUser ? 'they_liked' : 'none'
+    });
+
+  } catch (error) {
+    console.error('Error lors de la vérification du statut de relation:', error);
+    return res.status(500).json({
+      message: "Erreur lors de la vérification du statut de relation",
+      error: error.message
+    });
+  }
+}
+
+export default { ConsultProfile, likeUser, unlikeUser, getLikes, getOtherLikes, getMatches, dislikeUser , getViewlist, getConsultedUsers, getInteractedProfiles, getRelationshipStatus};
