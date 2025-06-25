@@ -5,7 +5,14 @@ import {
 } from "@/context/NotificationContext";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Bell, Heart, MessageCircle, Check, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Bell,
+  Heart,
+  MessageCircle,
+  Check,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -120,24 +127,28 @@ const Notification = () => {
   const setNotifications = notificationContext?.setNotifications || (() => {});
   const [animateOut, setAnimateOut] = useState<number | null>(null);
   const navigate = useNavigate();
-  
+
   // État pour la pagination
   const [currentPage, setCurrentPage] = useState(1);
   const notificationsPerPage = 5; // Nombre de notifications par page
-  
+
   // Calcul des index pour la pagination
   const indexOfLastNotification = currentPage * notificationsPerPage;
-  const indexOfFirstNotification = indexOfLastNotification - notificationsPerPage;
-  const currentNotifications = notifications.slice(indexOfFirstNotification, indexOfLastNotification);
+  const indexOfFirstNotification =
+    indexOfLastNotification - notificationsPerPage;
+  const currentNotifications = notifications.slice(
+    indexOfFirstNotification,
+    indexOfLastNotification
+  );
   const totalPages = Math.ceil(notifications.length / notificationsPerPage);
-  
+
   // Fonction pour changer de page
   const nextPage = () => {
     if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
     }
   };
-  
+
   const prevPage = () => {
     if (currentPage > 1) {
       setCurrentPage(currentPage - 1);
@@ -159,13 +170,15 @@ const Notification = () => {
     setTimeout(() => {
       setNotifications((prev: NotificationType[]) => {
         const updatedNotifications = prev.filter((_, i) => i !== realIndex);
-        
+
         // Ajuster la page si nécessaire après suppression
-        const newTotalPages = Math.ceil(updatedNotifications.length / notificationsPerPage);
+        const newTotalPages = Math.ceil(
+          updatedNotifications.length / notificationsPerPage
+        );
         if (currentPage > newTotalPages && newTotalPages > 0) {
           setCurrentPage(newTotalPages);
         }
-        
+
         return updatedNotifications;
       });
       setAnimateOut(null);
@@ -197,7 +210,10 @@ const Notification = () => {
             </span>
           )}
         </div>
-        <CardContent className="p-0 overflow-y-auto" style={{ maxHeight: notifications.length > 0 ? '450px' : 'auto' }}>
+        <CardContent
+          className="p-0 overflow-y-auto"
+          style={{ maxHeight: notifications.length > 0 ? "450px" : "auto" }}
+        >
           {notifications.length === 0 ? (
             <div className="p-6 text-center text-gray-500">
               <Bell size={32} className="mx-auto mb-3 text-pink-200" />
@@ -208,23 +224,25 @@ const Notification = () => {
             </div>
           ) : (
             <>
-              {currentNotifications.map((notif: NotificationType, i: number) => (
-                <NotificationItem
-                  key={i}
-                  notif={notif}
-                  onRemove={() => removeNotification(i)}
-                  animateOut={animateOut === (indexOfFirstNotification + i)}
-                  onNavigate={handleNotificationClick}
-                />
-              ))}
+              {currentNotifications.map(
+                (notif: NotificationType, i: number) => (
+                  <NotificationItem
+                    key={i}
+                    notif={notif}
+                    onRemove={() => removeNotification(i)}
+                    animateOut={animateOut === indexOfFirstNotification + i}
+                    onNavigate={handleNotificationClick}
+                  />
+                )
+              )}
             </>
           )}
         </CardContent>
-        
+
         {/* Contrôles de pagination toujours visibles si plus d'une page */}
         {notifications.length > notificationsPerPage && (
           <div className="flex justify-between items-center px-4 py-2 bg-gray-50 border-t border-pink-100">
-            <Button 
+            <Button
               onClick={prevPage}
               disabled={currentPage === 1}
               variant="outline"
@@ -237,7 +255,7 @@ const Notification = () => {
             <span className="text-sm text-gray-500">
               Page {currentPage} sur {totalPages}
             </span>
-            <Button 
+            <Button
               onClick={nextPage}
               disabled={currentPage === totalPages}
               variant="outline"
@@ -249,7 +267,7 @@ const Notification = () => {
             </Button>
           </div>
         )}
-        
+
         <CardFooter className="p-2 bg-gray-50 border-t border-pink-100">
           <Button
             onClick={markAllAsRead}
