@@ -1,6 +1,17 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/auth";
-import { Heart, MapPin, User, Edit3, Camera } from "lucide-react";
+import {
+  Heart,
+  MapPin,
+  User,
+  Edit3,
+  Camera,
+  Star,
+  Check,
+  Info,
+  Plus,
+  Minus,
+} from "lucide-react";
 import { Button, Avatar, Input, Textarea, Card } from "@heroui/react";
 import { addToast } from "@/utils/toast";
 
@@ -22,6 +33,12 @@ interface User {
   age: number;
   preference: string;
   profile_picture: string | null;
+  interests?: string[] | string;
+}
+
+interface Interest {
+  id: string;
+  label: string;
 }
 
 const Profile = () => {
@@ -33,6 +50,18 @@ const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [countries, setCountries] = useState<string[]>([]);
   const [cities, setCities] = useState<string[]>([]);
+  const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
+
+  const interestsList: Interest[] = [
+    { id: "sport", label: "Sport" },
+    { id: "music", label: "Musique" },
+    { id: "cinema", label: "Cinéma" },
+    { id: "technology", label: "Technologie" },
+    { id: "travel", label: "Voyages" },
+    { id: "cooking", label: "Cuisine" },
+    { id: "art", label: "Art" },
+    { id: "literature", label: "Littérature" },
+  ];
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -49,6 +78,27 @@ const Profile = () => {
         const data = await response.json();
         if (response.ok) {
           setUser(data.user);
+          // Initialiser les intérêts sélectionnés
+          if (data.user.interests) {
+            let userInterests: string[] = [];
+            if (Array.isArray(data.user.interests)) {
+              userInterests = data.user.interests;
+            } else if (typeof data.user.interests === "string") {
+              userInterests = data.user.interests
+                .split(",")
+                .map((i: string) => i.trim());
+            }
+
+            // Convertir les labels en IDs si nécessaire
+            const convertedInterests = userInterests.map((interest) => {
+              const found = interestsList.find(
+                (item) => item.label === interest || item.id === interest
+              );
+              return found ? found.id : interest;
+            });
+
+            setSelectedInterests(convertedInterests);
+          }
         } else {
           console.error(
             "Erreur lors de la récupération du profil",
@@ -150,11 +200,7 @@ const Profile = () => {
 
   useEffect(() => {
     // Exemple statique, tu peux remplacer par une API si besoin
-    setCountries([
-      "France",
-      "Belgique",
-      "Suisse",
-    ]);
+    setCountries(["France", "Belgique", "Suisse"]);
   }, []);
 
   useEffect(() => {
@@ -203,6 +249,16 @@ const Profile = () => {
       return;
     }
 
+    // Vérifier qu'au moins 1 intérêt est sélectionné
+    if (selectedInterests.length === 0) {
+      addToast({
+        title: "Erreur",
+        description: "Vous devez sélectionner au moins 1 intérêt",
+        color: "danger",
+      });
+      return;
+    }
+
     const token = localStorage.getItem("token");
     try {
       const response = await fetch("http://localhost:5001/api/updateUser", {
@@ -222,6 +278,7 @@ const Profile = () => {
           username: user.username,
           latitude: user.latitude,
           longitude: user.longitude,
+          interests: selectedInterests,
         }),
       });
 
@@ -252,6 +309,34 @@ const Profile = () => {
         color: "danger",
       });
     }
+  };
+
+  const handleInterestToggle = (interestId: string) => {
+    setSelectedInterests((prev) => {
+      if (prev.includes(interestId)) {
+        // Ne pas permettre de retirer le dernier intérêt
+        if (prev.length === 1) {
+          addToast({
+            title: "Information",
+            description: "Vous devez garder au moins 1 intérêt sélectionné",
+            color: "warning",
+          });
+          return prev;
+        }
+        return prev.filter((item) => item !== interestId);
+      } else {
+        // Limiter à 3 intérêts maximum
+        if (prev.length >= 3) {
+          addToast({
+            title: "Information",
+            description: "Vous ne pouvez sélectionner que 3 intérêts maximum",
+            color: "warning",
+          });
+          return prev;
+        }
+        return [...prev, interestId];
+      }
+    });
   };
 
   const handleUpload = async (filesToUpload: File[]) => {
@@ -820,6 +905,60 @@ const Profile = () => {
                         placeholder="Parlez de vous, de vos passions, de ce qui vous rend unique..."
                       />
                     </div>
+
+                    {/* Intérêts */}
+                    <div className="space-y-3 md:col-span-2">
+                      <h3 className="text-lg font-semibold text-pink-700 mb-2 flex items-center">
+                        <Heart size={16} className="mr-2" />
+                        Vos centres d'intérêt
+                      </h3>
+                      <p className="text-sm text-gray-600 mb-4">
+                        Sélectionnez entre 1 et 3 intérêts qui vous représentent
+                        le mieux
+                      </p>
+
+                      <div className="flex justify-between items-center mb-3">
+                        <span
+                          className={`text-sm font-medium px-3 py-1 rounded-full ${
+                            selectedInterests.length === 0
+                              ? "bg-gray-100 text-gray-500"
+                              : selectedInterests.length <= 2
+                              ? "bg-blue-100 text-blue-600"
+                              : "bg-green-100 text-green-600"
+                          }`}
+                        >
+                          {selectedInterests.length}/3 sélectionnés
+                        </span>
+                        {selectedInterests.length === 0 && (
+                          <span className="text-red-500 font-medium text-sm">
+                            Au moins 1 intérêt requis
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                        {interestsList.map((interest) => (
+                          <div
+                            key={interest.id}
+                            onClick={() => handleInterestToggle(interest.id)}
+                            className={`px-4 py-3 rounded-xl border-2 cursor-pointer transition-all duration-200 transform hover:scale-105 ${
+                              selectedInterests.includes(interest.id)
+                                ? "bg-gradient-to-r from-pink-500 to-purple-500 text-white border-transparent shadow-lg"
+                                : "border-pink-200 hover:bg-pink-50 hover:border-pink-300 text-gray-700 bg-white"
+                            }`}
+                          >
+                            <div className="flex items-center justify-center gap-2 text-center">
+                              <span className="font-medium text-sm">
+                                {interest.label}
+                              </span>
+                              {selectedInterests.includes(interest.id) && (
+                                <Check size={16} className="text-white" />
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
                   </div>
 
                   {/* Boutons d'actions */}
@@ -843,10 +982,41 @@ const Profile = () => {
               )}
 
               {!isEditing && (
-                <div className="bg-white/90 rounded-xl p-5 shadow-sm border border-pink-100">
-                  <p className="text-gray-700 whitespace-pre-wrap text-lg leading-relaxed">
-                    {user.description || "Aucune description pour le moment."}
-                  </p>
+                <div className="space-y-4">
+                  <div className="bg-white/90 rounded-xl p-5 shadow-sm border border-pink-100">
+                    <p className="text-gray-700 whitespace-pre-wrap text-lg leading-relaxed">
+                      {user.description || "Aucune description pour le moment."}
+                    </p>
+                  </div>
+
+                  {/* Section intérêts en mode lecture */}
+                  <div className="bg-white/90 rounded-xl p-5 shadow-sm border border-pink-100">
+                    <h3 className="text-lg font-semibold text-pink-700 mb-3 flex items-center">
+                      <Heart size={16} className="mr-2" />
+                      Centres d'intérêt
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedInterests.length > 0 ? (
+                        selectedInterests.map((interest, index) => (
+                          <span
+                            key={index}
+                            className="inline-flex items-center px-3 py-2 rounded-full text-sm font-medium bg-gradient-to-r from-pink-100 to-purple-100 border border-pink-200 text-gray-700"
+                          >
+                            <Heart
+                              size={12}
+                              className="mr-1 text-pink-500"
+                              fill="currentColor"
+                            />
+                            {interest}
+                          </span>
+                        ))
+                      ) : (
+                        <p className="text-gray-500 italic">
+                          Aucun intérêt renseigné
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
               {/* : (
