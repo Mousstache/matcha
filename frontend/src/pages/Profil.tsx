@@ -12,7 +12,7 @@ import {
   Plus,
   Minus,
 } from "lucide-react";
-import { Button, Avatar, Input, Textarea, Card } from "@heroui/react";
+import { Button, Input, Textarea, Card } from "@heroui/react";
 import { addToast } from "@/utils/toast";
 
 // import { MultiSelect } from "@heroui/multiselect";
@@ -632,20 +632,31 @@ const Profile = () => {
         <div className="pt-4 px-8 pb-4">
           <div className="flex flex-col md:flex-row md:items-center md:gap-8 gap-4">
             <div className="flex-shrink-0 flex justify-center md:justify-start">
-              <Avatar
-                size="lg"
-                className="w-28 h-28 border-4 border-white bg-gray-100 shadow-xl -mt-16 md:mt-0"
-              >
-                {profile_picture ? (
+              <div className="relative w-28 h-28 border-4 border-white bg-gray-100 shadow-xl rounded-full overflow-hidden -mt-16 md:mt-0">
+                {user?.profile_picture ? (
+                  <img
+                    src={user.profile_picture}
+                    alt="Photo de profil"
+                    className="w-full h-full object-cover"
+                  />
+                ) : profile_picture ? (
                   <img
                     src={profile_picture}
                     alt="Photo de profil"
                     className="w-full h-full object-cover"
                   />
+                ) : imageUrls.length > 0 ? (
+                  <img
+                    src={imageUrls[0]}
+                    alt="Photo de profil"
+                    className="w-full h-full object-cover"
+                  />
                 ) : (
-                  <User size={40} className="text-pink-400 mx-auto my-auto" />
+                  <div className="w-full h-full flex items-center justify-center bg-pink-100">
+                    <User size={40} className="text-pink-400" />
+                  </div>
                 )}
-              </Avatar>
+              </div>
             </div>
             <div className="flex-1 flex flex-col justify-center">
               <div className="flex items-center gap-3 flex-wrap">
