@@ -21,6 +21,19 @@ export async function likeUser (req, res){
           message: "ya pas de like",
         })
 
+      // Vérifier si l'utilisateur qui like a au moins une photo
+      const likerImages = await db.query(
+        'SELECT image_url FROM user_images WHERE user_id = $1',
+        [liker_id]
+      );
+      
+      if (!likerImages || likerImages.length === 0) {
+        return res.status(400).json({
+          message: "Vous devez avoir au moins une photo de profil pour liker d'autres utilisateurs",
+          error: "NO_PROFILE_PICTURE"
+        });
+      }
+
       const io = req.app.get("io");
       const connectedUsers = req.app.get("connectedUsers");
 
@@ -31,6 +44,35 @@ export async function likeUser (req, res){
         return res.status(400).json({
           message : "pas de like sois meme",
       })
+
+      // Vérifier si un match existe déjà entre ces deux utilisateurs
+      const existingMatchQuery = `
+        SELECT * FROM matches 
+        WHERE (user1_id = $1 AND user2_id = $2) 
+           OR (user1_id = $2 AND user2_id = $1)
+        LIMIT 1
+      `;
+      const existingMatch = await db.query(existingMatchQuery, [liker_id, liked_id]);
+
+      if (existingMatch && existingMatch.length > 0) {
+        return res.status(400).json({
+          message: "Vous êtes déjà en match avec cette personne",
+          error: "ALREADY_MATCHED"
+        });
+      }
+
+      // Vérifier si l'utilisateur a déjà liké cette personne
+      const existingLike = await db.findOne('likes', {
+        liker_id: liker_id,
+        liked_id: liked_id
+      });
+
+      if (existingLike) {
+        return res.status(400).json({
+          message: "Vous avez déjà liké cette personne",
+          error: "ALREADY_LIKED"
+        });
+      }
   
       await db.update('users', { fame_rate: fameRate}, { id: liked_id });
   
@@ -250,6 +292,19 @@ export async function likeUser (req, res){
       if (liker_id === liked_id) {
         return res.status(400).json({
           message: "Impossible de se disliker soi-même",
+        });
+      }
+
+      // Vérifier si l'utilisateur qui dislike a au moins une photo
+      const likerImages = await db.query(
+        'SELECT image_url FROM user_images WHERE user_id = $1',
+        [liker_id]
+      );
+      
+      if (!likerImages || likerImages.length === 0) {
+        return res.status(400).json({
+          message: "Vous devez avoir au moins une photo de profil pour interagir avec d'autres utilisateurs",
+          error: "NO_PROFILE_PICTURE"
         });
       }
 
