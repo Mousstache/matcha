@@ -24,7 +24,6 @@ export const validateJWTToken = (token: string | null): { isValid: boolean; erro
       return { isValid: false, error: "Token expiré" };
     }
 
-    console.log("✅ Token JWT valide, payload:", payload);
     return { isValid: true, payload };
   } catch (error) {
     console.log("🚨 Erreur lors de la validation du token:", error);

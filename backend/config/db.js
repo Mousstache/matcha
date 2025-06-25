@@ -84,16 +84,3 @@ const db = {
 };
 
 export default db;
-// module.exports = db;
-
-// const connectDB = async () => {
-//   try {
-//     await sequelize.authenticate();
-//     console.log('Connection à PostgreSQL réussie');
-//   } catch (error) {
-//     console.error('Erreur de connexion à PostgreSQL:', error);
-//     process.exit(1);
-//   }
-// };
-
-// export { sequelize, connectDB };

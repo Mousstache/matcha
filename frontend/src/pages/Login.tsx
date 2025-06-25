@@ -96,7 +96,6 @@ const Login = () => {
 
       // Redirection
       navigate("/profil");
-      console.log("Connexion réussie avec :", { userName, password });
     } catch (error) {
       console.error("Erreur lors de la connexion:", error);
       setError("Erreur lors de la connexion. Veuillez réessayer.");

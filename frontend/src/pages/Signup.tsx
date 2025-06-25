@@ -20,31 +20,10 @@ import {
   MessageCircle,
   Star,
   Upload,
-  X,
-  CheckCircle2,
-  ArrowLeft,
-  ArrowRight,
-  Sparkles,
 } from "lucide-react";
 import { addToast } from "@/utils/toast";
 import { useAuth } from "@/context/auth";
 import { validateJWTToken } from "@/utils/tokenValidator";
-import { Button, Input } from "@heroui/react";
-
-interface User {
-  id: number;
-  email: string;
-  username: string;
-  firstname: string;
-  lastname: string;
-  description: string;
-  gender: string;
-  birthDate: number;
-  city: string;
-  age: number;
-  preference: string;
-  profile_picture: string | null;
-}
 
 interface Interest {
   id: string;
@@ -61,13 +40,7 @@ const Signup = () => {
 
   const navigate = useNavigate();
 
-  // const [email, setEmail] = useState('');
-  // const [firstName, setFirstName] = useState('');
-  // const [lastName, setLastName] = useState('');
-  // const [password, setPassword] = useState('');
-
   const [imageUrls, setImageUrls] = useState<string[]>([]);
-  const [profilePictureIndex, setProfilePictureIndex] = useState(0);
 
   const [gender, setGender] = useState("Non binaire");
   const [description, setDescription] = useState("");
@@ -78,11 +51,8 @@ const Signup = () => {
   const [online, setOnline] = useState(false);
   const [step, setStep] = useState(1);
   const [errorr, setError] = useState("");
-  // const [email, setEmail] = useState("");
-  // const [password, setPassword] = useState("");
 
-  const [user, setUser] = useState<User | null>(null);
-  const { profile_picture, setProfilePicture } = useAuth();
+  const { profile_picture, setProfilePicture, emailConfirmed, emailVerified } = useAuth();
 
   const interestsList: Interest[] = [
     { id: "sport", label: "Sport" },
@@ -101,14 +71,8 @@ const Signup = () => {
         return;
       }
 
-      // 🚨 VÉRIFICATION DU TOKEN au chargement
       const tokenValidation = validateJWTToken(token);
       if (!tokenValidation.isValid) {
-        console.log(
-          "🚨 Token invalide détecté au chargement:",
-          tokenValidation.error
-        );
-        // Si le token est invalide (probablement le confirmationtoken), le supprimer
         localStorage.removeItem("token");
         addToast({
           title: "Erreur d'authentification",
@@ -117,11 +81,6 @@ const Signup = () => {
         });
         return;
       }
-
-      console.log(
-        "✅ Token JWT valide au chargement, payload:",
-        tokenValidation.payload
-      );
 
       try {
         const response = await fetch("http://localhost:5001/api/user-images", {
@@ -148,13 +107,6 @@ const Signup = () => {
 
           const newImageUrls = sortedImages.map((img) => img.image_url);
           setImageUrls(newImageUrls);
-
-          const currentProfileIndex = sortedImages.findIndex(
-            (img) => profile_picture && img.image_url === profile_picture
-          );
-          setProfilePictureIndex(
-            currentProfileIndex !== -1 ? currentProfileIndex : 0
-          );
         } else {
           setImageUrls([]);
         }
@@ -166,7 +118,6 @@ const Signup = () => {
     fetchImageUrls();
   }, []); // Déclenché une seule fois au montage du composant
 
-  // Fonction pour recharger les images depuis la base de données
   const refreshImages = async () => {
     const token = localStorage.getItem("token");
     if (!token) {
@@ -190,25 +141,12 @@ const Signup = () => {
           position: number;
         }[];
 
-        // Trier les images par position, sans se baser sur profile_picture qui peut être obsolète
         const sortedImages = [...imagesWithPosition].sort(
           (a, b) => a.position - b.position
         );
 
         const newImageUrls = sortedImages.map((img) => img.image_url);
         setImageUrls(newImageUrls);
-
-        // Recalculer l'index de la photo de profil si elle existe
-        if (profile_picture) {
-          const currentProfileIndex = sortedImages.findIndex(
-            (img) => img.image_url === profile_picture
-          );
-          setProfilePictureIndex(
-            currentProfileIndex !== -1 ? currentProfileIndex : 0
-          );
-        } else {
-          setProfilePictureIndex(0);
-        }
       } else {
         setImageUrls([]);
       }
@@ -247,45 +185,10 @@ const Signup = () => {
     }
   };
 
-  // const sendForm = async (e:any) => {
-  //     e.preventDefault();
-
-  //     try{
-  //         online;
-  //         lastConnection;
-  //         setOnline(false);
-  //         setLastConnection(new Date().toISOString());
-  //         const userAge = calculateAge(birthDate);
-  //         const token = localStorage.getItem("token");
-  //         console.log("dans le front", token);
-  //         fetch('http://localhost:5001/api/fillInfo', {
-  //             method: 'PUT',
-  //             headers: {
-  //                 'Authorization': `Bearer ${token}`,
-  //                 'Content-Type': 'application/json'
-  //             },
-  //             body: JSON.stringify({ gender, description, preference, birthDate, age: userAge, interests, lastConnection : new Date(), city, country, latitude, longitude, online }),
-  //         })
-  //         .then(response => response.json())
-  //        .then(data => {
-  //             // localStorage.setItem("token", data.token);
-  //             if (data.error) {
-  //                 console.error(data.error)
-  //             } else {
-  //                 navigate("/login", { state: { email: data.email, password: data.password || "" } });
-  //                 console.log(data)
-  //             }
-  //         })
-  //     } catch (error) {
-  //         console.error(error)
-  //     }
-  //   }
-
   const sendForm = async (e: any) => {
     e.preventDefault();
-    setError(""); // Réinitialise l'erreur à chaque tentative
+    setError("");
 
-    // Validation finale : vérifier qu'il y a au moins une photo
     if (imageUrls.length === 0) {
       setError(
         "Veuillez ajouter au moins une photo avant de terminer l'inscription"
@@ -298,7 +201,6 @@ const Signup = () => {
       const userAge = calculateAge(birthDate);
       const token = localStorage.getItem("token");
 
-      // Vérification simple du token
       if (!token) {
         setError(
           "Aucun token d'authentification trouvé. Veuillez vous reconnecter."
@@ -306,22 +208,14 @@ const Signup = () => {
         return;
       }
 
-      // Vérifier que c'est un JWT et non le confirmationtoken
       const parts = token.split(".");
       if (parts.length !== 3) {
-        console.log(
-          "🚨 Token invalide détecté (pas un JWT):",
-          token.substring(0, 20) + "..."
-        );
         setError(
           "Token d'authentification invalide. Veuillez vous reconnecter."
         );
-        localStorage.removeItem("token"); // Nettoyer le mauvais token
+        localStorage.removeItem("token");
         return;
       }
-
-      // Les images sont maintenant uploadées immédiatement via handleFileChange
-      // Donc plus besoin de les uploader ici
 
       const response = await fetch("http://localhost:5001/api/fillInfo", {
         method: "PUT",
@@ -348,13 +242,10 @@ const Signup = () => {
       const data = await response.json();
 
       if (!response.ok || data.error) {
-        // Affiche le message d'erreur du backend
         setError(data.error || data.message || "Erreur inconnue.");
         return;
       }
 
-      // Succès : redirection immédiate
-      // Si un nouveau token est fourni (email confirmé), le stocker
       if (data.token) {
         localStorage.setItem("token", data.token);
       }
@@ -381,26 +272,16 @@ const Signup = () => {
 
     const token = localStorage.getItem("token");
 
-    // 🚨 VÉRIFICATION DU TOKEN - S'assurer qu'on a un JWT valide
     const tokenValidation = validateJWTToken(token);
     if (!tokenValidation.isValid) {
-      console.log(
-        "🚨 Token invalide détecté lors de l'upload:",
-        tokenValidation.error
-      );
       addToast({
         title: "Erreur",
         description: `Authentification invalide: ${tokenValidation.error}. Veuillez vous reconnecter.`,
         color: "danger",
       });
-      localStorage.removeItem("token"); // Nettoyer le mauvais token
+      localStorage.removeItem("token");
       return;
     }
-
-    console.log(
-      "✅ Token JWT valide pour upload, payload:",
-      tokenValidation.payload
-    );
 
     const currentProfileImgUrl = profile_picture;
     const existingProfileIndexInCurrentUrls = imageUrls.findIndex(
@@ -423,17 +304,12 @@ const Signup = () => {
     uploadPromise
       .then(async (data) => {
         if (data.success) {
-          // Attendre un peu pour s'assurer que la DB est mise à jour
           await new Promise((resolve) => setTimeout(resolve, 100));
 
-          // Recharger les images depuis la base de données
           await refreshImages();
 
           if (data.profilePicture !== undefined) {
             setProfilePicture(data.profilePicture);
-            setUser((prev) =>
-              prev ? { ...prev, profile_picture: data.profilePicture } : null
-            );
           }
           addToast({
             title: "Succès",
@@ -448,7 +324,7 @@ const Signup = () => {
           });
         }
       })
-      .catch((error) => {
+      .catch(() => {
         addToast({
           title: "Erreur",
           description: "Erreur de connexion lors de l'upload",
@@ -530,14 +406,10 @@ const Signup = () => {
       deletePromise
         .then(async (data) => {
           if (data.success) {
-            // Recharger les images depuis la base de données
             await refreshImages();
 
             if (data.profilePicture !== undefined) {
               setProfilePicture(data.profilePicture);
-              setUser((prev) =>
-                prev ? { ...prev, profile_picture: data.profilePicture } : null
-              );
             }
             addToast({
               title: "Succès",
@@ -552,7 +424,7 @@ const Signup = () => {
             });
           }
         })
-        .catch((error) => {
+        .catch(() => {
           addToast({
             title: "Erreur",
             description: "Erreur de connexion lors de la suppression",
@@ -582,10 +454,8 @@ const Signup = () => {
     }
 
     try {
-      // D'abord rafraîchir la liste des images pour avoir les données les plus récentes
       await refreshImages();
 
-      // Récupérer l'URL de l'image à partir de l'état mis à jour
       const imageUrlToSet = imageUrls[index];
 
       if (!imageUrlToSet) {
@@ -597,7 +467,6 @@ const Signup = () => {
         return;
       }
 
-      // Récupérer les données de la base pour trouver la position
       const imagesResponse = await fetch(
         "http://localhost:5001/api/user-images",
         {
@@ -628,7 +497,6 @@ const Signup = () => {
       const positionToSet = imageToSetAsProfile.position;
       await setProfilePictureRequest(positionToSet, token);
     } catch (error: any) {
-      console.error("🔍 SIGNUP handleSetProfilePicture: Erreur:", error);
       addToast({
         title: "Erreur",
         description:
@@ -642,10 +510,6 @@ const Signup = () => {
     positionToSet: number,
     token: string
   ) => {
-    console.log(
-      `Tente de définir la photo à la position DB ${positionToSet} comme principale`
-    );
-
     const setProfilePromise = fetch(
       "http://localhost:5001/api/set-profile-picture",
       {
@@ -662,11 +526,7 @@ const Signup = () => {
       .then(async (data) => {
         if (data.success) {
           setProfilePicture(data.profilePicture);
-          setUser((prev) =>
-            prev ? { ...prev, profile_picture: data.profilePicture } : null
-          );
 
-          // Rafraîchir les images pour mettre à jour l'affichage
           await refreshImages();
 
           addToast({
@@ -675,7 +535,6 @@ const Signup = () => {
             color: "success",
           });
         } else {
-          console.error("Erreur API set-profile-picture:", data.error);
           addToast({
             title: "Erreur",
             description:
@@ -685,8 +544,7 @@ const Signup = () => {
           });
         }
       })
-      .catch((error) => {
-        console.error("Erreur fetch set-profile-picture:", error);
+      .catch(() => {
         addToast({
           title: "Erreur",
           description:
@@ -703,7 +561,6 @@ const Signup = () => {
         return;
       }
 
-      // Validation de l'âge
       const age = calculateAge(birthDate);
       if (age < 18) {
         setError(
@@ -790,7 +647,7 @@ const Signup = () => {
           className="absolute bottom-32 right-1/4 text-purple-200 animate-bounce delay-1000"
           size={12}
         />
-        <Sparkles
+        <Star
           className="absolute top-1/4 left-1/3 text-pink-200 animate-pulse delay-500"
           size={10}
         />
@@ -815,6 +672,34 @@ const Signup = () => {
             Partagez quelques détails pour trouver des personnes compatibles
           </p>
         </div>
+
+        {/* Message d'information pour les utilisateurs non confirmés */}
+        {!emailConfirmed && (
+          <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-400 rounded-lg shadow-sm animate-in slide-in-from-top-2">
+            <div className="flex items-start">
+              <div className="flex-shrink-0">
+                <Info size={20} className="text-blue-500 mt-0.5" />
+              </div>
+              <div className="ml-3">
+                <h3 className="text-sm font-semibold text-blue-800 mb-1">
+                  Finalisez votre inscription
+                </h3>
+                <p className="text-sm text-blue-700 mb-2">
+                  {!emailVerified 
+                    ? "Pour accéder à l'application, vous devez d'abord confirmer votre adresse email, puis compléter votre profil ci-dessous."
+                    : "Votre email est vérifié ! Complétez maintenant votre profil pour accéder à toutes les fonctionnalités de l'application."
+                  }
+                </p>
+                {!emailVerified && (
+                  <div className="flex items-center gap-2 text-xs text-blue-600">
+                    <Check size={14} />
+                    <span>Vérifiez votre boîte mail et cliquez sur le lien de confirmation</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
 
         <Card className="bg-white/90 backdrop-blur-sm shadow-2xl shadow-black/20 border-0 overflow-hidden rounded-2xl mb-6">
           <div className="absolute inset-0 bg-gradient-to-br from-gray-100/20 to-gray-200/20 pointer-events-none"></div>
@@ -1188,7 +1073,7 @@ const Signup = () => {
                               Ajouter une photo
                             </div>
                             <div className="text-xs text-gray-500">
-                              JPG, PNG ou WEBP
+                              JPG, PNG
                             </div>
                             <input
                               type="file"

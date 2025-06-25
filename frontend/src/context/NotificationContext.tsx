@@ -1,10 +1,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-// import io from "socket.io-client";
 import { useAuth } from "@/context/auth";
 import { addToast } from "@/utils/toast";
-
-// const socket = io(process.env.REACT_APP_SOCKET_URL || "http://localhost:5001");
 
 // Définir une interface pour les notifications
 export interface NotificationType {
@@ -67,7 +64,6 @@ export const NotificationProvider = ({
     if (!socket) return;
 
     socket.on("RECEIVE_NOTIFICATION", (notification) => {
-      console.log("🔔 Notification reçue dans le provider", notification);
       setNotifications((prev) => {
         const newNotif = {
           ...notification,
@@ -84,7 +80,6 @@ export const NotificationProvider = ({
 
     // Nouvelle notification pour les matches
     socket.on("match", (matchData) => {
-      console.log("💕 Match reçu dans le provider", matchData);
       setNotifications((prev) => {
         const newNotif = {
           ...matchData,
@@ -108,7 +103,6 @@ export const NotificationProvider = ({
 
     // Nouvelle notification pour les likes
     socket.on("like", (likeData) => {
-      console.log("👍 Like reçu dans le provider", likeData);
       setNotifications((prev) => {
         const newNotif = {
           ...likeData,
@@ -132,7 +126,6 @@ export const NotificationProvider = ({
 
     // Nouvelle notification pour les messages de chat
     socket.on("message", (messageData) => {
-      console.log("💬 Message reçu dans le provider", messageData);
       setNotifications((prev) => {
         const newNotif = {
           ...messageData,
@@ -175,5 +168,3 @@ export const NotificationProvider = ({
 };
 
 export const useNotifications = () => useContext(NotificationContext);
-
-// export {socket};

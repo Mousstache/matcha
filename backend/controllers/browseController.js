@@ -11,10 +11,6 @@ export async function recordProfileView (req, res){
       await db.update('users', { fame_rate: user.fame_rate + 1 }, { id: viewedId });
       
       
-  
-      console.log('viewerId:', viewerId);
-      console.log('viewedId:', viewedId);
-      
       if (!viewedId) {
         return res.status(400).json({
           success: false,
@@ -103,24 +99,8 @@ export async function recordProfileView (req, res){
         });
       }
   
-      console.log('>>>>>>>>>>>>');
-      console.log('minAge:', minAge);
-      console.log('maxAge:', maxAge);
-      console.log('sexualPreference:', sexualPreference);
-      console.log('gender:', gender);
-      console.log('latitude:', latitude);
-      console.log('longitude:', longitude);
-      console.log('maxDistance:', maxDistance);
-      console.log('ordered:', ordered);
-      console.log('interests:', interests);
-      console.log('excludeIds:', excludeIds);
-      console.log('excludeIds length:', excludeIds ? excludeIds.length : 0);
-      console.log('>>>>>>>>>>>>');
-  
       const blocked_id = req.user.getBlockUsers;
-  
-      console.log('blocked_id:', blocked_id);
-      console.log('id :', currentUserId);
+
   
       // Construction de la requête avec calcul des intérêts communs et distance
       let interestsArray = [];
@@ -135,9 +115,6 @@ export async function recordProfileView (req, res){
         }
         hasInterestFilter = interestsArray.length > 0;
       }
-
-      console.log('interestsArray:', interestsArray);
-      console.log('hasInterestFilter:', hasInterestFilter);
 
       const params = [];
       
@@ -209,7 +186,6 @@ export async function recordProfileView (req, res){
 
       // Amélioration de la logique de matching pour vérifier la compatibilité mutuelle
       if (gender && sexualPreference) {
-        console.log(`Filtrage par genre et préférences: genre=${gender}, préférence=${sexualPreference}`);
         
         if (sexualPreference === 'Homme') {
           query += ` AND u.gender = 'Homme' AND (u.preference = '${gender}' OR u.preference = 'Les deux')`;
@@ -243,11 +219,7 @@ export async function recordProfileView (req, res){
         if (interestParamIndex !== -1) {
           query += ` AND u.interests && $${interestParamIndex + 1}::text[]`;
         }
-        console.log('Filtre par intérêts appliqué avec:', interestsArray);
-      } else {
-        console.log('Pas d\'intérêts fournis ou sélectionnés');
-      }
-      
+      } 
       // Fermer la sous-requête
       query += ` GROUP BY u.id, u.email, u.firstname, u.lastname, u.description, u.interests, u.age, u.city, 
         u.profile_picture, u.gender, u.preference, u.fame_rate, u.lastConnection, u.isonline
@@ -313,9 +285,6 @@ export async function recordProfileView (req, res){
   
       const result = await db.query(query, params);
       
-      console.log('Nombre de profils trouvés:', result.rows ? result.rows.length : result.length);
-      console.log('Requête SQL générée:', query);
-      console.log('Paramètres SQL:', params);
       
       res.status(200).json({
         message: 'Liste des utilisateurs récupérée avec succès',
@@ -356,29 +325,101 @@ export async function recordProfileView (req, res){
 
 export async function blockUser(req, res) {
   try {
-    const { blocker_id, match_id} = req.body;
-  
-    const match = await db.findOne('matches', {match_id});
+    const { blocker_id, match_id, user_id } = req.body;
   
     let blocked_id;
-  
-    if (match.user1_id === blocker_id) {
-      blocked_id = match.user2_id;
-    }else {
-      blocked_id = match.user1_id;
+    
+    // Si on a un match_id, on récupère l'ID de l'autre utilisateur depuis la table matches
+    if (match_id) {
+      const match = await db.findOne('matches', {match_id});
+      
+      if (!match) {
+        return res.status(404).json({ message: 'Match non trouvé' });
+      }
+      
+      if (match.user1_id === blocker_id) {
+        blocked_id = match.user2_id;
+      } else {
+        blocked_id = match.user1_id;
+      }
+      
+      // Supprimer le match
+      await db.delete('matches', { match_id });
+    } 
+    // Sinon, on utilise directement l'user_id fourni
+    else if (user_id) {
+      blocked_id = user_id;
+    } 
+    else {
+      return res.status(400).json({ message: 'match_id ou user_id requis' });
     }
 
-    await db.delete('matches', { match_id });
+
+    // Vérifier si l'utilisateur n'est pas déjà bloqué
+    const existingBlock = await db.findOne('blocks', { 
+      blocker_id: blocker_id, 
+      blocked_id: blocked_id 
+    });
     
-    await db.insert('blocks', { blocker_id: blocker_id , blocked_id: blocked_id})
+    if (existingBlock) {
+      return res.status(400).json({ message: 'Utilisateur déjà bloqué' });
+    }
+    
+    // Supprimer tous les likes entre ces utilisateurs
+    await db.delete('likes', { liker_id: blocker_id, liked_id: blocked_id });
+    await db.delete('likes', { liker_id: blocked_id, liked_id: blocker_id });
+    
+    // Ajouter le blocage
+    await db.insert('blocks', { blocker_id: blocker_id, blocked_id: blocked_id });
+
+    // Notifications en temps réel pour les deux utilisateurs
+    const io = req.app.get("io");
+    const connectedUsers = req.app.get("connectedUsers");
+    
+    const blockedSocketId = connectedUsers[blocked_id];
+    const blockerSocketId = connectedUsers[blocker_id];
+
+    const blocker = await db.findOne('users', { id: blocker_id });
+    const blocked = await db.findOne('users', { id: blocked_id });
+
+    // Notification pour l'utilisateur bloqué
+    if (blockedSocketId) {
+      io.to(blockedSocketId).emit('user_blocked_you', {
+        type: 'blocked',
+        message: `Vous avez été bloqué par un utilisateur`,
+        userId: blocker_id,
+        userInfo: {
+          id: blocker_id,
+          firstname: blocker.firstname,
+          lastname: blocker.lastname,
+          profile_picture: blocker.profile_picture
+        }
+      });
+    }
+
+    // Notification pour l'utilisateur qui a bloqué (pour mettre à jour son interface)
+    if (blockerSocketId) {
+      io.to(blockerSocketId).emit('user_blocked', {
+        type: 'user_blocked',
+        message: `Vous avez bloqué ${blocked.firstname} ${blocked.lastname}`,
+        userId: blocked_id,
+        userInfo: {
+          id: blocked_id,
+          firstname: blocked.firstname,
+          lastname: blocked.lastname,
+          profile_picture: blocked.profile_picture
+        }
+      });
+    }
   
     res.status(200).json({
-      message: 'utilisateur bloquer avec succès',
+      message: 'Utilisateur bloqué avec succès',
     });
-  }catch (error){
-    console.error('Erreur lors du block de l\'utilisateur:', error);
+  } catch (error) {
+    console.error('Erreur lors du blocage de l\'utilisateur:', error);
     res.status(500).json({ 
-      message: 'Erreur serveur lors du block de l\'utilisateur'
+      message: 'Erreur serveur lors du blocage de l\'utilisateur',
+      error: error.message
     });
   } 
 };
@@ -397,8 +438,6 @@ export async function getBlockUser(req, res) {
       `;
   
     const block = await db.query(sql, [user.id]);
-
-    console.log('block:', block);
   
 
     res.status(200).json({
@@ -417,24 +456,82 @@ export async function unblockUser(req, res) {
   try{
     const {block_id, id} = req.body;
 
-    const user = db.findOne('users', { id: id });
+    // Récupérer les informations du blocage avant de le supprimer
+    const block = await db.findOne('blocks', { block_id });
+    
+    if (!block) {
+      return res.status(404).json({ message: 'Blocage non trouvé' });
+    }
 
+    const blocker_id = block.blocker_id;
+    const blocked_id = block.blocked_id;
+
+    // Récupérer les informations des utilisateurs
+    const blocker = await db.findOne('users', { id: blocker_id });
+    const blocked = await db.findOne('users', { id: blocked_id });
+
+    // Supprimer le blocage
     await db.delete('blocks', {block_id});
+
+    // Notifications en temps réel pour les deux utilisateurs
+    const io = req.app.get("io");
+    const connectedUsers = req.app.get("connectedUsers");
+    
+    const blockedSocketId = connectedUsers[blocked_id];
+    const blockerSocketId = connectedUsers[blocker_id];
+
+    // Notification pour l'utilisateur qui était bloqué
+    if (blockedSocketId) {
+      io.to(blockedSocketId).emit('user_unblocked_you', {
+        type: 'unblocked',
+        message: `Vous avez été débloqué par ${blocker.firstname} ${blocker.lastname}`,
+        userId: blocker_id,
+        userInfo: {
+          id: blocker_id,
+          firstname: blocker.firstname,
+          lastname: blocker.lastname,
+          profile_picture: blocker.profile_picture
+        }
+      });
+    }
+
+    // Notification pour l'utilisateur qui a débloqué (pour mettre à jour son interface)
+    if (blockerSocketId) {
+      io.to(blockerSocketId).emit('user_unblocked', {
+        type: 'user_unblocked',
+        message: `Vous avez débloqué ${blocked.firstname} ${blocked.lastname}`,
+        userId: blocked_id,
+        blockId: block_id,
+        userInfo: {
+          id: blocked_id,
+          firstname: blocked.firstname,
+          lastname: blocked.lastname,
+          profile_picture: blocked.profile_picture
+        }
+      });
+    }
 
     return res.status(201).json({
       message: "utilisateur debloquer",
     })
   }catch (error){
-    console.error('Error lors du dislike', error);
+    console.error('Error lors du unblock', error);
+    return res.status(500).json({
+      message: "Erreur lors du déblocage",
+      error: error.message
+    });
   }
 };
 
 export async function signalUser(req, res) {
   try {
-    const { reason, reported_id } = req.body;
-
+    
+    const { reason, reported_id, match_id } = req.body;
     const reporter_id = req.user.id;
+    let finalReportedId = reported_id;
+    
   
+    // Si on a un match_id mais pas de reported_id, on le détermine à partir du match
     if (!reported_id && match_id) {
       const match = await db.findOne('matches', {match_id});
       
@@ -443,20 +540,34 @@ export async function signalUser(req, res) {
       }
     
       if (match.user1_id === reporter_id) {
-        reported_id = match.user2_id;
+        finalReportedId = match.user2_id;
       } else {
-        reported_id = match.user1_id;
+        finalReportedId = match.user1_id;
       }
     }
 
-    if (!reported_id) {
+    if (!finalReportedId) {
       return res.status(400).json({ message: 'Impossible de déterminer l\'utilisateur à signaler' });
     }
 
-    console.log('reported_id:', reported_id);
-    console.log('reporter_id:', reporter_id);
+
+    // Vérifier si l'utilisateur n'a pas déjà été signalé par le même utilisateur
+    const existingReport = await db.findOne('reports', { 
+      reporter_id: reporter_id, 
+      reported_id: finalReportedId 
+    });
     
-    await db.insert('reports', { reporter_id: reporter_id , reported_id: reported_id, reason: reason})
+    if (existingReport) {
+      return res.status(400).json({ message: 'Vous avez déjà signalé cet utilisateur' });
+    }
+
+    // Ajouter le signalement
+    await db.insert('reports', { 
+      reporter_id: reporter_id, 
+      reported_id: finalReportedId, 
+      reason: reason || 'fake account',
+      created_at: new Date()
+    });
   
     res.status(200).json({
       message: 'Utilisateur signalé avec succès',
@@ -464,7 +575,8 @@ export async function signalUser(req, res) {
   } catch (error) {
     console.error('Erreur lors du signalement de l\'utilisateur:', error);
     res.status(500).json({ 
-      message: 'Erreur serveur lors du signalement de l\'utilisateur'
+      message: 'Erreur serveur lors du signalement de l\'utilisateur',
+      error: error.message
     });
   } 
 };

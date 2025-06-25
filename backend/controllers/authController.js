@@ -82,7 +82,8 @@ export async function registerUser(req,res){
         { 
           id: result.id, 
           email: email,
-          emailConfirmed: result.emailConfirmed
+          emailConfirmed: result.emailConfirmed,
+          emailVerified: result.emailVerified,
         },
         process.env.JWT_SECRET,
         { expiresIn: '24h' }
@@ -95,8 +96,6 @@ export async function registerUser(req,res){
         lastName,
         userName,
       };
-
-      console.log("token", token);
       
       res.status(201).json({
         message: 'Utilisateur créé avec succès',
@@ -181,10 +180,7 @@ export async function registerUser(req,res){
         } else if (Array.isArray(interests)) {
           updateData.interests = interests;
         }
-      }
-
-      console.log("intersts", interests);
-      
+      }      
 
 
       await db.update('users', updateData , conditions);
@@ -198,7 +194,6 @@ export async function registerUser(req,res){
           confirmationToken: null,
           confirmationTokenExpires: null
         }, { id: user.id });
-        console.log("Email confirmé définitivement pour l'utilisateur:", user.id);
         
         // Générer un nouveau token JWT avec emailConfirmed: true
         newToken = jwt.sign(
@@ -206,7 +201,8 @@ export async function registerUser(req,res){
             id: user.id,
             email: user.email,
             userName: user.userName,
-            emailConfirmed: true
+            emailConfirmed: true,
+            emailVerified: user.emailverified
           },
           process.env.JWT_SECRET,
           { expiresIn: '24h' }
@@ -249,7 +245,6 @@ export async function registerUser(req,res){
       
 
       const {email, lastname, firstname, description, gender, birthDate, preference, interests, city, age, longitude, latitude} = req.body;
-      console.log(firstname, lastname, description);
 
       const conditions = { id: user.id};
 
@@ -281,14 +276,10 @@ export async function registerUser(req,res){
 export async function confirmEmail (req, res){
   try {
     const { token } = req.params;
-    
-    console.log('Token reçu:', token);
-    console.log('Longueur du token:', token.length);
-    console.log('Date actuelle:', new Date().toISOString());
+  
     
     // Vérifier que le token a la bonne longueur (64 caractères pour un token hex de 32 bytes)
     if (!token || token.length !== 64 || !/^[a-f0-9]+$/i.test(token)) {
-      console.log('Token invalide: mauvais format');
       return res.status(400).json({
         message: 'Token invalide ou expiré'
       });
@@ -303,11 +294,7 @@ export async function confirmEmail (req, res){
     const now = new Date();
     const users = await db.query(sql, [token, now]);
 
-    console.log("users === ",users.length);
-    console.log("users >>> ",users);
-
     if (users.length === 0) {
-      console.log('Aucun utilisateur trouvé avec ce token');
       return res.status(400).json({
         message: 'Token invalide ou expiré'
       });
@@ -332,8 +319,6 @@ export async function confirmEmail (req, res){
       },
       { id: users[0].id }
     );
-
-    console.log("Email vérifié avec succès pour l'utilisateur:", users[0].id);
     
     // Générer un token JWT pour permettre à l'utilisateur de continuer l'inscription
     const jwtToken = jwt.sign(
@@ -373,12 +358,7 @@ export async function logUser (req, res){
         });
       }
       
-      console.log("🔍 Utilisateur trouvé:", {
-        id: user.id,
-        email: user.email,
-        emailconfirmed: user.emailconfirmed,
-        emailverified: user.emailverified
-      });
+
       
       const isPasswordValid = await bcrypt.compare(password, user.password);
       if (!isPasswordValid) {
@@ -387,13 +367,9 @@ export async function logUser (req, res){
         });
       }
 
-      // Vérifier si l'email est confirmé
-      console.log("🔍 Vérification emailconfirmed:", user.emailconfirmed, typeof user.emailconfirmed);
-      console.log("🔍 Vérification emailverified:", user.emailverified, typeof user.emailverified);
+
       
-      if (!user.emailconfirmed) {
-        console.log("🚨 Email non confirmé, blocage de la connexion");
-        
+      if (!user.emailconfirmed) {        
         // Cas 1: Email vérifié (ils ont cliqué sur le lien) mais compte non finalisé
         if (user.emailverified) {
           return res.status(403).json({ 
@@ -434,7 +410,6 @@ export async function logUser (req, res){
         { expiresIn: '24h' }
       );
 
-      console.log("a la connexion", user.emailconfirmed);
       
       // Préparer la réponse utilisateur (sans le mot de passe)
       const userResponse = {
@@ -478,24 +453,17 @@ export async function imageUpload(req, res) {
 
     const user = await db.findOne('users', { email: decoded.email });
 
-    console.log("user", user);
-    console.log("userId", user.id);
-    console.log(decoded.email);
-
     const userId = user.id;
 
     if (!userId || isNaN(userId)) {
       return res.status(400).json({ error: "Utilisateur non authentifié" });
     }
 
-    console.log("userId (type):", userId, typeof userId);
     const result = await db.query(
       'SELECT image_url, position FROM user_images WHERE user_id = $1 ORDER BY position',
       [Number(userId)]
     );
-    console.log("Résultat SQL brut :", result);
     const existingImages = result || [];
-    console.log("existingImages =", existingImages);
 
     // Vérifier qu'on ne dépasse pas 5 images
     const totalImages = existingImages.length + files.length;
@@ -563,17 +531,13 @@ export async function deleteUserImage(req, res) {
     // Support pour les anciens tokens qui n'ont que l'email
     let userId = decoded.id;
     
-    console.log("🔍 BACKEND deleteUserImage: userId extrait du token:", userId);
-    console.log("🔍 BACKEND deleteUserImage: type de userId:", typeof userId);
     
     if (!userId) {
-      console.log("🔍 BACKEND deleteUserImage: Pas d'ID dans le token, récupération via email...");
       const user = await db.findOne('users', { email: decoded.email });
       if (!user) {
         return res.status(404).json({ error: "Utilisateur non trouvé" });
       }
       userId = user.id;
-      console.log("🔍 BACKEND deleteUserImage: ID récupéré via email:", userId);
     }
     
     const { position } = req.params;
@@ -624,7 +588,6 @@ export async function forgotPassword(req, res){
         });
       }
 
-    console.log("looool ",user.email);
 
     const token = crypto.randomBytes(32).toString('hex');
     const tokenExpire = new Date(Date.now() + 3600_000); // 1h
@@ -678,13 +641,8 @@ export async function getUserImages(req, res) {
   try {
     let userId = req.user.id;
 
-    console.log("🔍 BACKEND getUserImages: userId extrait du token:", userId);
-    console.log("🔍 BACKEND getUserImages: type de userId:", typeof userId);
-    console.log("🔍 BACKEND getUserImages: contenu complet du token:", req.user);
-
     // Si pas d'ID dans le token, essayer de le récupérer via l'email
     if (!userId && req.user.email) {
-      console.log("🔍 BACKEND getUserImages: Pas d'ID dans le token, récupération via email...");
       const userResult = await db.query(
         'SELECT id FROM public.users WHERE email = $1',
         [req.user.email]
@@ -692,15 +650,12 @@ export async function getUserImages(req, res) {
       
       if (userResult && userResult.length > 0) {
         userId = userResult[0].id;
-        console.log("🔍 BACKEND getUserImages: ID récupéré via email:", userId);
       } else {
-        console.log("🔍 BACKEND getUserImages: Aucun utilisateur trouvé avec cet email");
         return res.status(404).json({ error: "Utilisateur non trouvé" });
       }
     }
 
     if (!userId) {
-      console.log("🔍 BACKEND getUserImages: Aucun userId disponible");
       return res.status(400).json({ error: "ID utilisateur manquant" });
     }
 
@@ -709,9 +664,7 @@ export async function getUserImages(req, res) {
       [userId]
     );
 
-    console.log("🔍 BACKEND getUserImages: résultat de la requête:", result);
-    console.log("🔍 BACKEND getUserImages: nombre d'images trouvées:", result ? result.length : 0);
-
+  
     res.status(200).json({ images: result });
   } catch (error) {
     console.error("🔍 BACKEND getUserImages: Erreur:", error);
@@ -729,23 +682,18 @@ export async function setProfilePicture(req, res) {
     // Support pour les anciens tokens qui n'ont que l'email
     let userId = decoded.id;
     
-    console.log("🔍 BACKEND setProfilePicture: userId extrait du token:", userId);
-    console.log("🔍 BACKEND setProfilePicture: type de userId:", typeof userId);
-    console.log("🔍 BACKEND setProfilePicture: contenu complet du token:", decoded);
+  
     
     if (!userId) {
-      console.log("🔍 BACKEND setProfilePicture: Pas d'ID dans le token, récupération via email...");
       const user = await db.findOne('users', { email: decoded.email });
       if (!user) {
         return res.status(404).json({ error: "Utilisateur non trouvé" });
       }
       userId = user.id;
-      console.log("🔍 BACKEND setProfilePicture: ID récupéré via email:", userId);
     }
     
     const { position } = req.body;
 
-    console.log("Changement de photo principale - userId:", userId, "position:", position);
 
     // Récupérer l'image à la position demandée
     const result = await db.query(
@@ -757,7 +705,6 @@ export async function setProfilePicture(req, res) {
       return res.status(404).json({ error: "Image non trouvée" });
     }
 
-    console.log("Image trouvée:", result[0].image_url);
 
     // Mettre à jour la photo de profil
     const updateResult = await db.query(
@@ -765,7 +712,6 @@ export async function setProfilePicture(req, res) {
       [result[0].image_url, userId]
     );
 
-    console.log("Résultat de la mise à jour:", updateResult);
 
     if (!updateResult || updateResult.length === 0) {
       return res.status(500).json({ error: "Erreur lors de la mise à jour de la photo de profil" });
@@ -777,7 +723,6 @@ export async function setProfilePicture(req, res) {
       [userId]
     );
 
-    console.log("Vérification après mise à jour:", verifyUpdate[0]);
 
     res.status(200).json({ 
       success: true, 

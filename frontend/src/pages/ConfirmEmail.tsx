@@ -6,7 +6,6 @@ const ConfirmEmail = () => {
   const location = useLocation();
   const token = new URLSearchParams(location.search).get("token");
 
-  console.log("Tentative de confirmation avec token:", token);
   useEffect(() => {
     let called = false;
 
@@ -15,7 +14,6 @@ const ConfirmEmail = () => {
         if (called) return;
         called = true;
 
-        console.log("here");
 
         // Utiliser fetch natif sans intercepteur pour éviter d'ajouter automatiquement le JWT
         const response = await window.fetch(
@@ -30,16 +28,13 @@ const ConfirmEmail = () => {
 
         const data = await response.json();
 
-        console.log(data);
 
         if (response.ok) {
-          console.log("Confirmation réussie:", data);
           setStatus("success");
 
           // Stocker le token JWT reçu pour continuer l'inscription
           if (data.token) {
             localStorage.setItem("token", data.token);
-            console.log("Token JWT stocké pour continuer l'inscription");
           }
 
           // Ne pas rediriger automatiquement vers signup
@@ -58,7 +53,6 @@ const ConfirmEmail = () => {
       confirmEmailtoken();
     } else {
       setStatus("error");
-      console.log("puree");
     }
   }, [token]); // Ajouter token comme dépendance
 

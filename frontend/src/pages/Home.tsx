@@ -17,6 +17,7 @@ import { Tabs, TabsList, TabsContent, TabsTrigger } from "@/components/ui/tabs";
 import UserProfilModal from "@/components/UserProfilModal";
 import SignalModal from "@/components/SignalModal";
 import { addToast } from "@/utils/toast";
+import { useSocketEvents } from "@/hooks/useSocketEvents";
 
 interface User {
   id: number;
@@ -60,12 +61,9 @@ const Home = () => {
   const { id, blockedUsers, firstname } = useAuth();
   const { socket } = useAuth();
 
-  // const [selectedUser, setSelectedUser] = useState(null);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSignalModalOpen, setIsSignalModalOpen] = useState(false);
-  // const [selectedUser, setSelectedUser] = useState(null);
-  // Dans votre composant
 
   const handleOpenSignalModal = (user: User) => {
     setSelectedUser(user);
@@ -74,7 +72,6 @@ const Home = () => {
 
   const navigate = useNavigate();
 
-  // useEffect(() => {
   const fetchData = async () => {
     const token = localStorage.getItem("token");
 
@@ -142,12 +139,16 @@ const Home = () => {
     }
   };
 
-  // fetchData();
-  // }, []);
-
   useEffect(() => {
-  fetchData();
-}, []);
+    fetchData();
+  }, []);
+
+  // Utiliser le hook personnalisé pour les événements socket
+  useSocketEvents({ 
+    socket, 
+    onDataUpdate: fetchData,
+    showToasts: true 
+  });
   
   const handleSignal = async (reported_id: number) => {
     try {
@@ -169,8 +170,8 @@ const Home = () => {
   const handleBlock = async (match_id: number) => {
     try {
       const token = localStorage.getItem("token");
-
-      await fetch("http://localhost:5001/api/blockUser", {
+      
+      const response = await fetch("http://localhost:5001/api/blockUser", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -178,9 +179,28 @@ const Home = () => {
         },
         body: JSON.stringify({ match_id, blocker_id: id }),
       });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Erreur lors du blocage');
+      }
+
       await fetchData();
+      
+      addToast({
+        title: "Utilisateur bloqué",
+        description: "L'utilisateur a été bloqué avec succès",
+        duration: 3000,
+      });
+      
     } catch (error) {
       console.error("Erreur lors du blocage:", error);
+      addToast({
+        title: "Erreur",
+        description: "Impossible de bloquer cet utilisateur",
+        duration: 3000,
+      });
     }
   };
 
@@ -197,7 +217,7 @@ const Home = () => {
         body: JSON.stringify({ liker_id: id, liked_id, match_id }),
       });
 
-      await fetchData();
+      // Note: fetchData() sera appelé automatiquement via l'événement socket
 
       const notif_unlike = {
         userId: liked_id,
@@ -210,6 +230,11 @@ const Home = () => {
       }
     } catch (error) {
       console.error("Erreur lors du unlike:", error);
+      addToast({
+        title: "Erreur",
+        description: "Impossible de retirer le like",
+        duration: 3000,
+      });
     }
   };
 
@@ -276,7 +301,7 @@ const Home = () => {
         return;
       }
 
-      await fetchData();
+      // Note: fetchData() sera appelé automatiquement via l'événement socket
       const notif_like = {
         userId: liked_id,
         type: "like",
@@ -318,7 +343,7 @@ const Home = () => {
     try {
       const token = localStorage.getItem("token");
 
-      await fetch("http://localhost:5001/api/unblockUser", {
+      const response = await fetch("http://localhost:5001/api/unblockUser", {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -326,14 +351,31 @@ const Home = () => {
         },
         body: JSON.stringify({ block_id, id }),
       });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || 'Erreur lors du déblocage');
+      }
+
       await fetchData();
+      
+      addToast({
+        title: "Utilisateur débloqué",
+        description: "L'utilisateur a été débloqué avec succès",
+        duration: 3000,
+      });
+      
     } catch (error) {
       console.error("Erreur lors du déblocage:", error);
+      addToast({
+        title: "Erreur",
+        description: "Impossible de débloquer cet utilisateur",
+        duration: 3000,
+      });
     }
   };
 
   const handleUserClick = (user: any) => {
-    console.log("User clicked:", user);
     setSelectedUser(user);
     setIsModalOpen(true);
     handleConsult(user.id);
@@ -343,7 +385,6 @@ const Home = () => {
     try {
       const viewedId = viewed_id;
       const viewerId = id;
-      console.log("l'id du mec que je regarde", viewedId);
       const res = await fetch("http://localhost:5001/api/ConsultProfile", {
         method: "POST",
         headers: {

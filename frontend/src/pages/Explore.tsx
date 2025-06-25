@@ -24,6 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { useForm } from "react-hook-form";
 import UserProfilModal from "@/components/UserProfilModal";
 import { addToast } from "@/utils/toast";
+import { useSocketEvents } from "@/hooks/useSocketEvents";
 
 interface Profile {
   id: string;
@@ -332,69 +333,6 @@ const Explore = () => {
 
   const currentProfile: Profile | null = profiles[currentProfileIndex] ?? null;
 
-  // Fonction pour calculer le score de compatibilité et les raisons
-  const calculateCompatibility = (profile: Profile) => {
-    if (!profile) return { score: 0, reasons: [] };
-
-    let score = 0;
-    const reasons = [];
-
-    // Score distance (40% max)
-    if (profile.distance && parseFloat(profile.distance) <= distance) {
-      const distanceScore = Math.max(
-        0,
-        40 - (parseFloat(profile.distance) * 40) / distance
-      );
-      score += distanceScore;
-      if (parseFloat(profile.distance) <= 5) {
-        reasons.push("🏠 Très proche");
-      } else if (parseFloat(profile.distance) <= 20) {
-        reasons.push("📍 Proximité géographique");
-      }
-    }
-
-    // Score intérêts communs (35% max)
-    const userInterests = interests;
-    const profileInterests =
-      typeof profile.interests === "string"
-        ? (profile.interests as string).split(",").map((i: string) => i.trim())
-        : Array.isArray(profile.interests)
-        ? profile.interests
-        : [];
-
-    const commonInterests = userInterests.filter((interest: string) =>
-      profileInterests.some((profileInterest: string) =>
-        profileInterest.toLowerCase().includes(interest.toLowerCase())
-      )
-    );
-
-    if (commonInterests.length > 0) {
-      const interestScore = Math.min((commonInterests.length * 35) / 3, 35);
-      score += interestScore;
-      if (commonInterests.length === 1) {
-        reasons.push("💫 1 intérêt commun");
-      } else {
-        reasons.push(`💫 ${commonInterests.length} intérêts communs`);
-      }
-    }
-
-    // Score fame rating (25% max)
-    if (profile.fame_rate) {
-      const fameScore = Math.min((profile.fame_rate * 25) / 100, 25);
-      score += fameScore;
-      if (profile.fame_rate >= 80) {
-        reasons.push("⭐ Très populaire");
-      } else if (profile.fame_rate >= 50) {
-        reasons.push("⭐ Populaire");
-      }
-    }
-
-    return {
-      score: Math.round(score),
-      reasons: reasons.length > 0 ? reasons : ["🎯 Profil suggéré"],
-    };
-  };
-
   useEffect(() => {
     form.reset({
       ageRange: [minAge, maxAge],
@@ -403,6 +341,13 @@ const Explore = () => {
       interests: [],
     });
   }, [minAge, maxAge, distance, fameRate]);
+
+  // Utiliser le hook personnalisé pour les événements socket  
+  useSocketEvents({ 
+    socket, 
+    showToasts: true 
+    // Pas de onDataUpdate ici car on ne rafraîchit pas la liste des profils
+  });
 
   const handleAgeChange = (values: number[]) => {
     setMinAge(values[0]);
@@ -419,14 +364,12 @@ const Explore = () => {
 
   const handleInterestChange = (values: string[]) => {
     setInterests(values);
-    console.log("Valeurs des intérêts sélectionnés>> :", values);
   };
 
   const markViewed = async (viewed_id: string) => {
     try {
       const viewedId = viewed_id;
       const viewerId = id;
-      console.log("l'id du mec que je regarde", viewedId);
 
       // Add to local viewed profiles set
       setViewedProfiles((prev) => new Set(prev).add(viewedId));
@@ -606,7 +549,6 @@ const Explore = () => {
     try {
       // D'abord récupérer les profils déjà interagis
       const interactedIds = await getInteractedProfiles();
-      console.log("Profils à exclure:", interactedIds);
 
       const requestBody = {
         minAge,
@@ -622,12 +564,6 @@ const Explore = () => {
         excludeIds: interactedIds, // Exclure les profils déjà interagis
       };
 
-      console.log("Paramètres de recherche:");
-      console.log("- interests:", interests);
-      console.log("- interests.length:", interests.length);
-      console.log("- requestBody.interests:", requestBody.interests);
-      console.log("- excludeIds count:", interactedIds.length);
-      console.log("Requête complète:", requestBody);
 
       const response = await fetch("http://localhost:5001/api/allUsers", {
         method: "POST",
@@ -681,7 +617,6 @@ const Explore = () => {
   };
 
   const handleUserClick = (user: any) => {
-    console.log("User clicked:", user);
     setSelectedUser(user);
     setIsModalOpen(true);
     handleConsult(user.id);
@@ -691,7 +626,6 @@ const Explore = () => {
     try {
       const viewedId = viewed_id;
       const viewerId = id;
-      console.log("l'id du mec que je regarde", viewedId);
       const res = await fetch("http://localhost:5001/api/ConsultProfile", {
         method: "POST",
         headers: {
@@ -863,26 +797,6 @@ const Explore = () => {
                         </span>
                       </p>
                     </div>
-
-                    {/* Indicateur de compatibilité */}
-                    {(() => {
-                      const compatibility =
-                        calculateCompatibility(currentProfile);
-                      return (
-                        <div className="mt-3 bg-white/90 backdrop-blur-sm rounded-lg p-3">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center">
-                              <div className="bg-gradient-to-r from-pink-500 to-purple-500 text-white text-xs font-bold px-2 py-1 rounded-full mr-2">
-                                {compatibility.score}% compatible
-                              </div>
-                              <div className="text-xs text-gray-600">
-                                {compatibility.reasons.join(" • ")}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })()}
                   </div>
                 </div>
 

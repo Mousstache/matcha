@@ -18,7 +18,6 @@ export const authMiddleware = (req, res, next) => {
 };
 
 export const ensureEmailConfirmed = (req, res, next) => {
-  console.log(req.user);
   if (!req.user.emailConfirmed) {
     return res.status(403).json({ message: 'Email non confirmé' });
   }

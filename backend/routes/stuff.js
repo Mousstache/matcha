@@ -22,9 +22,9 @@ router.post('/login', userCtrl.logUser);
 router.post('/upload', authMiddleware ,upload.array("images", 5), userCtrl.imageUpload);
 router.get('/user-images', authMiddleware,  userCtrl.getUserImages);
 
-router.get('/user', authMiddleware,  userCtrl.getUser);
+router.get('/user', authMiddleware, userCtrl.getUser);
 router.post('/allUsers', authMiddleware,ensureEmailConfirmed,  userCtrl.getAllUsers);
-// router.get('consult-profil/:id', authMiddleware,ensureEmailConfirmed,  userCtrl.getConsultProfil);
+
 
 router.post('/record-profile-view', authMiddleware,ensureEmailConfirmed,  userCtrl.recordProfileView);
 router.post('/likeUser',authMiddleware,ensureEmailConfirmed, userCtrl.likeUser);

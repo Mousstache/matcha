@@ -1,11 +1,15 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-    content: [
-      "./src/**/*.{js,jsx,ts,tsx}",
-      "./node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}",
-    ],
-    theme: {
-      extend: {},
+  content: [
+    "./src/**/*.{js,jsx,ts,tsx}",
+    "./index.html"
+  ],
+  theme: {
+    extend: {
+      fontFamily: {
+        'poppins': ['Poppins', 'Arial', 'Helvetica', 'sans-serif'],
+        'playfair': ['Playfair Display', 'serif'],
+      }
     },
-    plugins: [],
-  };
+  },
+};

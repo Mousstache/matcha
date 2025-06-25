@@ -2,9 +2,6 @@ import db from '../config/db.js';
 import { io } from '../server.js';
 import jwt from 'jsonwebtoken';
 
-// import { getSocket } from './matchController.js';
-
-// let socket = io("http://localhost:5001");
 
 let ioInstance = null;
 
@@ -40,7 +37,6 @@ export async function sendMessage (req, res) {
       const senderSocketId = connectedUsers[sender_id];
 
       if (!receiverSocketId) {
-          console.log("⚠️ Le destinataire n'est pas connecté !");
           return res.status(400).json({ message: "Le destinataire n'est pas en ligne" });
       }
 
@@ -90,10 +86,6 @@ export async function getMessages (req, res) {
         receiverId = match.user1_id;
       }
 
-
-  
-      console.log("le matchid == ", receiverId);
-
       const messages = await db.query(
         "SELECT * FROM messages WHERE match_id = $1 ORDER BY current_timestamp ASC",
         [match_id]
@@ -111,22 +103,6 @@ export async function getMessages (req, res) {
     }
   };
 
-// export async function sendNotification (req, res) {
-//     try {
-  
-//       const { user_id, notification_text } = req.body;
-  
-//       const notifications = await db.insert('notification', {user_id, notification_text, created_at: new Date()});
-  
-//       return res.status(200).json({
-//         message: "listes des notifications",
-//         notifications: notifications,
-//       })
-  
-//     }catch (error){
-//       console.log('Error lors de la recup des matches', error);
-//     }
-//   }; 
 
 export async function sendNotification (req, res) {
     try {

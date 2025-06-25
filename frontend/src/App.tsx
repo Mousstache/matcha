@@ -7,7 +7,6 @@ import Layout from "./components/Layout";
 import Home from "./pages/Home";
 import Signup from "./pages/Signup";
 import Profil from "./pages/Profil";
-import ConsultProfil from "./pages/ConsultProfil";
 import Explore from "./pages/Explore";
 import Register from "./pages/Register";
 import ConfirmEmail from "./pages/ConfirmEmail";
@@ -37,18 +36,9 @@ interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
-// const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-//   const isAuthenticated = localStorage.getItem('token') !== null;
-//   console.log(isAuthenticated);
-//   if (!isAuthenticated) {
-//     return <Navigate to="/login" replace />;
-//   }
-
-//   return children;
-// };
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { id, loading, error, logout } = useAuth();
+  const { id, loading, error, emailConfirmed, emailVerified } = useAuth();
 
   // Affichage pendant le chargement
   if (loading) {
@@ -70,13 +60,18 @@ const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
   // En cas d'erreur ou pas d'ID utilisateur, rediriger vers login
   if (error || !id) {
-    console.log(
-      "🚨 ProtectedRoute: Redirection vers login - Error:",
-      error,
-      "ID:",
-      id
-    );
     return <Navigate to="/login" replace />;
+  }
+
+  // Si l'utilisateur n'a pas confirmé son email, rediriger vers la page d'inscription
+  if (!emailConfirmed) {
+    console.log(
+      "🚨 ProtectedRoute: Email non confirmé - emailConfirmed:",
+      emailConfirmed,
+      "emailVerified:",
+      emailVerified
+    );
+    return <Navigate to="/signup" replace />;
   }
 
   return <>{children}</>;
@@ -189,16 +184,6 @@ function App() {
                 <Layout>
                   <ProtectedRoute>
                     <BlockList />
-                  </ProtectedRoute>{" "}
-                </Layout>
-              }
-            />
-            <Route
-              path="/consult-profil/:username"
-              element={
-                <Layout>
-                  <ProtectedRoute>
-                    <ConsultProfil />
                   </ProtectedRoute>{" "}
                 </Layout>
               }

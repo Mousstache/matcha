@@ -3,7 +3,6 @@ import {
   Card,
   CardContent,
   CardTitle,
-  CardFooter,
 } from "../../src/components/ui/card";
 import { useNavigate } from "react-router-dom";
 import {
@@ -76,7 +75,6 @@ const Register = () => {
         localStorage.setItem("token", data.token);
         setEmailSent(true);
         setLoading(false);
-        // navigate("/confirm-email");
       }
     } catch (error) {
       console.error(error);

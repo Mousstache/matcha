@@ -7,9 +7,7 @@ export async function likeUser (req, res){
     try{
   
       const {liked_id , liker_id} = req.body;
-  
-      console.log("liker_id", liker_id);
-      console.log("liked_id", liked_id);
+
   
       const user = await db.findOne('users', { id: liked_id });
   
@@ -78,7 +76,6 @@ export async function likeUser (req, res){
   
       const Otherlikes = await db.findOne('likes', {liker_id: liked_id, liked_id: liker_id});
   
-      console.log(Otherlikes);
   
       if (Otherlikes){
         const user2 = await db.findOne('users', { id: liker_id });
@@ -130,7 +127,7 @@ export async function likeUser (req, res){
     // Notification pour un simple like
     if (likedSocketId) {
       const liker = await db.findOne('users', { id: liker_id });
-      io.to(likedSocketId).emit('like', {
+      io.to(likedSocketId).emit('like_received', {
         type: 'like',
         message: `${liker.firstname} ${liker.lastname} vous a liké!`,
         userId: liker_id,
@@ -139,6 +136,21 @@ export async function likeUser (req, res){
           firstname: liker.firstname,
           lastname: liker.lastname,
           profile_picture: liker.profile_picture
+        }
+      });
+    }
+
+    // Notification pour l'utilisateur qui a liké (pour mettre à jour son interface)
+    if (likerSocketId) {
+      io.to(likerSocketId).emit('like_sent', {
+        type: 'like_sent',
+        message: `Vous avez liké ${user.firstname} ${user.lastname}`,
+        userId: liked_id,
+        userInfo: {
+          id: liked_id,
+          firstname: user.firstname,
+          lastname: user.lastname,
+          profile_picture: user.profile_picture
         }
       });
     }
@@ -171,25 +183,64 @@ export async function likeUser (req, res){
       }
 
       const user = await db.findOne('users', { id: likedId });
+      const liker = await db.findOne('users', { id: liker_id });
 
-  
       const fameRate = user.fame_rate - 1;
 
       await db.delete('likes', {liked_id :likedId, liker_id});
-
       await db.delete('likes', {liker_id, liked_id :likedId});
-
       await db.delete('matches', {match_id});
       
-      const like = await db.findOne('likes', {liker_id, liked_id: likedId});
-  
       await db.update('users', {fame_rate: fameRate}, { id: likedId });
+
+      // Notifications en temps réel pour les deux utilisateurs
+      const io = req.app.get("io");
+      const connectedUsers = req.app.get("connectedUsers");
+
+      const likedSocketId = connectedUsers[likedId];
+      const likerSocketId = connectedUsers[liker_id];
+
+      // Notification pour l'utilisateur qui a été unliké
+      if (likedSocketId) {
+        io.to(likedSocketId).emit('unlike_received', {
+          type: 'unlike',
+          message: `${liker.firstname} ${liker.lastname} vous a retiré son like`,
+          userId: liker_id,
+          matchId: match_id,
+          userInfo: {
+            id: liker_id,
+            firstname: liker.firstname,
+            lastname: liker.lastname,
+            profile_picture: liker.profile_picture
+          }
+        });
+      }
+
+      // Notification pour l'utilisateur qui a unliké (pour mettre à jour son interface)
+      if (likerSocketId) {
+        io.to(likerSocketId).emit('unlike_sent', {
+          type: 'unlike_sent',
+          message: `Vous avez retiré votre like à ${user.firstname} ${user.lastname}`,
+          userId: likedId,
+          matchId: match_id,
+          userInfo: {
+            id: likedId,
+            firstname: user.firstname,
+            lastname: user.lastname,
+            profile_picture: user.profile_picture
+          }
+        });
+      }
   
       return res.status(201).json({
         message: "like enlever",
       })
     }catch (error){
       console.error('Error lors du dislike', error);
+      return res.status(500).json({
+        message: "Erreur lors du unlike",
+        error: error.message
+      });
     }
   };
 
@@ -200,9 +251,6 @@ export async function likeUser (req, res){
       const user = await db.findOne('users',  { id: viewedId });
   
       await db.update('users', { fame_rate: user.fame_rate + 1 }, { id: viewedId });
-
-      console.log('viewerId:', viewerId);
-      console.log('viewedId:', viewedId);
       
       if (!viewedId) {
         return res.status(400).json({
@@ -541,8 +589,6 @@ export async function getInteractedProfiles(req, res) {
 
     const interacted = await db.query(sql, [user.id]);
     const interactedIds = interacted.rows ? interacted.rows.map(row => row.user_id) : interacted.map(row => row.user_id);
-
-    console.log(`Profils exclus pour l'utilisateur ${user.id}:`, interactedIds);
 
     return res.status(200).json({
       message: "Liste des profils déjà likés/dislikés",

@@ -30,3 +30,11 @@ dist-ssr
 .env.local
 .env.development
 .env.production
+
+# TypeScript generated files
+*.js.map
+*.d.ts.map
+# Don't ignore source .d.ts files but ignore generated ones
+/frontend/vite.config.js
+/frontend/vite.config.d.ts
+*.tsbuildinfo

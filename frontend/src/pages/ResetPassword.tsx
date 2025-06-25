@@ -256,60 +256,6 @@ const ResetPassword: React.FC = () => {
       </div>
     </div>
   );
-  //   <div className="reset-password-container">
-  //     <h2>Réinitialisation du mot de passe</h2>
-
-  //     {!success ? (
-  //       <form onSubmit={handleSubmit}>
-  //         <div className="form-group">
-  //           <label htmlFor="newPassword">Nouveau mot de passe:</label>
-  //           <input
-  //             type="password"
-  //             id="newPassword"
-  //             name="newPassword"
-  //             value={formData.newPassword}
-  //             onChange={handleChange}
-  //             required
-  //             minLength={8}
-  //             className="input-field"
-  //             disabled={isLoading}
-  //           />
-  //           <small>8 caractères minimum</small>
-  //         </div>
-
-  //         <div className="form-group">
-  //           <label htmlFor="confirmPassword">Confirmez le mot de passe:</label>
-  //           <input
-  //             type="password"
-  //             id="confirmPassword"
-  //             name="confirmPassword"
-  //             value={formData.confirmPassword}
-  //             onChange={handleChange}
-  //             required
-  //             minLength={8}
-  //             className="input-field"
-  //             disabled={isLoading}
-  //           />
-  //         </div>
-
-  //         {error && <p className="error-message">{error}</p>}
-
-  //         <button
-  //           type="submit"
-  //           className="primary-button"
-  //           disabled={isLoading}
-  //         >
-  //           {isLoading ? 'Réinitialisation en cours...' : 'Réinitialiser le mot de passe'}
-  //         </button>
-  //       </form>
-  //     ) : (
-  //       <div className="success-message">
-  //         <p>Votre mot de passe a été réinitialisé avec succès!</p>
-  //         <p>Vous allez être redirigé vers la page de connexion...</p>
-  //       </div>
-  //     )}
-  //   </div>
-  // );
 };
 
 export default ResetPassword;

@@ -24,6 +24,8 @@ interface AuthContextType {
   socket: Socket | null;
   blockedUsers: Block[];
   profile_picture: string;
+  emailConfirmed: boolean;
+  emailVerified: boolean;
   setId: React.Dispatch<React.SetStateAction<string>>;
   setFirstname: React.Dispatch<React.SetStateAction<string>>;
   setLastname: React.Dispatch<React.SetStateAction<string>>;
@@ -34,6 +36,8 @@ interface AuthContextType {
   setLongitude: React.Dispatch<React.SetStateAction<number>>;
   setDescription: React.Dispatch<React.SetStateAction<string>>;
   setProfilePicture: React.Dispatch<React.SetStateAction<string>>;
+  setEmailConfirmed: React.Dispatch<React.SetStateAction<boolean>>;
+  setEmailVerified: React.Dispatch<React.SetStateAction<boolean>>;
   refreshUser: () => Promise<void>;
   logout: () => void;
 }
@@ -67,6 +71,8 @@ export const AuthContextProvider = ({
   const [error, setError] = useState<string | null>(null);
   const [socket, setSocket] = useState<Socket | null>(null); // Stocke le socket
   const [blockedUsers, setBlockedUsers] = useState<Block[]>([]);
+  const [emailConfirmed, setEmailConfirmed] = useState<boolean>(false);
+  const [emailVerified, setEmailVerified] = useState<boolean>(false);
 
   const clearAuthData = () => {
     localStorage.removeItem("token");
@@ -81,6 +87,8 @@ export const AuthContextProvider = ({
     setDescription("");
     setProfilePicture("");
     setBlockedUsers([]);
+    setEmailConfirmed(false);
+    setEmailVerified(false);
     if (socket) {
       socket.disconnect();
       setSocket(null);
@@ -104,14 +112,12 @@ export const AuthContextProvider = ({
         const now = Date.now() / 1000;
 
         if (payload.exp && payload.exp < now) {
-          console.log("🚨 Token expiré, nettoyage automatique");
           clearAuthData();
           setError("Session expirée. Veuillez vous reconnecter.");
           setLoading(false);
           return;
         }
       } catch (tokenError) {
-        console.log("🚨 Token invalide, nettoyage automatique");
         clearAuthData();
         setError("Session invalide. Veuillez vous reconnecter.");
         setLoading(false);
@@ -125,7 +131,6 @@ export const AuthContextProvider = ({
 
       if (response.ok) {
         const data = await response.json();
-        console.log("🔐 Données utilisateur :", data);
 
         setId(data.user.id || "");
         setFirstname(data.user.firstname || "");
@@ -137,8 +142,9 @@ export const AuthContextProvider = ({
         setLongitude(data.user.longitude || 0);
         setDescription(data.user.description || "");
         setProfilePicture(data.user.profile_picture || "");
+        setEmailConfirmed(data.user.emailconfirmed || false);
+        setEmailVerified(data.user.emailverified || false);
       } else if (response.status === 401 || response.status === 403) {
-        console.log("🚨 Authentification échouée, nettoyage automatique");
         clearAuthData();
         setError("Session expirée ou invalide. Veuillez vous reconnecter.");
       } else {
@@ -166,7 +172,6 @@ export const AuthContextProvider = ({
       });
 
       newSocket.on("connect", () => {
-        console.log("✅ Socket connecté ! ID :", newSocket.id);
         newSocket.emit("userConnected", id);
       });
 
@@ -187,7 +192,6 @@ export const AuthContextProvider = ({
       const data = await response.json();
 
       setBlockedUsers(data.list);
-      console.log("data == ", data.list);
       return data.list;
     } catch (error) {
       console.error("Erreur récupération des utilisateurs bloqués :", error);
@@ -198,7 +202,6 @@ export const AuthContextProvider = ({
   useEffect(() => {
     if (id) {
       fetchBlockedUsers();
-      console.log("📌 blockedUsers après mise à jour :", blockedUsers);
     }
   }, [id]);
 
@@ -219,6 +222,8 @@ export const AuthContextProvider = ({
         socket,
         blockedUsers,
         profile_picture,
+        emailConfirmed,
+        emailVerified,
         setFirstname,
         setLastname,
         setAge,
@@ -228,6 +233,8 @@ export const AuthContextProvider = ({
         setLatitude,
         setLongitude,
         setSexualPreference,
+        setEmailConfirmed,
+        setEmailVerified,
         refreshUser: fetchUserData,
         setProfilePicture,
         logout: clearAuthData,

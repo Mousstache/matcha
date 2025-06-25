@@ -11,7 +11,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { User } from "@/types/User";
-import { Heart } from "lucide-react";
+import { Heart, Ban, Flag } from "lucide-react";
+import { addToast } from "@/utils/toast";
+import { useAuth } from "@/context/auth";
 
 interface Props {
   isOpen: boolean;
@@ -26,6 +28,7 @@ interface Props {
 //   : [];
 
 const UserProfileModal: React.FC<Props> = ({ isOpen, onClose, user }) => {
+  const { id, firstname, socket } = useAuth();
   const [relationshipStatus, setRelationshipStatus] = useState<{
     isMatch: boolean;
     currentUserLikesTarget: boolean;
@@ -64,6 +67,172 @@ const UserProfileModal: React.FC<Props> = ({ isOpen, onClose, user }) => {
         "Erreur lors de la récupération du statut de relation:",
         error
       );
+    }
+  };
+
+  const handleLike = async () => {
+    if (!user) return;
+
+    try {
+      const token = localStorage.getItem("token");
+
+      const response = await fetch("http://localhost:5001/api/likeUser", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ liker_id: id, liked_id: user.id }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        if (data.error === "NO_PROFILE_PICTURE") {
+          addToast({
+            title: "Photo de profil manquante",
+            description:
+              "Vous devez avoir au moins une photo de profil pour pouvoir liker d'autres utilisateurs",
+            duration: 5000,
+          });
+          return;
+        }
+
+        if (data.error === "ALREADY_MATCHED") {
+          addToast({
+            title: "Déjà en match",
+            description: "Vous êtes déjà en match avec cette personne",
+            duration: 3000,
+          });
+          return;
+        }
+
+        if (data.error === "ALREADY_LIKED") {
+          addToast({
+            title: "Déjà liké",
+            description: "Vous avez déjà liké cette personne",
+            duration: 3000,
+          });
+          return;
+        }
+
+        addToast({
+          title: "Erreur",
+          description: data.message || "Impossible d'envoyer le like",
+          duration: 3000,
+        });
+        return;
+      }
+
+      // Rafraîchir le statut de relation
+      await fetchRelationshipStatus();
+
+      const notif_like = {
+        userId: user.id,
+        type: "like",
+        message: `💖 ${firstname} vous a liké`,
+      };
+
+      if (socket) {
+        socket.emit("SEND_NOTIFICATION", notif_like);
+      }
+
+      addToast({
+        title: "Like envoyé",
+        description: "Vous avez liké ce profil avec succès",
+        duration: 3000,
+      });
+    } catch (error: any) {
+      console.error("Erreur lors du like:", error);
+      addToast({
+        title: "Erreur",
+        description: "Impossible d'envoyer le like",
+        duration: 3000,
+      });
+    }
+  };
+
+  const handleBlock = async () => {
+    if (!user) return;
+
+    try {
+      const token = localStorage.getItem("token");
+      
+      const response = await fetch("http://localhost:5001/api/blockUser", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ user_id: user.id, blocker_id: id }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        addToast({
+          title: "Erreur",
+          description: data.message || "Impossible de bloquer cet utilisateur",
+          duration: 3000,
+        });
+        return;
+      }
+
+      addToast({
+        title: "Utilisateur bloqué",
+        description: `${user.firstname} a été bloqué avec succès`,
+        duration: 3000,
+      });
+
+      onClose(); // Fermer la modal après le blocage
+    } catch (error) {
+      console.error("Erreur lors du blocage:", error);
+      addToast({
+        title: "Erreur",
+        description: "Impossible de bloquer cet utilisateur",
+        duration: 3000,
+      });
+    }
+  };
+
+  const handleSignal = async () => {
+    if (!user) return;
+
+    try {
+      const token = localStorage.getItem("token");
+            
+      const response = await fetch('http://localhost:5001/api/signalUser', {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ reported_id: user.id, reason: "fake account" })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        addToast({
+          title: "Erreur",
+          description: data.message || "Impossible de signaler cet utilisateur",
+          duration: 3000,
+        });
+        return;
+      }
+
+      addToast({
+        title: "Utilisateur signalé",
+        description: `${user.firstname} a été signalé aux modérateurs`,
+        duration: 3000,
+      });
+    } catch (error) {
+      console.error("Erreur lors du signalement:", error);
+      addToast({
+        title: "Erreur",
+        description: "Impossible de signaler cet utilisateur",
+        duration: 3000,
+      });
     }
   };
 
@@ -339,12 +508,45 @@ const UserProfileModal: React.FC<Props> = ({ isOpen, onClose, user }) => {
         </div>
 
         <DialogFooter className="border-t border-pink-100 pt-4">
-          <Button
-            onClick={onClose}
-            className="w-full bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white font-semibold py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 active:scale-95"
-          >
-            Fermer
-          </Button>
+          <div className="flex flex-col sm:flex-row gap-3 w-full">
+            {/* Boutons d'action */}
+            <div className="flex gap-2 flex-1">
+              <Button
+                onClick={handleLike}
+                className="flex-1 bg-gradient-to-r from-pink-500 to-purple-500 hover:from-pink-600 hover:to-purple-600 text-white font-semibold py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 active:scale-95"
+              >
+                <Heart size={18} className="mr-2" />
+                Liker
+              </Button>
+              
+              <Button
+                onClick={handleBlock}
+                variant="outline"
+                className="flex-1 border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400 font-semibold py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 active:scale-95"
+              >
+                <Ban size={18} className="mr-2" />
+                Bloquer
+              </Button>
+              
+              <Button
+                onClick={handleSignal}
+                variant="outline"
+                className="flex-1 border-orange-300 text-orange-600 hover:bg-orange-50 hover:border-orange-400 font-semibold py-3 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 active:scale-95"
+              >
+                <Flag size={18} className="mr-2" />
+                Signaler
+              </Button>
+            </div>
+            
+            {/* Bouton fermer */}
+            <Button
+              onClick={onClose}
+              variant="outline"
+              className="border-gray-300 text-gray-600 hover:bg-gray-50 hover:border-gray-400 font-semibold py-3 px-6 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 active:scale-95"
+            >
+              Fermer
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

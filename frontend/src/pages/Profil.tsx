@@ -15,7 +15,6 @@ import {
 import { Button, Input, Textarea, Card } from "@heroui/react";
 import { addToast } from "@/utils/toast";
 
-// import { MultiSelect } from "@heroui/multiselect";
 
 interface User {
   id: number;
@@ -232,18 +231,6 @@ const Profile = () => {
     );
   }
 
-  //   const refreshUser = async () => {
-  //   const token = localStorage.getItem('token');
-  //   if (!token) return;
-  //   const response = await fetch('http://localhost:5001/api/user', {
-  //     headers: { 'Authorization': `Bearer ${token}` }
-  //   });
-  //   const data = await response.json();
-  //   if (response.ok) {
-  //     setUser(data.user);
-  //   }
-  // };
-
   const handleUpdate = async () => {
     if (!user) {
       return;
@@ -257,6 +244,29 @@ const Profile = () => {
         color: "danger",
       });
       return;
+    }
+
+    // Récupérer les coordonnées de la nouvelle ville avant la sauvegarde
+    let updatedLatitude = user.latitude;
+    let updatedLongitude = user.longitude;
+    
+    if (user.city && user.country) {
+      try {
+        const query = encodeURIComponent(`${user.city}, ${user.country}`);
+        const url = `https://nominatim.openstreetmap.org/search?format=json&q=${query}`;
+        const geoResponse = await fetch(url, {
+          headers: { "Accept-Language": "fr" },
+        });
+        const geoData = await geoResponse.json();
+        
+        if (geoData && geoData.length > 0) {
+          updatedLatitude = parseFloat(geoData[0].lat);
+          updatedLongitude = parseFloat(geoData[0].lon);
+        }
+      } catch (geoError) {
+        console.warn("Erreur lors de la récupération des coordonnées:", geoError);
+        // Continuer avec les anciennes coordonnées si l'API de géolocalisation échoue
+      }
     }
 
     const token = localStorage.getItem("token");
@@ -276,8 +286,8 @@ const Profile = () => {
           firstname: user.firstname,
           lastname: user.lastname,
           username: user.username,
-          latitude: user.latitude,
-          longitude: user.longitude,
+          latitude: updatedLatitude,
+          longitude: updatedLongitude,
           interests: selectedInterests,
         }),
       });
@@ -285,6 +295,13 @@ const Profile = () => {
       const data = await response.json();
 
       if (response.ok) {
+        // Mettre à jour le state local avec les nouvelles coordonnées
+        setUser(prevUser => prevUser ? {
+          ...prevUser,
+          latitude: updatedLatitude,
+          longitude: updatedLongitude
+        } : prevUser);
+        
         addToast({
           title: "Succès",
           description: "Profil mis à jour avec succès !",
@@ -371,7 +388,6 @@ const Profile = () => {
         ? existingProfileIndexInCurrentUrls
         : 0;
     formData.append("profilePictureIndex", profileIndexToSend.toString());
-    console.log("Uploading avec profilePictureIndex:", profileIndexToSend);
 
     const uploadPromise = fetch("http://localhost:5001/api/upload", {
       headers: {
@@ -470,9 +486,6 @@ const Profile = () => {
       }
 
       const positionToDelete = imageToDelete.position;
-      console.log(
-        `Suppression de l'image à la position DB: ${positionToDelete}`
-      );
 
       const deletePromise = fetch(
         `http://localhost:5001/api/delete-image/${positionToDelete}`,
@@ -561,9 +574,7 @@ const Profile = () => {
       }
 
       const positionToSet = imageToSetAsProfile.position;
-      console.log(
-        `Tente de définir la photo à la position DB ${positionToSet} comme principale`
-      );
+
 
       const setProfilePromise = fetch(
         "http://localhost:5001/api/set-profile-picture",
@@ -752,20 +763,6 @@ const Profile = () => {
 
                         <div className="flex flex-col">
                           <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Pseudo
-                          </label>
-                          <Input
-                            value={user.username || ""}
-                            onChange={(e) =>
-                              setUser({ ...user, username: e.target.value })
-                            }
-                            className="w-full"
-                            placeholder="Votre pseudo"
-                          />
-                        </div>
-
-                        <div className="flex flex-col">
-                          <label className="block text-sm font-medium text-gray-700 mb-1">
                             Âge
                           </label>
                           <Input
@@ -833,9 +830,33 @@ const Profile = () => {
                           </label>
                           <select
                             value={user.city || ""}
-                            onChange={(e) =>
-                              setUser({ ...user, city: e.target.value })
-                            }
+                            onChange={async (e) => {
+                              const newCity = e.target.value;
+                              setUser({ ...user, city: newCity });
+                              
+                              // Récupération immédiate des coordonnées pour preview
+                              if (newCity && user.country) {
+                                try {
+                                  const query = encodeURIComponent(`${newCity}, ${user.country}`);
+                                  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${query}`;
+                                  const geoResponse = await fetch(url, {
+                                    headers: { "Accept-Language": "fr" },
+                                  });
+                                  const geoData = await geoResponse.json();
+                                  
+                                  if (geoData && geoData.length > 0) {
+                                    setUser(prevUser => prevUser ? {
+                                      ...prevUser,
+                                      city: newCity,
+                                      latitude: parseFloat(geoData[0].lat),
+                                      longitude: parseFloat(geoData[0].lon),
+                                    } : prevUser);
+                                  }
+                                } catch (geoError) {
+                                  console.warn("Erreur lors de la récupération des coordonnées:", geoError);
+                                }
+                              }
+                            }}
                             className="w-full px-4 py-3 border border-pink-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-pink-50/30"
                             disabled={!user.country}
                           >
@@ -848,6 +869,11 @@ const Profile = () => {
                               </option>
                             ))}
                           </select>
+                          {user.city && user.latitude && user.longitude && (
+                            <p className="text-xs text-gray-500 mt-1">
+                              📍 Coordonnées: {user.latitude.toFixed(4)}, {user.longitude.toFixed(4)}
+                            </p>
+                          )}
                         </div>
                       </div>
                     </div>
