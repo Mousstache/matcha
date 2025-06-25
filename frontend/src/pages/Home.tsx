@@ -146,24 +146,19 @@ const Home = () => {
   // }, []);
 
   useEffect(() => {
-    fetchData();
-  }, []);
-
-  const handleSignal = async (match_id: number) => {
+  fetchData();
+}, []);
+  
+  const handleSignal = async (reported_id: number) => {
     try {
       const token = localStorage.getItem("token");
-      console.log("match_id:", id);
-      await fetch("http://localhost:5001/api/signalUser", {
+      await fetch('http://localhost:5001/api/signalUser', {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          match_id,
-          reporter_id: id,
-          reason: "fake account",
-        }),
+        body: JSON.stringify({ reported_id, reporter_id: id, reason: "fake account" })
       });
       await fetchData();
     } catch (error) {
@@ -547,9 +542,10 @@ const Home = () => {
                           <Ban size={16} className="mr-1" />
                           <span>Bloquer</span>
                         </button>
+                        
+                        <button 
+                          onClick={() => handleSignal(user.id)}
 
-                        <button
-                          onClick={() => handleSignal(user.match_id)}
                           className="flex items-center gap-1 px-3 sm:px-4 py-1.5 sm:py-2 rounded-md font-medium text-xs sm:text-sm shadow font-poppins bg-orange-100 text-orange-600 hover:bg-orange-200 hover:text-orange-700 hover:shadow-lg transition-all"
                         >
                           <Flag size={16} className="mr-1" />

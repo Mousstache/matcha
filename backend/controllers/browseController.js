@@ -431,11 +431,10 @@ export async function unblockUser(req, res) {
 
 export async function signalUser(req, res) {
   try {
-    const { reporter_id, match_id, reason, reported_id: directReportedId } = req.body;
-  
-    let reported_id = directReportedId;
+    const { reason, reported_id } = req.body;
 
-    // Si reported_id n'est pas fourni directement, chercher dans les matches
+    const reporter_id = req.user.id;
+  
     if (!reported_id && match_id) {
       const match = await db.findOne('matches', {match_id});
       
