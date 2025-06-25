@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { useAuth } from "@/context/auth";
+
 
 interface SignalModalProps {
   isOpen: boolean;
@@ -16,9 +18,10 @@ const SignalModal: React.FC<SignalModalProps> = ({
   userName,
   matchId: reportedId // Renommé en interne pour plus de clarté
 }) => {
-  const reason = "fake_account";
+  const reason = "fake account";
   const [details, setDetails] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const { id } = useAuth();
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
@@ -34,9 +37,9 @@ const SignalModal: React.FC<SignalModalProps> = ({
           "Content-Type": "application/json"
         },
         body: JSON.stringify({
-          reporter_id: reporterId,
+          reporter_id: id,
           reported_id: reportedId, // Maintenant on peut passer directement l'ID de l'utilisateur signalé
-          reason: `${reason}${details ? ': ' + details : ''}`
+          reason: reason,
         })
       });
 
