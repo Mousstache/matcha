@@ -35,6 +35,7 @@ interface AuthContextType {
   setDescription: React.Dispatch<React.SetStateAction<string>>;
   setProfilePicture: React.Dispatch<React.SetStateAction<string>>;
   refreshUser: () => Promise<void>;
+  logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -47,7 +48,11 @@ export const useAuth = () => {
   return context;
 };
 
-export const AuthContextProvider = ({ children }: { children: React.ReactNode }) => {
+export const AuthContextProvider = ({
+  children,
+}: {
+  children: React.ReactNode;
+}) => {
   const [firstname, setFirstname] = useState<string>("");
   const [lastname, setLastname] = useState<string>("");
   const [age, setAge] = useState<number>(0);
@@ -63,6 +68,25 @@ export const AuthContextProvider = ({ children }: { children: React.ReactNode })
   const [socket, setSocket] = useState<Socket | null>(null); // Stocke le socket
   const [blockedUsers, setBlockedUsers] = useState<Block[]>([]);
 
+  const clearAuthData = () => {
+    localStorage.removeItem("token");
+    setId("");
+    setFirstname("");
+    setLastname("");
+    setAge(0);
+    setGender("");
+    setSexualPreference("");
+    setLatitude(0);
+    setLongitude(0);
+    setDescription("");
+    setProfilePicture("");
+    setBlockedUsers([]);
+    if (socket) {
+      socket.disconnect();
+      setSocket(null);
+    }
+  };
+
   const fetchUserData = async () => {
     try {
       setLoading(true);
@@ -70,6 +94,26 @@ export const AuthContextProvider = ({ children }: { children: React.ReactNode })
 
       const token = localStorage.getItem("token");
       if (!token) {
+        setLoading(false);
+        return;
+      }
+
+      // Vérifier si le token est valide avant de faire la requête
+      try {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        const now = Date.now() / 1000;
+
+        if (payload.exp && payload.exp < now) {
+          console.log("🚨 Token expiré, nettoyage automatique");
+          clearAuthData();
+          setError("Session expirée. Veuillez vous reconnecter.");
+          setLoading(false);
+          return;
+        }
+      } catch (tokenError) {
+        console.log("🚨 Token invalide, nettoyage automatique");
+        clearAuthData();
+        setError("Session invalide. Veuillez vous reconnecter.");
         setLoading(false);
         return;
       }
@@ -93,16 +137,18 @@ export const AuthContextProvider = ({ children }: { children: React.ReactNode })
         setLongitude(data.user.longitude || 0);
         setDescription(data.user.description || "");
         setProfilePicture(data.user.profile_picture || "");
-
-      } else if (response.status === 401) {
-        localStorage.removeItem("token");
-        setError("Session expirée. Veuillez vous reconnecter.");
+      } else if (response.status === 401 || response.status === 403) {
+        console.log("🚨 Authentification échouée, nettoyage automatique");
+        clearAuthData();
+        setError("Session expirée ou invalide. Veuillez vous reconnecter.");
       } else {
         setError("Erreur lors de la récupération des données utilisateur");
       }
     } catch (error) {
       console.error("🚨 Erreur de requête:", error);
-      setError("Problème de connexion au serveur");
+      // En cas d'erreur réseau, on nettoie aussi pour éviter les états incohérents
+      clearAuthData();
+      setError("Problème de connexion au serveur. Veuillez vous reconnecter.");
     } finally {
       setLoading(false);
     }
@@ -132,32 +178,30 @@ export const AuthContextProvider = ({ children }: { children: React.ReactNode })
     }
   }, [id]);
 
-
-
-const fetchBlockedUsers = async () => {
+  const fetchBlockedUsers = async () => {
     try {
-        const response = await fetch(`http://localhost:5001/api/getBlockUser`, {
-            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        });
+      const response = await fetch(`http://localhost:5001/api/getBlockUser`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
 
-        const data = await response.json();
+      const data = await response.json();
 
-        setBlockedUsers(data.list);
-        console.log("data == ", data.list);
-        return data.list;
-      } catch (error) {
-        console.error("Erreur récupération des utilisateurs bloqués :", error);
-        return [];
-      }
-    };
-    
-    useEffect(() => {
-      if (id) {
-        fetchBlockedUsers()
-          console.log("📌 blockedUsers après mise à jour :", blockedUsers);
-      }
-    }, [id]);
-    
+      setBlockedUsers(data.list);
+      console.log("data == ", data.list);
+      return data.list;
+    } catch (error) {
+      console.error("Erreur récupération des utilisateurs bloqués :", error);
+      return [];
+    }
+  };
+
+  useEffect(() => {
+    if (id) {
+      fetchBlockedUsers();
+      console.log("📌 blockedUsers après mise à jour :", blockedUsers);
+    }
+  }, [id]);
+
   return (
     <AuthContext.Provider
       value={{
@@ -185,7 +229,8 @@ const fetchBlockedUsers = async () => {
         setLongitude,
         setSexualPreference,
         refreshUser: fetchUserData,
-        setProfilePicture
+        setProfilePicture,
+        logout: clearAuthData,
       }}
     >
       {children}

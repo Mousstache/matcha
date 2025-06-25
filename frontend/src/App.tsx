@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import "./App.css";
 import { Navigate } from "react-router-dom";
-import { Heart, ArrowLeft } from "lucide-react";
+import { Heart } from "lucide-react";
 import Login from "./pages/Login";
 import Layout from "./components/Layout";
 import Home from "./pages/Home";
@@ -19,6 +19,12 @@ import ResetPassword from "./pages/ResetPassword";
 import { ToastProvider } from "./context/ToastContext";
 import { NotificationProvider } from "./context/NotificationContext";
 import ToastContainer from "./components/ToastContainer";
+import { useAuth } from "./context/auth";
+import { useEffect } from "react";
+import {
+  cleanupInvalidTokens,
+  startTokenValidationInterval,
+} from "./utils/tokenCleanup";
 
 // interface User {
 //   id: number;
@@ -42,24 +48,38 @@ interface ProtectedRouteProps {
 // };
 
 const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const token = localStorage.getItem("token");
+  const { id, loading, error, logout } = useAuth();
 
-  if (!token) {
+  // Affichage pendant le chargement
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-pink-50 to-purple-50">
+        <div className="animate-pulse flex space-x-4">
+          <div className="rounded-full bg-pink-300 h-12 w-12"></div>
+          <div className="flex-1 space-y-4 py-1">
+            <div className="h-4 bg-pink-300 rounded w-3/4"></div>
+            <div className="space-y-2">
+              <div className="h-4 bg-pink-300 rounded"></div>
+              <div className="h-4 bg-pink-300 rounded w-5/6"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // En cas d'erreur ou pas d'ID utilisateur, rediriger vers login
+  if (error || !id) {
+    console.log(
+      "🚨 ProtectedRoute: Redirection vers login - Error:",
+      error,
+      "ID:",
+      id
+    );
     return <Navigate to="/login" replace />;
   }
 
-  try {
-    const payload = JSON.parse(atob(token.split(".")[1]));
-
-    if (!payload.emailConfirmed) {
-      return <Navigate to="/login" replace />;
-    }
-
-    return children;
-  } catch (error) {
-    console.error("Erreur lors du décodage du token:", error);
-    return <Navigate to="/login" replace />;
-  }
+  return <>{children}</>;
 };
 
 const RouteNotFound = () => {
@@ -86,8 +106,7 @@ const RouteNotFound = () => {
             onClick={() => window.history.back()}
             className="flex items-center gap-2 bg-pink-500 text-white px-6 py-3 rounded-full hover:bg-pink-600 transition-colors"
           >
-            <ArrowLeft size={18} />
-            Retour
+            ← Retour
           </button>
         </div>
       </div>
@@ -96,6 +115,26 @@ const RouteNotFound = () => {
 };
 
 function App() {
+  const { logout } = useAuth();
+
+  useEffect(() => {
+    // Nettoyer les tokens invalides au démarrage
+    cleanupInvalidTokens();
+
+    // Démarrer la vérification périodique des tokens
+    const intervalId = startTokenValidationInterval(() => {
+      logout();
+      window.location.href = "/login";
+    });
+
+    // Nettoyer l'intervalle au démontage
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [logout]);
+
   return (
     <ToastProvider>
       <Router>

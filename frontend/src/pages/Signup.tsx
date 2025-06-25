@@ -9,11 +9,27 @@ import { useState, useEffect } from "react";
 import useGeolocation from "../hooks/useGeolocation";
 import useReverseGeolocation from "../hooks/useReverseGeolocation";
 import { useNavigate } from "react-router-dom";
-import { Camera, Info, MapPin, Heart, Check } from "lucide-react";
+import {
+  Camera,
+  Info,
+  MapPin,
+  Heart,
+  Check,
+  User,
+  Calendar,
+  MessageCircle,
+  Star,
+  Upload,
+  X,
+  CheckCircle2,
+  ArrowLeft,
+  ArrowRight,
+  Sparkles,
+} from "lucide-react";
 import { addToast } from "@/utils/toast";
 import { useAuth } from "@/context/auth";
+import { validateJWTToken } from "@/utils/tokenValidator";
 import { Button, Input } from "@heroui/react";
-import { User } from "lucide-react";
 
 interface User {
   id: number;
@@ -84,6 +100,28 @@ const Signup = () => {
       if (!token) {
         return;
       }
+
+      // 🚨 VÉRIFICATION DU TOKEN au chargement
+      const tokenValidation = validateJWTToken(token);
+      if (!tokenValidation.isValid) {
+        console.log(
+          "🚨 Token invalide détecté au chargement:",
+          tokenValidation.error
+        );
+        // Si le token est invalide (probablement le confirmationtoken), le supprimer
+        localStorage.removeItem("token");
+        addToast({
+          title: "Erreur d'authentification",
+          description: `Token invalide détecté: ${tokenValidation.error}. Veuillez vous reconnecter.`,
+          color: "danger",
+        });
+        return;
+      }
+
+      console.log(
+        "✅ Token JWT valide au chargement, payload:",
+        tokenValidation.payload
+      );
 
       try {
         const response = await fetch("http://localhost:5001/api/user-images", {
@@ -247,10 +285,40 @@ const Signup = () => {
     e.preventDefault();
     setError(""); // Réinitialise l'erreur à chaque tentative
 
+    // Validation finale : vérifier qu'il y a au moins une photo
+    if (imageUrls.length === 0) {
+      setError(
+        "Veuillez ajouter au moins une photo avant de terminer l'inscription"
+      );
+      return;
+    }
+
     try {
       setOnline(false);
       const userAge = calculateAge(birthDate);
       const token = localStorage.getItem("token");
+
+      // Vérification simple du token
+      if (!token) {
+        setError(
+          "Aucun token d'authentification trouvé. Veuillez vous reconnecter."
+        );
+        return;
+      }
+
+      // Vérifier que c'est un JWT et non le confirmationtoken
+      const parts = token.split(".");
+      if (parts.length !== 3) {
+        console.log(
+          "🚨 Token invalide détecté (pas un JWT):",
+          token.substring(0, 20) + "..."
+        );
+        setError(
+          "Token d'authentification invalide. Veuillez vous reconnecter."
+        );
+        localStorage.removeItem("token"); // Nettoyer le mauvais token
+        return;
+      }
 
       // Les images sont maintenant uploadées immédiatement via handleFileChange
       // Donc plus besoin de les uploader ici
@@ -286,7 +354,10 @@ const Signup = () => {
       }
 
       // Succès : redirection immédiate
-      // localStorage.setItem("token", data.token); // décommente si besoin
+      // Si un nouveau token est fourni (email confirmé), le stocker
+      if (data.token) {
+        localStorage.setItem("token", data.token);
+      }
       navigate("/login", {
         state: { email: data.userName, password: data.password || "" },
       });
@@ -309,14 +380,27 @@ const Signup = () => {
     filesToUpload.forEach((image) => formData.append("images", image));
 
     const token = localStorage.getItem("token");
-    if (!token) {
+
+    // 🚨 VÉRIFICATION DU TOKEN - S'assurer qu'on a un JWT valide
+    const tokenValidation = validateJWTToken(token);
+    if (!tokenValidation.isValid) {
+      console.log(
+        "🚨 Token invalide détecté lors de l'upload:",
+        tokenValidation.error
+      );
       addToast({
         title: "Erreur",
-        description: "Authentification requise pour uploader.",
+        description: `Authentification invalide: ${tokenValidation.error}. Veuillez vous reconnecter.`,
         color: "danger",
       });
+      localStorage.removeItem("token"); // Nettoyer le mauvais token
       return;
     }
+
+    console.log(
+      "✅ Token JWT valide pour upload, payload:",
+      tokenValidation.payload
+    );
 
     const currentProfileImgUrl = profile_picture;
     const existingProfileIndexInCurrentUrls = imageUrls.findIndex(
@@ -618,11 +702,25 @@ const Signup = () => {
         setError("Veuillez remplir tous les champs obligatoires");
         return;
       }
+
+      // Validation de l'âge
+      const age = calculateAge(birthDate);
+      if (age < 18) {
+        setError(
+          "Vous devez avoir au moins 18 ans pour vous inscrire sur Matcha"
+        );
+        return;
+      }
     } else if (step === 2) {
       if (!description || interests.length === 0) {
         setError(
           "Veuillez ajouter une description et sélectionner au moins un intérêt"
         );
+        return;
+      }
+    } else if (step === 3) {
+      if (imageUrls.length === 0) {
+        setError("Veuillez ajouter au moins une photo");
         return;
       }
     }
@@ -635,25 +733,42 @@ const Signup = () => {
   };
 
   const renderStepIndicator = () => (
-    <div className="flex justify-center mb-6">
-      <div className="flex items-center space-x-2">
-        {[1, 2, 3].map((item) => (
-          <div key={item} className="flex items-center">
-            <div
-              className={`w-8 h-8 rounded-full flex items-center justify-center ${
-                step === item
-                  ? "bg-gradient-to-r from-pink-500 to-purple-500 text-white"
-                  : step > item
-                  ? "bg-green-500 text-white"
-                  : "bg-gray-200 text-gray-500"
-              }`}
-            >
-              {step > item ? <Check size={16} /> : item}
-            </div>
-            {item < 3 && (
+    <div className="flex justify-center mb-8">
+      <div className="flex items-center space-x-3">
+        {[
+          { num: 1, label: "Informations de base" },
+          { num: 2, label: "À propos de vous" },
+          { num: 3, label: "Photos" },
+        ].map((item, index) => (
+          <div key={item.num} className="flex items-center">
+            <div className="flex flex-col items-center">
               <div
-                className={`w-10 h-1 ${
-                  step > item ? "bg-green-500" : "bg-gray-200"
+                className={`w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all duration-300 ${
+                  step === item.num
+                    ? "bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg transform scale-110"
+                    : step > item.num
+                    ? "bg-green-500 text-white shadow-md"
+                    : "bg-gray-200 text-gray-500"
+                }`}
+              >
+                {step > item.num ? <Check size={18} /> : item.num}
+              </div>
+              <span
+                className={`text-xs mt-2 font-medium transition-colors ${
+                  step >= item.num ? "text-pink-600" : "text-gray-400"
+                }`}
+              >
+                {item.label}
+              </span>
+            </div>
+            {index < 2 && (
+              <div
+                className={`w-16 h-1 mx-4 rounded-full transition-all duration-300 ${
+                  step > item.num
+                    ? "bg-green-500"
+                    : step === item.num
+                    ? "bg-gradient-to-r from-pink-500 to-purple-500"
+                    : "bg-gray-200"
                 }`}
               ></div>
             )}
@@ -665,79 +780,139 @@ const Signup = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-pink-100 to-purple-100 p-4">
-      <div className="w-full max-w-2xl">
-        <div className="text-center mb-6">
-          <div className="inline-flex items-center justify-center p-3 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full mb-3">
-            <Heart size={28} fill="white" className="text-white" />
+      {/* Particules décoratives */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-20 left-10 w-2 h-2 bg-pink-300 rounded-full animate-pulse"></div>
+        <div className="absolute top-32 right-20 w-1 h-1 bg-purple-300 rounded-full animate-ping"></div>
+        <div className="absolute bottom-40 left-20 w-1.5 h-1.5 bg-fuchsia-300 rounded-full animate-bounce"></div>
+        <div className="absolute bottom-20 right-10 w-2 h-2 bg-pink-300 rounded-full animate-pulse delay-700"></div>
+        <Heart
+          className="absolute bottom-32 right-1/4 text-purple-200 animate-bounce delay-1000"
+          size={12}
+        />
+        <Sparkles
+          className="absolute top-1/4 left-1/3 text-pink-200 animate-pulse delay-500"
+          size={10}
+        />
+      </div>
+
+      <div className="w-full max-w-2xl relative">
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center p-4 bg-gradient-to-r from-pink-500 to-purple-500 rounded-full mb-4 shadow-xl transform hover:scale-105 transition-all duration-300">
+            <Heart
+              size={32}
+              fill="white"
+              className="text-white animate-pulse"
+            />
           </div>
-          <h1 className="text-2xl font-bold text-gray-800">
-            Créez votre profil
+          <h1 className="text-4xl font-bold bg-gradient-to-r from-pink-600 to-purple-600 bg-clip-text text-transparent mb-2">
+            Matcha
           </h1>
+          <h2 className="text-2xl font-semibold text-gray-800 mb-2">
+            Créez votre profil parfait
+          </h2>
           <p className="text-gray-600">
             Partagez quelques détails pour trouver des personnes compatibles
           </p>
         </div>
 
-        <Card className="bg-white shadow-xl border-pink-100 overflow-hidden rounded-xl mb-6">
-          <div className="bg-gradient-to-r from-pink-500 to-purple-500 p-4">
+        <Card className="bg-white/90 backdrop-blur-sm shadow-2xl shadow-black/20 border-0 overflow-hidden rounded-2xl mb-6">
+          <div className="absolute inset-0 bg-gradient-to-br from-gray-100/20 to-gray-200/20 pointer-events-none"></div>
+
+          <div className="bg-gradient-to-r from-pink-500 to-purple-500 p-4 relative">
             <CardTitle className="text-white text-center">
-              <h1 className="text-xl font-bold">Créez votre profil</h1>
+              <h1 className="text-lg font-semibold">Créez votre profil</h1>
+              <p className="text-pink-100 text-sm mt-1">Étape {step} sur 3</p>
             </CardTitle>
           </div>
 
-          <CardContent className="p-6">
+          <CardContent className="p-8 relative">
             {renderStepIndicator()}
 
             {errorr && (
-              <div className="bg-red-50 border-l-4 border-red-500 p-4 mb-4 text-red-700 text-sm rounded-md">
+              <div className="mb-6 p-4 bg-gradient-to-r from-red-50 to-pink-50 border-l-4 border-red-400 rounded-lg shadow-sm animate-in slide-in-from-top-1">
                 <div className="flex items-center">
-                  <Info size={16} className="mr-2" />
-                  {errorr}
+                  <div className="flex-shrink-0">
+                    <Info size={18} className="text-red-400" />
+                  </div>
+                  <div className="ml-3">
+                    <p className="text-sm text-red-800 font-medium">{errorr}</p>
+                  </div>
                 </div>
               </div>
             )}
 
-            <form className="space-y-6">
+            <form className="space-y-8">
               {step === 1 && (
                 <>
-                  <div>
-                    <label className="block text-gray-700 font-medium mb-2">
-                      Vous êtes :
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                      <User size={16} className="text-pink-500" />
+                      Vous êtes
                     </label>
-                    <select
-                      value={gender}
-                      onChange={(e) => setGender(e.target.value)}
-                      className="w-full px-4 py-3 border border-pink-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-pink-50/30"
-                    >
-                      <option value="" disabled selected>
-                        Sélectionnez votre genre
-                      </option>
-                      <option value="Homme">Homme</option>
-                      <option value="Femme">Femme</option>
-                      <option value="Non binaire">Non binaire</option>
-                    </select>
+                    <div className="relative group">
+                      <select
+                        value={gender}
+                        onChange={(e) => setGender(e.target.value)}
+                        className="w-full px-4 py-3 pl-10 bg-gray-50/80 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200 text-gray-800 appearance-none group-hover:border-gray-300"
+                      >
+                        <option value="" disabled>
+                          Sélectionnez votre genre
+                        </option>
+                        <option value="Homme">Homme</option>
+                        <option value="Femme">Femme</option>
+                        <option value="Non binaire">Non binaire</option>
+                      </select>
+                      <User
+                        size={18}
+                        className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-pink-500 transition-colors"
+                      />
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none">
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M19 9l-7 7-7-7"
+                          />
+                        </svg>
+                      </div>
+                    </div>
                   </div>
 
-                  <div>
-                    <label className="block text-gray-700 font-medium mb-2">
-                      Date de naissance :
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                      <Calendar size={16} className="text-pink-500" />
+                      Date de naissance
                     </label>
-                    <input
-                      type="date"
-                      value={birthDate}
-                      onChange={(e) => setBirthDate(e.target.value)}
-                      name="birthDate"
-                      className="w-full px-4 py-3 border border-pink-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-pink-50/30"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
+                    <div className="relative group">
+                      <input
+                        type="date"
+                        value={birthDate}
+                        onChange={(e) => setBirthDate(e.target.value)}
+                        name="birthDate"
+                        className="w-full px-4 py-3 pl-10 bg-gray-50/80 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200 text-gray-800 group-hover:border-gray-300"
+                      />
+                      <Calendar
+                        size={18}
+                        className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-pink-500 transition-colors"
+                      />
+                    </div>
+                    <p className="text-xs text-gray-500 flex items-center gap-1">
+                      <Check size={12} className="text-green-500" />
                       Vous devez avoir au moins 18 ans pour vous inscrire
                     </p>
                   </div>
 
-                  <div className="bg-pink-50 rounded-lg p-4 border border-pink-100">
-                    <div className="flex items-center">
+                  <div className="bg-gradient-to-r from-pink-50 to-purple-50 rounded-xl p-6 border border-pink-100 shadow-sm">
+                    <div className="flex items-center mb-3">
                       <MapPin size={20} className="text-pink-500 mr-2" />
-                      <h3 className="font-medium text-gray-700">
+                      <h3 className="font-semibold text-gray-700">
                         Votre localisation
                       </h3>
                     </div>
@@ -766,173 +941,267 @@ const Signup = () => {
 
               {step === 2 && (
                 <>
-                  <div>
-                    <label className="block text-gray-700 font-medium mb-2">
-                      À propos de vous :
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                      <MessageCircle size={16} className="text-pink-500" />À
+                      propos de vous
                     </label>
-                    <textarea
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      className="w-full px-4 py-3 border border-pink-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-pink-50/30 h-32"
-                      placeholder="Partagez quelques mots sur vous, vos passions, ce que vous recherchez..."
-                    ></textarea>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {description.length}/500 caractères
-                    </p>
+                    <div className="relative group">
+                      <textarea
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        maxLength={500}
+                        className="w-full px-4 py-3 pl-10 bg-gray-50/80 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200 text-gray-800 placeholder-gray-400 group-hover:border-gray-300 h-32 resize-none"
+                        placeholder="Partagez quelques mots sur vous, vos passions, ce que vous recherchez..."
+                      />
+                      <MessageCircle
+                        size={18}
+                        className="absolute left-3 top-3 text-gray-400 group-focus-within:text-pink-500 transition-colors"
+                      />
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <p className="text-xs text-gray-500 flex items-center gap-1">
+                        <Info size={12} className="text-blue-500" />
+                        Décrivez-vous de manière authentique et positive
+                      </p>
+                      <span
+                        className={`text-xs font-medium ${
+                          description.length > 450
+                            ? "text-red-500"
+                            : "text-gray-500"
+                        }`}
+                      >
+                        {description.length}/500
+                      </span>
+                    </div>
                   </div>
 
-                  <div>
-                    <label className="block text-gray-700 font-medium mb-2">
-                      Vous recherchez :
+                  <div className="space-y-2">
+                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                      <Heart size={16} className="text-pink-500" />
+                      Vous recherchez
                     </label>
-                    <select
-                      value={preference}
-                      onChange={(e) => setPreference(e.target.value)}
-                      className="w-full px-4 py-3 border border-pink-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 bg-pink-50/30"
-                    >
-                      <option value="" disabled selected>
-                        Sélectionnez votre préférence
-                      </option>
-                      <option value="Homme">Homme</option>
-                      <option value="Femme">Femme</option>
-                      <option value="Les deux">Les deux</option>
-                    </select>
+                    <div className="relative group">
+                      <select
+                        value={preference}
+                        onChange={(e) => setPreference(e.target.value)}
+                        className="w-full px-4 py-3 pl-10 bg-gray-50/80 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-500 focus:border-pink-500 transition-all duration-200 text-gray-800 appearance-none group-hover:border-gray-300"
+                      >
+                        <option value="" disabled>
+                          Sélectionnez votre préférence
+                        </option>
+                        <option value="Homme">Homme</option>
+                        <option value="Femme">Femme</option>
+                        <option value="Les deux">Les deux</option>
+                      </select>
+                      <Heart
+                        size={18}
+                        className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 group-focus-within:text-pink-500 transition-colors"
+                      />
+                      <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none">
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M19 9l-7 7-7-7"
+                          />
+                        </svg>
+                      </div>
+                    </div>
                   </div>
 
-                  <div>
-                    <div className="flex justify-between items-center mb-2">
-                      <label className="block text-gray-700 font-medium">
-                        Vos centres d'intérêt :
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                      <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+                        <Star size={16} className="text-pink-500" />
+                        Vos centres d'intérêt
                       </label>
-                      <span className="text-sm text-gray-500">
+                      <span
+                        className={`text-sm font-medium px-3 py-1 rounded-full ${
+                          interests.length === 0
+                            ? "bg-gray-100 text-gray-500"
+                            : interests.length <= 2
+                            ? "bg-blue-100 text-blue-600"
+                            : "bg-green-100 text-green-600"
+                        }`}
+                      >
                         {interests.length}/3 sélectionnés
                       </span>
                     </div>
 
                     {interestError && (
-                      <div className="bg-red-50 text-red-600 px-3 py-2 rounded-md text-sm mb-2">
+                      <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-xl text-sm flex items-center gap-2">
+                        <Info size={16} className="text-red-500" />
                         {interestError}
                       </div>
                     )}
 
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                       {interestsList.map((interest) => (
                         <div
                           key={interest.id}
                           onClick={() => handleInterestChange(interest.id)}
-                          className={`px-4 py-2 rounded-full border cursor-pointer transition-all ${
+                          className={`px-4 py-3 rounded-xl border-2 cursor-pointer transition-all duration-200 transform hover:scale-105 ${
                             interests.includes(interest.id)
-                              ? "bg-gradient-to-r from-pink-500 to-purple-500 text-white border-transparent"
-                              : "border-pink-300 hover:bg-pink-50 text-gray-700"
+                              ? "bg-gradient-to-r from-pink-500 to-purple-500 text-white border-transparent shadow-lg"
+                              : "border-pink-200 hover:bg-pink-50 hover:border-pink-300 text-gray-700 bg-white"
                           }`}
                         >
-                          <div className="flex items-center justify-between">
-                            <span>{interest.label}</span>
+                          <div className="flex items-center justify-center gap-2 text-center">
+                            <span className="font-medium text-sm">
+                              {interest.label}
+                            </span>
                             {interests.includes(interest.id) && (
-                              <Check size={16} className="ml-1" />
+                              <Check size={16} className="text-white" />
                             )}
                           </div>
                         </div>
                       ))}
                     </div>
+
+                    <p className="text-xs text-gray-500 flex items-center gap-1 mt-2">
+                      <Info size={12} className="text-blue-500" />
+                      Sélectionnez jusqu'à 3 centres d'intérêt qui vous
+                      définissent le mieux
+                    </p>
                   </div>
                 </>
               )}
 
               {step === 3 && (
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-lg font-medium text-gray-800 flex items-center">
-                      <Camera size={20} className="mr-2 text-pink-500" />
-                      Vos photos
+                <div className="space-y-6">
+                  {/* Header section plus compact */}
+                  <div className="text-center">
+                    <h2 className="text-xl font-semibold text-gray-800 mb-2 flex items-center justify-center gap-2">
+                      <Camera size={20} className="text-pink-500" />
+                      Ajoutez vos plus belles photos
                     </h2>
-                    <span className="text-sm bg-pink-100 text-pink-600 px-2 py-1 rounded-full">
-                      {imageUrls.length}/5 photos
-                    </span>
+                    <p className="text-gray-600 text-sm">
+                      Montrez votre personnalité avec des photos authentiques et
+                      récentes
+                    </p>
                   </div>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
-                    {imageUrls.map((url, index) => (
-                      <div
-                        key={index}
-                        className={`relative rounded-2xl overflow-hidden h-36 shadow-lg border-2 border-pink-100 ${
-                          profile_picture === url ? "ring-4 ring-pink-400" : ""
-                        } group`}
+                  {/* Section photos avec header aligné */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-semibold text-gray-700 flex items-center gap-2">
+                        <Camera size={16} className="text-pink-500" />
+                        Vos photos
+                      </h3>
+                      <span
+                        className={`text-sm font-medium px-3 py-1 rounded-full ${
+                          imageUrls.length === 0
+                            ? "bg-gray-100 text-gray-500"
+                            : imageUrls.length <= 2
+                            ? "bg-blue-100 text-blue-600"
+                            : "bg-green-100 text-green-600"
+                        }`}
                       >
-                        <img
-                          src={url}
-                          alt={`Photo ${index + 1}`}
-                          className="w-full h-full object-cover"
-                        />
-                        {/* Bouton de suppression avec meilleure visibilité */}
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleRemoveImage(index);
-                          }}
-                          className="absolute top-2 right-2 w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-200 z-10"
-                          title="Supprimer cette photo"
+                        {imageUrls.length}/5 photos
+                      </span>
+                    </div>
+
+                    {/* Grille de photos améliorée */}
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                      {imageUrls.map((url, index) => (
+                        <div
+                          key={index}
+                          className={`relative rounded-xl overflow-hidden h-32 shadow-md transition-all duration-300 hover:shadow-lg ${
+                            profile_picture === url
+                              ? "ring-3 ring-pink-400 ring-offset-1 transform scale-105"
+                              : "border-2 border-gray-200 hover:border-pink-300"
+                          } group`}
                         >
-                          <span className="text-white font-bold text-lg leading-none">
-                            ×
-                          </span>
-                        </button>
-                        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-[90%] flex justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                          <Button
+                          <img
+                            src={url}
+                            alt={`Photo ${index + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+
+                          {/* Badge photo principale */}
+                          {profile_picture === url && (
+                            <div className="absolute top-1 left-1 bg-pink-500 text-white text-xs font-bold px-2 py-1 rounded-md flex items-center gap-1">
+                              <Star size={10} fill="white" />
+                              Principale
+                            </div>
+                          )}
+
+                          {/* Bouton de suppression */}
+                          <button
+                            type="button"
                             onClick={(e) => {
                               e.preventDefault();
                               e.stopPropagation();
-                              if (profile_picture !== url) {
-                                handleSetProfilePicture(index);
-                              }
+                              handleRemoveImage(index);
                             }}
-                            variant={
-                              profile_picture === url ? "solid" : "bordered"
-                            }
-                            color="primary"
-                            size="sm"
-                            className={`w-full text-xs font-semibold rounded-full shadow-sm py-1 px-2 bg-white/80 backdrop-blur border border-pink-200 transition-all duration-200
-                          ${
-                            profile_picture === url
-                              ? "bg-pink-500 text-white cursor-not-allowed"
-                              : "text-pink-600 hover:bg-pink-50 active:bg-pink-100 active:scale-95"
-                          }`}
-                            style={{ fontSize: "0.85rem" }}
-                            disabled={profile_picture === url}
+                            className="absolute top-1 right-1 w-6 h-6 bg-red-500 hover:bg-red-600 text-white rounded-full flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-all duration-200 z-10 transform hover:scale-110"
+                            title="Supprimer cette photo"
                           >
-                            {profile_picture === url
-                              ? "Photo principale"
-                              : "Définir comme principale"}
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                    {imageUrls.length < 5 && (
-                      <label className="flex items-center justify-center h-36 border-2 border-dashed border-pink-200 rounded-2xl cursor-pointer hover:bg-pink-50 transition-colors duration-300">
-                        <div className="text-center">
-                          <Camera size={24} className="mx-auto text-pink-400" />
-                          <div className="mt-2 text-sm text-pink-600">
-                            Ajouter une photo
-                          </div>
-                          <Input
-                            type="file"
-                            className="hidden"
-                            accept="image/*"
-                            multiple
-                            onChange={handleFileChange}
-                          />
-                        </div>
-                      </label>
-                    )}
-                  </div>
+                            <span className="font-bold text-white">X</span>
+                          </button>
 
-                  <p className="text-sm text-gray-500 mt-4">
-                    <Info size={14} className="inline mr-1" />
-                    Utilisez des photos récentes et de bonne qualité. Votre
-                    photo principale apparaîtra en premier sur votre profil.
-                  </p>
+                          {/* Bouton pour définir comme photo principale */}
+                          <div className="absolute bottom-1 left-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                if (profile_picture !== url) {
+                                  handleSetProfilePicture(index);
+                                }
+                              }}
+                              disabled={profile_picture === url}
+                              className={`w-full text-xs font-medium rounded-lg py-1.5 px-2 transition-all duration-200 ${
+                                profile_picture === url
+                                  ? "bg-pink-500 text-white cursor-not-allowed"
+                                  : "bg-white/95 backdrop-blur text-pink-600 hover:bg-pink-50 border border-pink-200"
+                              }`}
+                            >
+                              {profile_picture === url ? (
+                                <div className="flex items-center justify-center gap-1">
+                                  <Star size={10} fill="white" />
+                                  Principale
+                                </div>
+                              ) : (
+                                "Définir principale"
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+
+                      {/* Zone d'ajout de photos compacte */}
+                      {imageUrls.length < 5 && (
+                        <label className="flex flex-col items-center justify-center h-32 border-2 border-dashed border-pink-300 rounded-xl cursor-pointer hover:bg-pink-50 hover:border-pink-400 transition-all duration-300 group">
+                          <div className="text-center">
+                            <div className="bg-pink-100 p-2 rounded-full mb-2 group-hover:bg-pink-200 transition-colors mx-auto w-fit">
+                              <Upload size={20} className="text-pink-500" />
+                            </div>
+                            <div className="text-sm font-medium text-pink-600 mb-1">
+                              Ajouter une photo
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              JPG, PNG ou WEBP
+                            </div>
+                            <input
+                              type="file"
+                              className="hidden"
+                              accept="image/*"
+                              multiple
+                              onChange={handleFileChange}
+                            />
+                          </div>
+                        </label>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
             </form>
@@ -971,16 +1240,14 @@ const Signup = () => {
           </CardFooter>
         </Card>
 
-        <p className="text-center text-sm text-gray-500 mt-4">
-          En poursuivant, vous acceptez nos{" "}
-          <a href="#" className="text-pink-500 hover:underline">
-            Conditions d'utilisation
-          </a>{" "}
-          et notre{" "}
-          <a href="#" className="text-pink-500 hover:underline">
-            Politique de confidentialité
-          </a>
-        </p>
+        {/* Footer stylé */}
+        <div className="text-center mt-6 text-gray-400 text-xs">
+          <p className="flex items-center justify-center gap-1">
+            Fait avec{" "}
+            <Heart size={12} className="text-pink-400" fill="currentColor" />{" "}
+            pour vous
+          </p>
+        </div>
       </div>
     </div>
   );

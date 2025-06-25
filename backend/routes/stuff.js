@@ -53,7 +53,7 @@ router.get('/getBlockUser',authMiddleware,ensureEmailConfirmed, userCtrl.getBloc
 router.delete('/unblockUser',authMiddleware,ensureEmailConfirmed, userCtrl.unblockUser);
 router.post('/signalUser',authMiddleware,ensureEmailConfirmed, userCtrl.signalUser);
 
-// router.put('/logout', authMiddleware,ensureEmailConfirmed,  userCtrl.logoutUser);
+router.put('/logout', authMiddleware, userCtrl.logoutUser);
 
 router.post('/forgot-password', userCtrl.forgotPassword);
 router.post('/reset-password', userCtrl.resetPassword);

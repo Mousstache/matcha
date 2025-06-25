@@ -70,6 +70,7 @@ export async function registerUser(req,res){
         confirmationToken,
         confirmationTokenExpires,
         emailConfirmed: false,
+        emailVerified: false,
         createdAt: new Date(),
         updatedAt: new Date()
       });
@@ -188,12 +189,43 @@ export async function registerUser(req,res){
 
       await db.update('users', updateData , conditions);
 
-      res.status(200).json({ 
+      // NOUVELLE LOGIQUE : Confirmer définitivement l'email à la fin du processus d'inscription
+      // Seulement si l'email a été vérifié (emailVerified = true)
+      let newToken = null;
+      if (user.emailverified && !user.emailconfirmed) {
+        await db.update('users', {
+          emailConfirmed: true,
+          confirmationToken: null,
+          confirmationTokenExpires: null
+        }, { id: user.id });
+        console.log("Email confirmé définitivement pour l'utilisateur:", user.id);
+        
+        // Générer un nouveau token JWT avec emailConfirmed: true
+        newToken = jwt.sign(
+          { 
+            id: user.id,
+            email: user.email,
+            userName: user.userName,
+            emailConfirmed: true
+          },
+          process.env.JWT_SECRET,
+          { expiresIn: '24h' }
+        );
+      }
+
+      const response = { 
         message: "Informations mises à jour avec succès",
         email: user.email, 
         userName: user.userName, 
         password: user.password
-    });
+      };
+
+      // Ajouter le nouveau token si l'email a été confirmé
+      if (newToken) {
+        response.token = newToken;
+      }
+
+      res.status(200).json(response);
 
     }catch (error){
       console.error("Erreur lors de l'update des infos", error);
@@ -251,11 +283,21 @@ export async function confirmEmail (req, res){
     const { token } = req.params;
     
     console.log('Token reçu:', token);
+    console.log('Longueur du token:', token.length);
+    console.log('Date actuelle:', new Date().toISOString());
+    
+    // Vérifier que le token a la bonne longueur (64 caractères pour un token hex de 32 bytes)
+    if (!token || token.length !== 64 || !/^[a-f0-9]+$/i.test(token)) {
+      console.log('Token invalide: mauvais format');
+      return res.status(400).json({
+        message: 'Token invalide ou expiré'
+      });
+    }
     
     const sql = `
       SELECT * FROM users 
-      WHERE confirmationToken = $1
-      AND confirmationTokenExpires > $2
+      WHERE confirmationtoken = $1
+      AND confirmationtokenexpires > $2
     `;
     
     const now = new Date();
@@ -264,47 +306,57 @@ export async function confirmEmail (req, res){
     console.log("users === ",users.length);
     console.log("users >>> ",users);
 
-    // if (users.length !== 1 || users[0].emailconfirmed) {
-    //   return res.status(400).json({
-    //     message: 'Token invalide, expiré ou déjà utilisé.'
-    //   });
-    // }
-    
     if (users.length === 0) {
+      console.log('Aucun utilisateur trouvé avec ce token');
       return res.status(400).json({
         message: 'Token invalide ou expiré'
       });
     }
     
+    // Vérifier si l'email est déjà vérifié
+    if (users[0].emailverified) {
+      return res.status(200).json({ 
+        message: 'Email déjà vérifié. Vous pouvez maintenant terminer votre inscription.',
+        emailVerified: true 
+      });
+    }
+
+    // NOUVELLE LOGIQUE : Marquer l'email comme vérifié mais PAS ENCORE confirmé
+    // On garde le token pour la confirmation finale après completion du profil
     await db.update(
       'users',
       {
-        emailConfirmed: true,
-        confirmationToken: null,
-        confirmationTokenExpires: null,
+        emailVerified: true, // Marquer comme vérifié
         updatedAt: new Date()
+        // On ne supprime PAS le token et on ne confirme PAS encore l'email
       },
       { id: users[0].id }
     );
 
-    const checkSql = `SELECT emailConfirmed FROM users WHERE id = $1`;
-    const checkResult = await db.query(checkSql, [users[0].id]);
-
-    if (checkResult[0].emailconfirmed === true) {
-      console.log("ici");
-      res.status(200).json({
-        message: 'Email confirmé avec succès'
-      });
-    }
-
-    if (users.emailConfirmed) {
-      return res.status(200).json({ message: 'Email déjà confirmé' });
-}
+    console.log("Email vérifié avec succès pour l'utilisateur:", users[0].id);
+    
+    // Générer un token JWT pour permettre à l'utilisateur de continuer l'inscription
+    const jwtToken = jwt.sign(
+      { 
+        id: users[0].id,
+        email: users[0].email,
+        emailConfirmed: false, // Pas encore confirmé définitivement
+        emailVerified: true    // Mais vérifié par email
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+    
+    return res.status(200).json({
+      message: 'Email vérifié avec succès. Vous pouvez maintenant terminer votre inscription.',
+      emailVerified: true,
+      token: jwtToken
+    });
 
   } catch (error) {
-    console.error('Erreur lors de la confirmation de l\'email:', error);
+    console.error('Erreur lors de la vérification de l\'email:', error);
     res.status(500).json({
-      message: 'Erreur serveur lors de la confirmation de l\'email'
+      message: 'Erreur serveur lors de la vérification de l\'email'
     });
   }
 };
@@ -321,10 +373,27 @@ export async function logUser (req, res){
         });
       }
       
+      console.log("🔍 Utilisateur trouvé:", {
+        id: user.id,
+        email: user.email,
+        emailconfirmed: user.emailconfirmed,
+        emailverified: user.emailverified
+      });
+      
       const isPasswordValid = await bcrypt.compare(password, user.password);
       if (!isPasswordValid) {
         return res.status(401).json({ 
           message: 'Identifiants invalides' 
+        });
+      }
+
+      // Vérifier si l'email est confirmé
+      console.log("🔍 Vérification emailconfirmed:", user.emailconfirmed, typeof user.emailconfirmed);
+      if (!user.emailconfirmed) {
+        console.log("🚨 Email non confirmé, blocage de la connexion");
+        return res.status(403).json({ 
+          message: 'Votre email n\'est pas encore confirmé. Veuillez vérifier votre boîte email et cliquer sur le lien de confirmation avant de vous connecter.',
+          emailConfirmed: false
         });
       }
       
@@ -706,4 +775,36 @@ export async function setProfilePicture(req, res) {
   }
 }
 
-export default {getUserImages, registerUser, fillInfo, confirmEmail, updateUser, logUser, imageUpload, forgotPassword, resetPassword };
+export async function logoutUser(req, res) {
+  try {
+    const token = req.headers.authorization?.split(' ')[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    const user = await db.findOne('users', { email: decoded.email });
+    if (!user) {
+      return res.status(404).json({ message: 'Utilisateur non trouvé' });
+    }
+
+    // Mettre à jour le statut de connexion
+    await db.update(
+      'users',
+      {
+        isOnline: false,
+        lastConnection: new Date(),
+        updatedAt: new Date()
+      },
+      { id: user.id }
+    );
+
+    res.status(200).json({
+      message: 'Déconnexion réussie'
+    });
+  } catch (error) {
+    console.error('Erreur lors de la déconnexion:', error);
+    res.status(500).json({ 
+      message: 'Erreur serveur lors de la déconnexion' 
+    });
+  }
+}
+
+export default {getUserImages, registerUser, fillInfo, confirmEmail, updateUser, logUser, imageUpload, forgotPassword, resetPassword, logoutUser };
